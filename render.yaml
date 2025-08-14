@@ -1,0 +1,53 @@
+services:
+  # 1. The Web Service for the FastAPI App
+  - type: web
+    name: xenx-api
+    env: python
+    plan: free # Use the free instance type which sleeps after inactivity
+    # IMPORTANT: Change this repo URL to your own GitHub/GitLab repository
+    repo: https://github.com/YOUR_USERNAME/YOUR_REPONAME
+    branch: main # Or whatever your default branch is
+    buildCommand: |
+      pip install -r requirements.txt
+      alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4 # Or your preferred Python 3.11+ version
+      - key: SECRET_KEY
+        generateValue: true # Render will generate a secure secret key for you
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: 7
+      - key: MAX_LOGIN_ATTEMPTS
+        value: 5
+      - key: LOCKOUT_MINUTES
+        value: 15
+      - key: MFA_ISSUER_NAME
+        value: XenX
+      # The database URL is automatically injected from the db service below
+      - key: SQLALCHEMY_DATABASE_URI
+        fromService:
+          type: psql
+          name: xenx-db
+          property: connectionString
+      # The Redis URL is automatically injected from the redis service below
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: xenx-redis
+          property: connectionString
+
+  # 2. The PostgreSQL Database
+  - type: psql
+    name: xenx-db
+    plan: free
+
+  # 3. The Redis Instance
+  - type: redis
+    name: xenx-redis
+    plan: free

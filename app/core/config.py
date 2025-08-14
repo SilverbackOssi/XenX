@@ -29,7 +29,8 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int = 6379
     REDIS_PASSWORD: str = None
-    
+    # REDIS_URL: str = None
+
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
     

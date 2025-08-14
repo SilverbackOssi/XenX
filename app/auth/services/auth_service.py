@@ -169,6 +169,9 @@ class AuthService:
         self.redis.delete(f"refresh_token:{refresh_token}")
         return self.create_tokens(user)
 
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        return self.db.query(User).filter(User.email == email).first()
+
     def setup_mfa(self, user: User) -> MFAEnrollResponse:
         # Generate secret key
         secret = pyotp.random_base32()

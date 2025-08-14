@@ -18,8 +18,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(auth.router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 async def root():
@@ -28,3 +26,6 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+# Include routers
+app.include_router(auth.router, prefix=settings.API_V1_STR)

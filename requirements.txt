@@ -1,5 +1,5 @@
 # FastAPI and Server
-fastapi>=0.100.0
+fastapi[all]
 uvicorn>=0.22.0
 pydantic[email]>=2.0.0
 pydantic-settings>=2.0.0

@@ -9,6 +9,15 @@
 
 -----
 
+# Single FastAPI app structure
+app/
+├── auth/          # JWT, RBAC, user management
+├── gateway/       # Request routing logic
+├── middleware/    # Auth middleware, rate limiting
+└── routes/        # Service proxy endpoints
+
+-----
+
 ## 1. System Overview & Test Scope
 
 ### 1.1 Service Responsibilities
@@ -22,7 +31,8 @@ The Gateway/User Management system serves as:
 - **Role-based access control (RBAC)** enforcement
 - **Rate limiting & security** enforcement layer
 
-### 1.2 User Roles & Permissions (From SRS)
+
+### 1.2 User Roles & Permissions
 
 - **Administrator**: Platform-level settings, usage monitoring, access to all projects
 - **CPA/Tax Professional**: Create/manage client projects, invite clients, generate tax plans

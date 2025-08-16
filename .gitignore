@@ -1,4 +1,7 @@
 .env
 venv/
+xenEnv/
 __py*
 .coverage
+
+.pytest_cache/

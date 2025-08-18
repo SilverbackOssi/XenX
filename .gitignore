@@ -1,6 +1,8 @@
 .env
 venv/
 xenEnv/
+/testlocale
+
 __py*
 .coverage
 

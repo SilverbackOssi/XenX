@@ -1,1 +1,1 @@
-from app.auth.schemas.user import *
+from app.auth.schemas.user_schemas import *

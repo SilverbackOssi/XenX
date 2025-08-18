@@ -10,6 +10,12 @@ class UserRole(str, enum.Enum):
     CLIENT = "client"
     STAFF = "staff"
 
+class StaffRole(str, enum.Enum):
+    ASSISTANT = "assistant"
+    CPA = "cpa"
+    REVIEWER = "reviewer"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -21,9 +27,11 @@ class User(Base):
     first_name = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
     role = Column(SQLAEnum(UserRole), nullable=False)
+    
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
     last_login = Column(DateTime, nullable=True)
     email_verified = Column(Boolean, default=False)
+    is_onboarded = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -20,7 +20,7 @@ async def register_user(
         email=user_data.email,
         username=user_data.username,
         password=user_data.password,
-        role=user_data.role,
+        # role=user_data.role,
         first_name=user_data.first_name,
         last_name=user_data.last_name,
         phone_number=user_data.phone_number

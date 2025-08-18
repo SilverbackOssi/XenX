@@ -12,14 +12,14 @@ REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 class TokenService:
     @staticmethod
-    def create_access_token(user_id: int, role: UserRole) -> str:
+    def create_access_token(user_id: int) -> str:
         """Create a new access token for a user"""
         expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         expire = datetime.utcnow() + expires_delta
         
         to_encode = {
             "sub": str(user_id),
-            "role": role.value,
+            # "role": role.value,
             "exp": expire.timestamp(),
             "type": "access"
         }
@@ -27,14 +27,14 @@ class TokenService:
         return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     
     @staticmethod
-    def create_refresh_token(user_id: int, role: UserRole) -> str:
+    def create_refresh_token(user_id: int) -> str:
         """Create a new refresh token for a user"""
         expires_delta = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         expire = datetime.utcnow() + expires_delta
         
         to_encode = {
             "sub": str(user_id),
-            "role": role.value,
+            # "role": role.value,
             "exp": expire.timestamp(),
             "type": "refresh"
         }
@@ -78,8 +78,8 @@ class TokenService:
     @staticmethod
     def create_tokens_for_user(user: User) -> Dict[str, str]:
         """Create both access and refresh tokens for a user"""
-        access_token = TokenService.create_access_token(user.id, user.role)
-        refresh_token = TokenService.create_refresh_token(user.id, user.role)
+        access_token = TokenService.create_access_token(user.id)
+        refresh_token = TokenService.create_refresh_token(user.id)
         
         return {
             "access_token": access_token,

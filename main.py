@@ -7,6 +7,7 @@ app = FastAPI(title="XenToba Gateway & User Management System")
 # Include routers
 app.include_router(auth_router)
 
+# sync tables
 @app.on_event("startup")
 async def startup_event():
     # Create database tables

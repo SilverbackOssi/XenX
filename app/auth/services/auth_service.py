@@ -38,7 +38,7 @@ class AuthService:
         email: str, 
         username: str, 
         password: str, 
-        role: UserRole,
+        # role: UserRole,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
         phone_number: Optional[str] = None
@@ -53,7 +53,7 @@ class AuthService:
                 email=email,
                 username=username,
                 password_hash=self.get_password_hash(password),
-                role=role,
+                # role=role,
                 first_name=first_name,
                 last_name=last_name,
                 phone_number=phone_number
@@ -134,7 +134,7 @@ class AuthService:
             "id": user.id,
             "email": user.email,
             "username": user.username,
-            "role": user.role.value,
+            # "role": user.role.value,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "is_active": user.is_active,

@@ -21,7 +21,7 @@ class TokenResponse(BaseModel):
 class TokenData(BaseModel):
     """Schema for token payload"""
     sub: str  # user ID
-    role: str
+    # role: str
     exp: Optional[int] = None
 
 class RefreshRequest(BaseModel):

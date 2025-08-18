@@ -7,7 +7,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     username: Annotated[str, StringConstraints(min_length=3, max_length=50)]
     password: str
-    role: UserRole = Field(UserRole.CPA, description="Role of the user (e.g., admin, cpa, client, staff)")
+    # role: UserRole = Field(UserRole.CPA, description="Role of the user (e.g., admin, cpa, client, staff)")
     last_name: Optional[str] = Field(None, description="Last name of the user")
     first_name: Optional[str] = Field(None, description="First name of the user")
     phone_number: Optional[str] = Field(None, description="Phone number of the user")
@@ -19,7 +19,7 @@ class UserResponse(BaseModel):
     id: int
     email: str
     username: str
-    role: UserRole
+    # role: UserRole
     last_name: Optional[str]
     first_name: Optional[str]
     phone_number: Optional[str]

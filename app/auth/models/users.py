@@ -32,6 +32,6 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
     last_login = Column(DateTime, nullable=True)
     email_verified = Column(Boolean, default=False)
-    is_onboarded = Column(Boolean, default=False)
+    # is_onboarded = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

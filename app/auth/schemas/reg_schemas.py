@@ -3,6 +3,7 @@ from typing import Optional, Annotated
 from app.auth.models.users import UserRole
 
 class UserCreate(BaseModel):
+    """Schema for user registration"""
     email: EmailStr
     username: Annotated[str, StringConstraints(min_length=3, max_length=50)]
     password: str
@@ -14,6 +15,7 @@ class UserCreate(BaseModel):
 
 
 class UserResponse(BaseModel):
+    """Schema for user creation response"""
     id: int
     email: str
     username: str

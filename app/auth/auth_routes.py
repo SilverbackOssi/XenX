@@ -2,9 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
 from app.schemas.schema import UserCreate, UserResponse
+from app.auth.schemas.auth_schemas import LoginRequest, TokenResponse, RefreshRequest, LoginResponse
 from app.auth.services.auth_service import AuthService
 from app.auth.models.users import UserRole
 from app.auth.services.email_service import EmailService
+from typing import Dict, Any
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -43,3 +45,23 @@ async def register_user(
         print(f"Failed to send welcome email: {str(e)}")
 '''
     return user
+
+@auth_router.post("/login", response_model=LoginResponse)
+async def login(
+    login_data: LoginRequest,
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    auth_service = AuthService(db)
+    return await auth_service.login(
+        email=login_data.email,
+        username=login_data.username,
+        password=login_data.password
+    )
+
+@auth_router.post("/refresh", response_model=TokenResponse)
+async def refresh_token(
+    refresh_data: RefreshRequest,
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, str]:
+    auth_service = AuthService(db)
+    return await auth_service.refresh_token(refresh_data.refresh_token)

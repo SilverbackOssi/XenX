@@ -31,6 +31,8 @@ class User(Base):
     email_verified = Column(Boolean, default=False)
     verification_token = Column(String, nullable=True)
     verification_token_expires_at = Column(DateTime, nullable=True)
+    otp_code = Column(String, nullable=True)
+    otp_code_expires_at = Column(DateTime, nullable=True)
     # is_onboarded = Column(Boolean, default=False)
     
     created_at = Column(DateTime, default=datetime.utcnow)

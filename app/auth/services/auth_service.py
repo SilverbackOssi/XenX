@@ -112,7 +112,7 @@ class AuthService:
         return True, tokens
 
     # Log user in
-    async def get_user__by_email(self, email: str) -> User | None:
+    async def get_user_by_email(self, email: str) -> User | None:
         result = await self.session.execute(select(User).filter(User.email == email))
         return result.scalar_one_or_none()
 
@@ -181,7 +181,65 @@ class AuthService:
         }
         
         return {**tokens, "user": user_data}
+
+    async def login_with_code(self, email: str) -> Dict[str, Any]:
+        """Login a user with one-time code and return tokens"""
+        user = await self.get_user_by_email(email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account disabled"
+            )
+
+        # Update last login time
+        user.last_login = datetime.utcnow()
+        await self.session.commit()
+
+        # Generate tokens
+        tokens = TokenService.create_tokens_for_user(user)
+
+        # Add user info to response
+        user_data = {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            # "role": user.role.value,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "is_active": user.is_active,
+            "email_verified": user.email_verified
+        }
+
+        return {**tokens, "user": user_data}
         
+    async def create_otp(self, user: User) -> str:
+        """Generate and save OTP for a user"""
+        otp = "".join([str(secrets.randbelow(10)) for _ in range(6)])
+        user.otp_code = self.get_password_hash(otp) # Hash the OTP
+        user.otp_code_expires_at = datetime.utcnow() + timedelta(minutes=10) # OTP valid for 10 minutes
+        await self.session.commit()
+        return otp
+
+    async def verify_otp(self, user: User, otp: str) -> bool:
+        """Verify OTP for a user"""
+        if not user.otp_code or not user.otp_code_expires_at:
+            return False
+        if datetime.utcnow() > user.otp_code_expires_at:
+            return False # OTP expired
+        return self.verify_password(otp, user.otp_code)
+
+    async def clear_otp(self, user: User):
+        """Clear OTP for a user after use"""
+        user.otp_code = None
+        user.otp_code_expires_at = None
+        await self.session.commit()
+
     # New access token
     async def refresh_token(self, refresh_token: str) -> Dict[str, str]:
         """Generate new access token using refresh token"""

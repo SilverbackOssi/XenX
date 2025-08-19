@@ -34,3 +34,15 @@ class LoginResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     user: dict
+
+class ForgotPasswordSchema(BaseModel):
+    email: EmailStr
+
+class LoginWithCodeSchema(BaseModel):
+    email: EmailStr
+    code: str
+
+class ResetPasswordSchema(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str

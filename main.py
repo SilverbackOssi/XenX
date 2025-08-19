@@ -1,12 +1,14 @@
 from fastapi import FastAPI
-from app.routes.routes import auth_router, profile_router
+from app.routes.routes import password_reset_routes, profile_routes
+# from app.auth.password_reset_routes import router as password_reset_router
 from app.auth.database import engine, Base
 
 app = FastAPI(title="XenToba Gateway & User Management System")
 
 # Include routers
-app.include_router(auth_router)
-app.include_router(profile_router)
+app.include_router(password_reset_routes.auth_router)
+app.include_router(profile_routes.profile_router)
+# app.include_router(password_reset_router, prefix="/auth", tags=["auth"])
 
 # sync tables
 @app.on_event("startup")

@@ -64,6 +64,7 @@ pytest-asyncio==1.1.0
 pytest-cov==6.2.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
+python-http-client==3.3.7
 python-jose==3.5.0
 python-multipart==0.0.20
 PyYAML==6.0.2
@@ -74,6 +75,7 @@ rich-toolkit==0.15.0
 rignore==0.6.4
 rsa==4.9.1
 s3transfer==0.13.1
+sendgrid==6.12.4
 sentry-sdk==2.35.0
 shellingham==1.5.4
 six==1.17.0
@@ -89,3 +91,4 @@ urllib3==2.5.0
 uvicorn==0.35.0
 watchfiles==1.1.0
 websockets==15.0.1
+Werkzeug==3.1.3

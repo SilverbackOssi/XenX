@@ -3,6 +3,7 @@ from typing import Optional
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLAEnum, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.auth.database import Base
+from app.enterprises.models.enterprises import Enterprise
 import enum
 
 

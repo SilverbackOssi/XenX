@@ -12,11 +12,11 @@ class EmailService:
         """
         Send an email verification link to users.
         """
-        subject = "Verify Your Email Address"
+        subject = "Verify Your Xentoba Account Email"
         html_content = f"""
         <strong>Verify Your Email Address</strong>
         <p>Thank you for registering with us. Please click the link below to verify your email address:</p>
-        <p><a href="{verification_link}">Verify Email</a></p>
+        <p><a href="{verification_link}">{verification_link}</a></p>
         <p>If you did not register for an account, please ignore this email.</p>
         <p>Best regards,<br>The XenToba Team</p>
         """
@@ -29,6 +29,7 @@ class EmailService:
 
         try:
             sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+            print(message)
             response = sg.send(message)
             print(f"SendGrid Status Code: {response.status_code}")
         except Exception as e:

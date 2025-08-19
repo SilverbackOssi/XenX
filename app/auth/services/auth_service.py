@@ -5,9 +5,11 @@ from sqlalchemy.exc import IntegrityError
 from app.auth.models.users import User
 from app.auth.services.token_service import TokenService
 from typing import Optional, Dict, Any, Union
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import HTTPException, status
 import re
+import secrets
+from app.auth.services.email_service import EmailService
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -51,6 +53,9 @@ class AuthService:
             return None, error_msg
 
         try:
+            verification_token = secrets.token_urlsafe(32)
+            verification_token_expires_at = datetime.utcnow() + timedelta(hours=1)
+            
             user = User(
                 email=email,
                 username=username,
@@ -58,11 +63,19 @@ class AuthService:
                 # role=role,
                 first_name=first_name,
                 last_name=last_name,
-                phone_number=phone_number
+                phone_number=phone_number,
+                verification_token=verification_token,
+                verification_token_expires_at=verification_token_expires_at
             )
             self.session.add(user)
             await self.session.commit()
             await self.session.refresh(user)
+
+            # Send verification email
+            email_service = EmailService()
+            verification_link = f"http://xenx.onrender.com/verify-email/{verification_token}"
+            await email_service.send_verification_email(email, verification_link)
+
             return user, ""
         except IntegrityError as e:
             await self.session.rollback()
@@ -75,8 +88,31 @@ class AuthService:
             await self.session.rollback()
             return None, str(e)
 
+    async def verify_user_email(self, token: str) -> tuple[bool, Union[str, Dict[str, Any]]]:
+        result = await self.session.execute(select(User).filter(User.verification_token == token))
+        user = result.scalar_one_or_none()
+
+        if not user:
+            return False, "Invalid verification token"
+
+        if user.verification_token_expires_at < datetime.utcnow(): # type:ignore
+            return False, "Verification token has expired"
+
+        user.email_verified = True
+        user.verification_token = None
+        user.verification_token_expires_at = None
+        await self.session.commit()
+
+        # Send welcome email
+        email_service = EmailService()
+        await email_service.send_welcome_email(user.email)
+
+        # Generate tokens
+        tokens = TokenService.create_tokens_for_user(user)
+        return True, tokens
+
     # Log user in
-    async def get_user_by_email(self, email: str) -> User | None:
+    async def get_user__by_email(self, email: str) -> User | None:
         result = await self.session.execute(select(User).filter(User.email == email))
         return result.scalar_one_or_none()
 

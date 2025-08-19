@@ -32,19 +32,22 @@ async def register_user(
             detail=error
         )
 
-    # Send welcome email (async)
-    try:
-        email_service = EmailService()
-
-        if user and hasattr(user, "email"):
-            await email_service.send_welcome_email(user_data.email)
-        else:
-            print("User email is not available or not a string, skipping welcome email.")
-    except Exception as e:
-        # Log the error but don't fail registration
-        print(f"Failed to send welcome email: {str(e)}")
-
     return user
+
+@auth_router.get("/verify-email/{token}", status_code=status.HTTP_200_OK)
+async def verify_email(
+    token: str,
+    db: AsyncSession = Depends(get_db)
+):
+    auth_service = AuthService(db)
+    success, result = await auth_service.verify_user_email(token)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result
+        )
+    return result
+
 
 @auth_router.post("/login", response_model=LoginResponse)
 async def login(

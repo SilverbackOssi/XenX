@@ -29,6 +29,8 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
     last_login = Column(DateTime, nullable=True)
     email_verified = Column(Boolean, default=False)
+    verification_token = Column(String, nullable=True)
+    verification_token_expires_at = Column(DateTime, nullable=True)
     # is_onboarded = Column(Boolean, default=False)
     
     created_at = Column(DateTime, default=datetime.utcnow)

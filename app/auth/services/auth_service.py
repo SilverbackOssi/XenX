@@ -2,7 +2,7 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
-from app.auth.models.users import User, UserRole
+from app.auth.models.users import User
 from app.auth.services.token_service import TokenService
 from typing import Optional, Dict, Any, Union
 from datetime import datetime

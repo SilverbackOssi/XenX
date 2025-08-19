@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, constr, StringConstraints, Field
 from typing import Optional, Annotated
-from app.auth.models.users import UserRole
+# from app.auth.models.users import UserRole
 
 class UserCreate(BaseModel):
     """Schema for user registration"""

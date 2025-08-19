@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import jwt
 from fastapi import HTTPException, status
-from app.auth.models.users import User, UserRole
+from app.auth.models.users import User
 
 # These should be in environment variables in production
 SECRET_KEY = "secret-key-for-jwt-tokens"

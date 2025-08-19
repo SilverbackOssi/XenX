@@ -60,6 +60,7 @@ class EmailService:
             print(f"Failed to send email: {str(e)}")
             raise
 
+    
     # Authentication Mails
     async def send_login_code_email(self, to_email: str, otp_code: str):
         """

@@ -27,12 +27,14 @@ class AuthService:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    # Password confirmation
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return pwd_context.verify(plain_password, hashed_password)
 
     def get_password_hash(self, password: str) -> str:
         return pwd_context.hash(password)
 
+    # Create user
     async def create_user(
         self, 
         email: str, 
@@ -73,6 +75,7 @@ class AuthService:
             await self.session.rollback()
             return None, str(e)
 
+    # Log user in
     async def get_user_by_email(self, email: str) -> User | None:
         result = await self.session.execute(select(User).filter(User.email == email))
         return result.scalar_one_or_none()
@@ -143,6 +146,7 @@ class AuthService:
         
         return {**tokens, "user": user_data}
         
+    # New access token
     async def refresh_token(self, refresh_token: str) -> Dict[str, str]:
         """Generate new access token using refresh token"""
         try:

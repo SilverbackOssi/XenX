@@ -4,6 +4,7 @@ from app.auth.database import get_db
 from app.schemas.schema import UserCreate, UserResponse
 from app.auth.schemas.auth_schemas import LoginRequest, TokenResponse, RefreshRequest, LoginResponse
 from app.auth.services.auth_service import AuthService
+from app.auth.services.email_service import EmailService
 from typing import Dict, Any
 
 
@@ -32,7 +33,7 @@ async def register_user(
         )
 
     # Send welcome email (async)
-    '''try:
+    try:
         email_service = EmailService()
 
         if user and hasattr(user, "email"):
@@ -42,7 +43,7 @@ async def register_user(
     except Exception as e:
         # Log the error but don't fail registration
         print(f"Failed to send welcome email: {str(e)}")
-'''
+
     return user
 
 @auth_router.post("/login", response_model=LoginResponse)

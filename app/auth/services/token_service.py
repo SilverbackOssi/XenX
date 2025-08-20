@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from fastapi.security import OAuth2PasswordBearer, OAuth2AuthorizationCodeBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,7 @@ class TokenService:
     def create_access_token(user_id: int) -> str:
         """Create a new access token for a user"""
         expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
         
         to_encode = {
             "sub": str(user_id),
@@ -35,7 +35,7 @@ class TokenService:
     def create_refresh_token(user_id: int) -> str:
         """Create a new refresh token for a user"""
         expires_delta = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
         
         to_encode = {
             "sub": str(user_id),
@@ -95,7 +95,7 @@ class TokenService:
 
     @staticmethod
     async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
-        print("Getting current user from token", f"token = {token}")
+        '''Get the current user from the token'''
         payload = TokenService.verify_token(token)
         user_id = int(payload.get("sub"))
         user = await db.get(User, user_id)

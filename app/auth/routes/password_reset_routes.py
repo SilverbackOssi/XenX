@@ -4,10 +4,11 @@ from app.auth.database import get_db
 from app.auth.schemas.auth_schemas import ForgotPasswordSchema, LoginWithCodeSchema, ResetPasswordSchema
 from app.auth.services.auth_service import AuthService
 from app.auth.services.email_service import EmailService
-from app.auth.auth_routes import auth_router
 
 
 email_service = EmailService()
+auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
+
 
 @auth_router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def forgot_password(payload: ForgotPasswordSchema, db: AsyncSession = Depends(get_db)):
@@ -66,7 +67,7 @@ async def reset_password(payload: ResetPasswordSchema, db: AsyncSession = Depend
             detail="Invalid or expired code",
         )
 
-    user.password_hash = auth_service.get_password_hash(payload.new_password)
+    user.password_hash = auth_service.get_password_hash(payload.new_password)  # type: ignore
     await auth_service.clear_otp(user)
     await db.commit()
 

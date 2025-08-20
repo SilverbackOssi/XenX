@@ -35,8 +35,12 @@ async def change_password(
 ):
     profile_service = ProfileService(db)
     await profile_service.change_password(
-        user_id=current_user.id,
+        user_id=current_user.id, # type: ignore
         old_password=password_data.old_password,
         new_password=password_data.new_password
     )
     return
+
+@profile_router.get("/me/subscription")
+async def get_user_subscription(current_user: User = Depends(get_current_user)):
+    return {"subscription_plan": current_user.subscription_plan}

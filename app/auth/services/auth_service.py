@@ -98,14 +98,14 @@ class AuthService:
         if user.verification_token_expires_at < datetime.utcnow(): # type:ignore
             return False, "Verification token has expired"
 
-        user.email_verified = True
-        user.verification_token = None
-        user.verification_token_expires_at = None
+        user.email_verified = True # type: ignore
+        user.verification_token = None # type: ignore
+        user.verification_token_expires_at = None # type: ignore
         await self.session.commit()
 
         # Send welcome email
         email_service = EmailService()
-        await email_service.send_welcome_email(user.email)
+        await email_service.send_welcome_email(user.email) # type: ignore
 
         # Generate tokens
         tokens = TokenService.create_tokens_for_user(user)
@@ -133,11 +133,11 @@ class AuthService:
         if not user.is_active:
             return None, "Account disabled"
             
-        if not self.verify_password(password, user.password_hash):
+        if not self.verify_password(password, user.password_hash): # type: ignore
             return None, "Invalid credentials"
             
         # Update last login time
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.utcnow()  # type: ignore
         await self.session.commit()
         
         return user, ""

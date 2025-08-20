@@ -12,6 +12,10 @@ class StaffRole(str, enum.Enum):
     CPA = "cpa"
     REVIEWER = "reviewer"
 
+class SubscriptionPlans(str, enum.Enum):
+    FREE = "free"
+    PRO = "pro"
+    BUSINESS = "business"
 
 class User(Base):
     __tablename__ = "users"
@@ -23,6 +27,9 @@ class User(Base):
     last_name = Column(String, nullable=True)
     first_name = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
+    subscription_plan = Column(SQLAEnum(SubscriptionPlans), default=SubscriptionPlans.FREE, nullable=False)
+
+
     # role = Column(SQLAEnum(UserRole), nullable=False)
     
     is_active = Column(Boolean, default=True)

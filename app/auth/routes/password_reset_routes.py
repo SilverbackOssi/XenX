@@ -46,7 +46,7 @@ async def login_with_code(payload: LoginWithCodeSchema, db: AsyncSession = Depen
         )
 
     await auth_service.clear_otp(user)
-    return await auth_service.login_with_code(user.email)
+    return await auth_service.login_with_code(user.email) # type: ignore
 
 @auth_router.post("/reset-password", status_code=status.HTTP_200_OK)
 async def reset_password(payload: ResetPasswordSchema, db: AsyncSession = Depends(get_db)):

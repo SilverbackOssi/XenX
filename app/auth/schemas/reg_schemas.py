@@ -19,10 +19,12 @@ class UserResponse(BaseModel):
     id: int
     email: str
     username: str
+    subscription_plan: str
     # role: UserRole
     last_name: Optional[str]
     first_name: Optional[str]
     phone_number: Optional[str]
+    
     is_active: bool
     email_verified: bool
 

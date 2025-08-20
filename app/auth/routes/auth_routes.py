@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
-from app.schemas.schema import UserCreate, UserResponse
+from app.schemas.schema import UserCreate, UserResponse, UserRegisterResponse
 from app.auth.schemas.auth_schemas import LoginRequest, TokenResponse, RefreshRequest, LoginResponse
 from app.auth.services.auth_service import AuthService
 from app.auth.services.email_service import EmailService
@@ -11,7 +11,7 @@ from typing import Dict, Any
 
 from app.auth.routes.password_reset_routes import auth_router
 
-@auth_router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@auth_router.post("/register", response_model=UserRegisterResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db)
@@ -33,7 +33,7 @@ async def register_user(
             detail=error
         )
 
-    return user
+    return user, {"message": "User successfully created, check your spam mail for verification mail"}
 
 @auth_router.get("/verify-email/{token}", status_code=status.HTTP_200_OK)
 async def verify_email(

@@ -17,7 +17,7 @@ PUT /dev/users/update/{user_id}
 DELETE /dev/users/delete/{user_id}
 '''
 
-@dev_router.get("/users/all", response_model=List[User])
+@dev_router.get("/users/all")
 async def get_all_users():
     pass
 

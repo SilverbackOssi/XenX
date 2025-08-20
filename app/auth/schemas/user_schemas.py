@@ -30,3 +30,15 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UserRegisterResponse(UserResponse):
+    """Schema for user registration response"""
+    message: str
+
+class UserUpdate(BaseModel):
+    """Schema for user update"""
+    email: Optional[EmailStr]
+    username: Optional[Annotated[str, StringConstraints(min_length=3, max_length=50)]]
+    last_name: Optional[str]
+    first_name: Optional[str]
+    phone_number: Optional[str]

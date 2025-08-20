@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
-from app.schemas.schema import UserResponse
+from app.schemas.schema import UserResponse, UserUpdate
 from app.auth.schemas.profile_schemas import ChangePasswordRequest
 from app.auth.models.users import User
 from app.auth.services.profile_service import ProfileService
@@ -26,6 +26,25 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
 @profile_router.get("/me", response_model=UserResponse)
 async def get_profile(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+@profile_router.put("/me", response_model=UserResponse)
+async def update_profile(
+    user_data: UserUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    profile_service = ProfileService(db)
+    updated_user, error = await profile_service.update_user_profile(
+        user_id=current_user.id,  # type: ignore
+        user_data=user_data
+    )
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error
+        )
+    return updated_user
+
 
 @profile_router.put("/me/change-password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_password(

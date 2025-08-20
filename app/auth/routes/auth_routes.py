@@ -35,7 +35,33 @@ async def register_user(
 
     return user, {"message": "User successfully created, check your spam mail for verification mail"}
 
-@auth_router.get("/verify-email/{token}", status_code=status.HTTP_200_OK)
+@auth_router.post("/resend-verification-email", status_code=status.HTTP_200_OK)
+async def resend_verification_email(
+    email: str,
+    db: AsyncSession = Depends(get_db)
+):
+    auth_service = AuthService(db)
+    email_service = EmailService()
+    user = await auth_service.get_user_by_email(email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    if bool(user.email_verified):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already verified",
+        )
+    
+    token = user.verification_token
+    verification_link = f"http://xenx.onrender.com/verify-email?token={token}"
+    await email_service.send_verification_email(str(user.email), verification_link)
+    
+    return {"message": f"Verification email sent to {user.email}"}
+
+
+@auth_router.get("/verify-email", status_code=status.HTTP_200_OK)
 async def verify_email(
     token: str,
     db: AsyncSession = Depends(get_db)

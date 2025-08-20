@@ -73,7 +73,7 @@ class AuthService:
 
             # Send verification email
             email_service = EmailService()
-            verification_link = f"http://xenx.onrender.com/verify-email/{verification_token}"
+            verification_link = f"http://xenx.onrender.com/verify-email?token={verification_token}"
             await email_service.send_verification_email(email, verification_link)
 
             return user, ""
@@ -83,7 +83,7 @@ class AuthService:
                 return None, "Email already registered"
             if "users_username_key" in str(e):
                 return None, "Username already taken"
-            return None, "Registration failed, integrity error"
+            return None, "Registration failed, user exists"
         except Exception as e:
             await self.session.rollback()
             return None, str(e)
@@ -130,7 +130,7 @@ class AuthService:
         if not user:
             return None, "Invalid credentials"
             
-        if not user.is_active:
+        if not bool(user.is_active):
             return None, "Account disabled"
             
         if not self.verify_password(password, user.password_hash): # type: ignore
@@ -142,7 +142,7 @@ class AuthService:
         
         return user, ""
         
-    async def login(self, email: Optional[str] = None, username: Optional[str] = None, password: str = None) -> Dict[str, Any]:
+    async def login(self, email: Optional[str] = None, username: Optional[str] = None, password: str = None) -> Dict[str, Any]: # type: ignore
         """Login a user and return tokens"""
         if email:
             user, error = await self.authenticate_user(email, password, is_email=True)

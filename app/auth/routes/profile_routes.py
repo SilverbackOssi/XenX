@@ -17,7 +17,7 @@ profile_router = APIRouter(prefix="/users", tags=["User Profile"])
 async def get_profile(current_user: User = Depends(TokenService.get_current_user)) -> User:
     return current_user
 
-@profile_router.put("/me", response_model=UserResponse)
+@profile_router.patch("/me", response_model=UserResponse)
 async def update_profile(
     user_data: UserUpdate,
     db: AsyncSession = Depends(get_db),

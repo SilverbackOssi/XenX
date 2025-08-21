@@ -32,9 +32,30 @@ async def create_enterprise(
         )
     return enterprise
 
+# XXX Should also return associated users(owner, staff, and clients)
+# @enterprise_router.get("/{enterprise_id}", response_model=EnterpriseResponse, status_code=status.HTTP_200_OK)
+# async def get_enterprise(
+#     enterprise_id: int,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(TokenService.get_current_user)
+# ) -> EnterpriseResponse:
+#     """
+#     Get details of a specific firm.
+#     Requires permission
+#     """
+#     enterprise_service = EnterpriseService(db)
+#     enterprise, error = await enterprise_service.get_enterprise(
+#         user_id=current_user.id,  # type: ignore
+#         enterprise_id=enterprise_id
+#     )
+#     if error:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail=error
+#         )
+#     return enterprise
 
-
-@enterprise_router.post("/{enterprise_id}/invite", status_code=status.HTTP_200_OK)
+@enterprise_router.post("/{enterprise_id}/invite", status_code=status.HTTP_200_OK, summary="Inviting a teammate to a firm")
 async def invite_teammate_to_enterprise(
     enterprise_id: int,
     invitation_data: StaffInvitation,

@@ -25,7 +25,14 @@ class Enterprise(Base):
     city = Column(String, nullable=False)
     address = Column(String, nullable=True)
     website = Column(String, nullable=True)
-    
+
+    # Branding
+    logo_url = Column(String, nullable=True)  # URL or path to the logo image
+    primary_color = Column(String, nullable=True)  # Hex code for the primary brand color
+    accent_color = Column(String, nullable=True)  # Hex code for the accent brand color
+    footer_text = Column(String, nullable=True)  # Text to display in the footer of exported documents
+
+    # Status & Timestamps
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

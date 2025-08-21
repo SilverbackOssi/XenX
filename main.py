@@ -1,7 +1,16 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from app.routes.routes import *
 # from app.auth.password_reset_routes import router as password_reset_router
 from app.auth.database import engine, Base
+from app.enterprises.routes.branding_routes import branding_router
+
+# Create uploads directory if it doesn't exist
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+LOGOS_DIR = Path("uploads/logos")
+LOGOS_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="XenToba Gateway & User Management System")
 
@@ -9,10 +18,14 @@ app = FastAPI(title="XenToba Gateway & User Management System")
 app.include_router(auth_routes.auth_router)
 app.include_router(profile_routes.profile_router)
 app.include_router(enterprise_routes.enterprise_router)
+app.include_router(branding_router)
 app.include_router(dev_routes.dev_router)
 # app.include_router(password_reset_router, prefix="/auth", tags=["auth"])
 
 # sync tables
+# Mount the uploads directory to make logos accessible
+app.mount("/logos", StaticFiles(directory="uploads/logos"), name="logos")
+
 @app.on_event("startup")
 async def startup_event():
     # Create database tables

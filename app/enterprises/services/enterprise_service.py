@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import secrets
+from typing import Dict, Any, Tuple, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.auth.services.email_service import EmailService
@@ -155,5 +156,79 @@ class EnterpriseService:
                 await self.db.commit()
 
             return staff, None
+        except Exception as e:
+            return None, str(e)
+            
+    async def get_enterprise_by_id(self, enterprise_id: int) -> Tuple[Optional[Enterprise], Optional[str]]:
+        """
+        Get an enterprise by its ID.
+        """
+        try:
+            enterprise = await self.db.get(Enterprise, enterprise_id)
+            if not enterprise:
+                return None, "Enterprise not found"
+                
+            return enterprise, None
+        except Exception as e:
+            return None, str(e)
+            
+    async def has_permission(self, enterprise: Enterprise, user_id: int) -> bool:
+        """
+        Check if a user has permission to update an enterprise.
+        """
+        try:
+            # Check if user is a superuser
+            user = await self.db.get(User, user_id)
+            if user and getattr(user, "is_superuser", False):
+                return True
+
+            # Check if user is the owner
+            if enterprise.owner_id == user_id:
+                return True
+                
+            # Check if user is staff with proper permissions
+            result = await self.db.execute(
+                select(Staff).filter_by(
+                    user_id=user_id,
+                    enterprise_id=enterprise.id,
+                    is_active=True
+                )
+            )
+            staff = result.scalar_one_or_none()
+            
+            # For now, any active staff member can update branding
+            # In the future, this would be enhanced with role-based permissions
+            if staff:
+                return True
+                
+            return False
+        except Exception:
+            return False
+            
+    async def update_enterprise_branding(
+        self, 
+        enterprise_id: int, 
+        branding_data: Dict[str, Any]
+    ) -> Tuple[Optional[Enterprise], Optional[str]]:
+        """
+        Update the branding information for an enterprise.
+        """
+        try:
+            enterprise = await self.db.get(Enterprise, enterprise_id)
+            if not enterprise:
+                return None, "Enterprise not found"
+                
+            # Update only the fields provided in branding_data
+            for key, value in branding_data.items():
+                if hasattr(enterprise, key):
+                    setattr(enterprise, key, value)
+            
+            # Update the timestamp
+            enterprise.updated_at = datetime.now(timezone.utc)
+            
+            await self.db.commit()
+            await self.db.refresh(enterprise)
+            
+            return enterprise, None
         except Exception as e:
             return None, str(e)

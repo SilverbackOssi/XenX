@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from app.auth.models.users import User
 from app.auth.services.token_service import TokenService
 from typing import Optional, Dict, Any, Union
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 import re
 import secrets
@@ -54,8 +54,8 @@ class AuthService:
 
         try:
             verification_token = secrets.token_urlsafe(32)
-            verification_token_expires_at = datetime.utcnow() + timedelta(hours=1)
-            
+            verification_token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+
             user = User(
                 email=email,
                 username=username,
@@ -137,7 +137,7 @@ class AuthService:
             return None, "Invalid credentials"
             
         # Update last login time
-        user.last_login = datetime.utcnow()  # type: ignore
+        user.last_login = datetime.now(timezone.utc)  # type: ignore
         await self.session.commit()
         
         return user, ""
@@ -198,7 +198,7 @@ class AuthService:
             )
 
         # Update last login time
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(timezone.utc)
         await self.session.commit()
 
         # Generate tokens
@@ -222,7 +222,7 @@ class AuthService:
         """Generate and save OTP for a user"""
         otp = "".join([str(secrets.randbelow(10)) for _ in range(6)])
         user.otp_code = self.get_password_hash(otp) # Hash the OTP
-        user.otp_code_expires_at = datetime.utcnow() + timedelta(minutes=10) # OTP valid for 10 minutes
+        user.otp_code_expires_at = datetime.now(timezone.utc) + timedelta(minutes=10) # OTP valid for 10 minutes
         await self.session.commit()
         return otp
 
@@ -230,7 +230,7 @@ class AuthService:
         """Verify OTP for a user"""
         if not user.otp_code or not user.otp_code_expires_at:
             return False
-        if datetime.utcnow() > user.otp_code_expires_at:
+        if datetime.now(timezone.utc) > user.otp_code_expires_at:
             return False # OTP expired
         return self.verify_password(otp, user.otp_code)
 

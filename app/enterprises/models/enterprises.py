@@ -5,14 +5,26 @@ from sqlalchemy.orm import relationship
 from app.auth.database import Base
 import enum
 
+class EnterpriseType(enum.Enum):
+    BUSINESS = "business"
+    NON_PROFIT = "non-profit"
+    GOVERNMENT = "government"
+
 class Enterprise(Base):
     __tablename__ = "enterprises"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    email = Column(String, nullable=True)
+    name = Column(String, unique=True, index=True)
+    email = Column(String, nullable=False)
+    type = Column(SQLAEnum(EnterpriseType), nullable=False)
+    default_tax_year = Column(Integer, nullable=False)
+    
+    description = Column(String, nullable=True)
+    country = Column(String, nullable=False)
+    city = Column(String, nullable=False)
     address = Column(String, nullable=True)
+    website = Column(String, nullable=True)
     
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)

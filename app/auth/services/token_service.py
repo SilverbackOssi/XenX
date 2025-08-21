@@ -7,11 +7,16 @@ from fastapi import Depends, HTTPException, status
 from app.auth.models.users import User
 from app.auth.database import get_db
 
-# These should be in environment variables in production
-SECRET_KEY = "secret-key-for-jwt-tokens"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY", "secret-key-for-jwt-tokens")
+
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 20))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 1))
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 

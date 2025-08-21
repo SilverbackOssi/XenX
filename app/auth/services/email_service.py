@@ -72,7 +72,7 @@ class EmailService:
         <strong>Your One-Time Password (OTP)</strong>
         <p>You have requested to log in. Please use the following OTP to complete your login:</p>
         <h3>{otp_code}</h3>
-        <p>This OTP is valid for a limited time. Do not share it with anyone.</p>
+        <p>This OTP is valid for 10 minutes. Do not share it with anyone.</p>
         <p>If you did not request this, please ignore this email.</p>
         <p>Best regards,<br>The XenToba Team</p>
         """
@@ -119,7 +119,7 @@ class EmailService:
             raise
 
     # Collaboration Mails
-    async def send_teammate_invitation_mail(self, to_email: str, inviter_name: str, enterprise_name: str, invitation_link: str):
+    async def send_teammate_invitation_mail(self, to_email: str, inviter_name: str, enterprise_name: str, invitation_link: str, otp: str):
         """
         Send an invitation email to a new team member.
         """
@@ -131,6 +131,10 @@ class EmailService:
         <p>To accept the invitation and get started, please click the link below:</p>
         <p><a href="{invitation_link}">Join {enterprise_name}</a></p>
         <p>If you have any questions, feel free to reach out to {inviter_name}.</p>
+        <p>Use this one-time password (OTP) to login to your account: <strong>{otp}</strong></p>
+        <p>This OTP is valid for a limited time. Do not share it with anyone.</p>
+        <p>Dont forget to change your password after logging in.</p>
+        <p>If you did not request this, please ignore this email.</p>
         <p>Best regards,<br>The XenToba Team</p>
         """
         message = Mail(

@@ -59,6 +59,9 @@ class Staff(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=False, index=True, nullable=False)
     enterprise_id = Column(Integer, ForeignKey("enterprises.id"), nullable=False)
+    inviter_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    invite_token = Column(String, nullable=True)
+    invite_token_expires_at = Column(DateTime, nullable=True)
     role = Column(SQLAEnum(StaffRole), nullable=False)
 
     is_active = Column(Boolean, default=False)
@@ -84,6 +87,7 @@ class Staff(Base):
     __table_args__ = (
         UniqueConstraint('user_id', 'enterprise_id', name='uq_staff_user_enterprise'),
     )
+
 
 class Client(Base):
     __tablename__ = "clients"

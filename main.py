@@ -8,6 +8,7 @@ app = FastAPI(title="XenToba Gateway & User Management System")
 # Include routers
 app.include_router(auth_routes.auth_router)
 app.include_router(profile_routes.profile_router)
+app.include_router(enterprise_routes.enterprise_router)
 app.include_router(dev_routes.dev_router)
 # app.include_router(password_reset_router, prefix="/auth", tags=["auth"])
 

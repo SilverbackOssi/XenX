@@ -42,7 +42,7 @@ async def invite_teammate_to_enterprise(
     current_user: User = Depends(TokenService.get_current_user),
 ):
     """
-    Invite a teammate to an enterprise.
+    Invite a teammate to a firm.
     """
     enterprise_service = EnterpriseService(db)
     auth_service = AuthService(db)
@@ -57,3 +57,19 @@ async def invite_teammate_to_enterprise(
     if error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
     return {"message": "Invitation sent successfully"}
+
+@enterprise_router.post("/accept-invitation", status_code=status.HTTP_200_OK)
+async def accept_invitation(
+    token: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Accept an invitation to join a firm.
+    """
+    enterprise_service = EnterpriseService(db)
+    staff, error = await enterprise_service.accept_invitation(
+        token=token
+    )
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    return {"message": "Invitation accepted successfully"}

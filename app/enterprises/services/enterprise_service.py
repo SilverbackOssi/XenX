@@ -113,8 +113,7 @@ class EnterpriseService:
 
             # Send the invitation email
             email_service = EmailService()
-            invitation_link = f"http://localhost:3000/accept-invitation?token={invite_token}" # Replace with your frontend URL
-            
+            invitation_link = f"http://xenx.onrender.com/accept-invitation?token={invite_token}"
 
             await email_service.send_teammate_invitation_mail(
                 to_email=invitation_data.email,
@@ -125,5 +124,36 @@ class EnterpriseService:
             )
 
             return new_staff, None
+        except Exception as e:
+            return None, str(e)
+
+    async def accept_invitation(self, token: str):
+        try:
+            async with self.db.begin():
+                # Find the staff record with the given token
+                result = await self.db.execute(
+                    select(Staff).filter_by(invite_token=token)
+                )
+                staff = result.scalar_one_or_none()
+
+                if not staff:
+                    return None, "Invalid invitation token"
+
+                # Check if the token has expired
+                if staff.invite_token_expires_at < datetime.now(timezone.utc):
+                    return None, "Invitation has expired"
+
+                # Activate the staff and the user
+                staff.is_active = True
+                staff.invite_token = None
+                staff.invite_token_expires_at = None
+
+                user = await self.db.get(User, staff.user_id)
+                if user:
+                    user.is_active = True
+
+                await self.db.commit()
+
+            return staff, None
         except Exception as e:
             return None, str(e)

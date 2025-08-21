@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.auth.models.users import User
-from app.auth.schemas.user_schemas import UserUpdate
+from app.auth.schemas.profile_schemas import UserUpdate
 from app.auth.services.auth_service import AuthService, PasswordPolicy
 from fastapi import HTTPException, status
 

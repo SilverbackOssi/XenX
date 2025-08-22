@@ -12,7 +12,7 @@ class BrandingUpdate(BaseModel):
             "example": {
                 "primary_color": "#00FF00",
                 "accent_color": "#0000FF",
-                "footer_text": "© 2025 Zenco Tax. All rights reserved."
+                "footer_text": "© 2025 Ziba LLC. All rights reserved."
             }
         }
 

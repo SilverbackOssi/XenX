@@ -134,41 +134,6 @@ async def delete_logo(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-@branding_router.post("/{enterprise_id}/branding", status_code=status.HTTP_200_OK)
-async def add_branding(
-    enterprise_id: int,
-    branding_data: BrandingUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(TokenService.get_current_user),
-):
-    """
-    Set branding information for the enterprise.
-    Requires permission
-    """
-    enterprise_service = EnterpriseService(db)
-
-    # Get enterprise by ID
-    enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
-    if error:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
-    
-    # Verify user has permission to update this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id): # type: ignore
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update this enterprise"
-        )
-    
-    # Update the branding
-    enterprise, error = await enterprise_service.update_enterprise_branding(
-        enterprise_id=enterprise_id,
-        branding_data=branding_data.model_dump(exclude_unset=True)
-    )
-    
-    if error:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-        
-    return {"message": "Branding updated successfully", "branding": enterprise}
 
 @branding_router.patch("/{enterprise_id}/branding", status_code=status.HTTP_200_OK)
 async def update_branding(

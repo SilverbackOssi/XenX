@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLAEnum, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, foreign
 from app.auth.database import Base
 from app.enterprises.models.enterprises import Enterprise
 import enum
@@ -47,9 +47,16 @@ class User(Base):
 
     # Relationships
     enterprises = relationship("Enterprise", back_populates="owner")
-    staff_profiles = relationship("Staff", back_populates="user_details")
+    staff_profiles = relationship("Staff", back_populates="user_details", foreign_keys="Staff.user_id")
     client_profiles = relationship("Client", back_populates="user_details")
 
+    # A relationship for staff members where this user is the inviter
+    invited_staffs = relationship("Staff", back_populates="inviter", foreign_keys="Staff.inviter_id")
+    invited_clients = relationship("Client", back_populates="inviter", foreign_keys="Client.inviter_id")
+
+    def __str__(self):
+        return self.username or self.email
+    
     class Config:
         from_attributes = True
 
@@ -67,10 +74,11 @@ class Staff(Base):
     is_active = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Relationships
-    user_details = relationship("User", back_populates="staff_profiles")
+    # Relationships 
+    user_details = relationship("User", back_populates="staff_profiles", foreign_keys=[user_id])
     enterprise = relationship("Enterprise", back_populates="staffs")
-
+    inviter = relationship("User", back_populates="invited_staff", foreign_keys=[inviter_id])
+    
     def activate(self):
         is_active = True
 
@@ -95,6 +103,7 @@ class Client(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=False, index=True, nullable=False)
     enterprise_id = Column(Integer, ForeignKey("enterprises.id"), nullable=False)
+    inviter_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     is_active = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -103,6 +112,7 @@ class Client(Base):
     user_details = relationship("User", back_populates="client_profiles")
     enterprise = relationship("Enterprise", back_populates="clients")
 
+    inviter = relationship("User", back_populates="invited_clients", foreign_keys="Client.inviter_id")
 
     def activate(self):
         is_active = True

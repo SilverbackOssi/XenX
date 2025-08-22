@@ -32,11 +32,16 @@ class ProfileService:
         user.password_hash = self.auth_service.get_password_hash(new_password)
         await self.session.commit()
 
-    async def update_user_profile(self, user_id: int, user_data: UserUpdate) -> User:
+    async def update_user_profile(self, user_id: int, user_data: UserUpdate) -> tuple[User | None, str]:
         """Update user profile and ensure unique constraints are not violated"""
+        
+        # Ensure data is valid and iterable        
+        update_data = user_data.model_dump(exclude_unset=True)
+        if not update_data:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No data provided for update")
+        
         result = await self.session.execute(select(User).filter(User.id == user_id))
         user = result.scalar_one_or_none()
-
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -56,12 +61,17 @@ class ProfileService:
             if username_check.scalar_one_or_none():
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already in use")
 
-        # Update user fields
-        user.email = user_data.email
-        user.username = user_data.username
-        user.first_name = user_data.first_name
-        user.last_name = user_data.last_name
-        user.phone_number = user_data.phone_number
+        # Update user fields only if provided (partial update)
+        if user_data.email is not None:
+            user.email = user_data.email
+        if user_data.username is not None:
+            user.username = user_data.username
+        if user_data.first_name is not None:
+            user.first_name = user_data.first_name
+        if user_data.last_name is not None:
+            user.last_name = user_data.last_name
+        if user_data.phone_number is not None:
+            user.phone_number = user_data.phone_number
 
         await self.session.commit()
-        return user
+        return user, ''

@@ -71,10 +71,14 @@ class AuthService:
             await self.session.commit()
             await self.session.refresh(user)
 
-            # Send verification email
-            email_service = EmailService()
-            verification_link = f"http://xenx.onrender.com/verify-email?token={verification_token}"
-            await email_service.send_verification_email(email, verification_link)
+            try:
+                # Send verification email
+                email_service = EmailService()
+                verification_link = f"http://xenx.onrender.com/verify-email?token={verification_token}"
+                await email_service.send_verification_email(email, verification_link)
+            except Exception as e:
+                await self.session.rollback()
+                return user, f"User Created. Failed to send verification email: {str(e)}"
 
             return user, ""
         except IntegrityError as e:

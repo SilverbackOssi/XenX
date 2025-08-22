@@ -9,6 +9,7 @@ from app.auth.services.email_service import EmailService
 email_service = EmailService()
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+# XXX Define forgot password endpoints as "Account Recovery"
 
 @auth_router.post("/forgot-password", status_code=status.HTTP_200_OK)
 async def forgot_password(payload: ForgotPasswordSchema, db: AsyncSession = Depends(get_db)):

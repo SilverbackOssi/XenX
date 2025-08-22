@@ -8,8 +8,8 @@ class ChangePasswordRequest(BaseModel):
     
 class UserUpdate(BaseModel):
     """Schema for user update"""
-    email: Optional[EmailStr]
-    username: Optional[Annotated[str, StringConstraints(min_length=3, max_length=50)]]
-    last_name: Optional[str]
-    first_name: Optional[str]
-    phone_number: Optional[str]
+    email: Optional[EmailStr] = None
+    username: Optional[Annotated[str, StringConstraints(min_length=3, max_length=50)]] = None
+    last_name: Optional[str] = None
+    first_name: Optional[str] = None
+    phone_number: Optional[str] = None

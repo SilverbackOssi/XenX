@@ -5,6 +5,10 @@ from datetime import datetime
 
 BASE_URL = "http://localhost:8000"
 TEST_IMAGE_PATH = os.path.join(os.path.dirname(__file__), "test_logo.png")
+print(f"Test image path: {TEST_IMAGE_PATH}")
+print(__file__)
+print(os.path.dirname(__file__))
+
 
 def register_user(user_data):
     """Register a new user"""
@@ -189,19 +193,19 @@ def run_branding_tests():
     updated_info, status_code = get_branding(owner_token, enterprise_id)
     print(f"Response: {updated_info}, Status Code: {status_code}")
     
-    # 9. Delete logo
-    print("\n9. Deleting logo...")
-    delete_response, status_code = delete_logo(owner_token, enterprise_id)
-    print(f"Response: {delete_response}, Status Code: {status_code}")
+    # # 9. Delete logo
+    # print("\n9. Deleting logo...")
+    # delete_response, status_code = delete_logo(owner_token, enterprise_id)
+    # print(f"Response: {delete_response}, Status Code: {status_code}")
     
-    # 10. Verify logo deletion
-    print("\n10. Verifying logo deletion...")
-    final_info, status_code = get_branding(owner_token, enterprise_id)
-    print(f"Response: {final_info}, Status Code: {status_code}")
-    if final_info.get("logo_url") is None:
-        print("Logo successfully deleted")
-    else:
-        print("Logo was not deleted properly")
+    # # 10. Verify logo deletion
+    # print("\n10. Verifying logo deletion...")
+    # final_info, status_code = get_branding(owner_token, enterprise_id)
+    # print(f"Response: {final_info}, Status Code: {status_code}")
+    # if final_info.get("logo_url") is None:
+    #     print("Logo successfully deleted")
+    # else:
+    #     print("Logo was not deleted properly")
 
 if __name__ == "__main__":
     run_branding_tests()

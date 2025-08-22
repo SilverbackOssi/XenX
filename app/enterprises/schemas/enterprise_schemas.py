@@ -1,11 +1,13 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+# from app.enterprises.models.enterprises 
+from app.enterprises.models.enterprises import EnterpriseType
 
 class EnterpriseBase(BaseModel):
     name: str
     email: str
-    type: str
+    type: EnterpriseType
     default_tax_year: int
     country: str
     city: str

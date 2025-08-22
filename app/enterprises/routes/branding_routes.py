@@ -30,13 +30,13 @@ async def upload_logo(
     """
     enterprise_service = EnterpriseService(db)
     
-    # Check if user has permission to update this enterprise
+    # Get enterprise by ID
     enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
     if error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
     
     # Verify user has permission to update this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id):
+    if not await enterprise_service.has_permission(enterprise, current_user.id): # type: ignore
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to update this enterprise"
@@ -44,7 +44,8 @@ async def upload_logo(
     
     # Check file type (allow common image formats)
     allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".svg"}
-    file_ext = os.path.splitext(logo.filename)[1].lower()
+    filename = logo.filename or "" # Potential bug
+    file_ext = os.path.splitext(filename)[1].lower() # refactor for better processing
     if file_ext not in allowed_extensions:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -53,12 +54,12 @@ async def upload_logo(
     
     # Create a unique filename
     filename = f"enterprise_{enterprise_id}{file_ext}"
-    file_path = UPLOAD_DIR / filename
+    file_path: Path = UPLOAD_DIR / filename
     
     # Save the file
     try:
         # Delete existing logo if it exists
-        if enterprise.logo_url:
+        if enterprise is not None and getattr(enterprise, "logo_url", None) is not None:
             old_file_path = Path(enterprise.logo_url.replace("/logos/", "uploads/logos/"))
             if old_file_path.exists():
                 os.remove(old_file_path)
@@ -93,21 +94,21 @@ async def delete_logo(
     Requires permission
     """
     enterprise_service = EnterpriseService(db)
-    
-    # Check if user has permission to update this enterprise
+
+    # Get enterprise by ID
     enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
     if error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
     
     # Verify user has permission to update this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id):
+    if not await enterprise_service.has_permission(enterprise, current_user.id): # type: ignore
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to update this enterprise"
         )
     
     # Check if a logo exists
-    if not enterprise.logo_url:
+    if enterprise is None or getattr(enterprise, "logo_url", None) is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No logo found for this enterprise"
@@ -134,7 +135,7 @@ async def delete_logo(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 @branding_router.post("/{enterprise_id}/branding", status_code=status.HTTP_200_OK)
-async def create_branding(
+async def add_branding(
     enterprise_id: int,
     branding_data: BrandingUpdate,
     db: AsyncSession = Depends(get_db),
@@ -145,14 +146,14 @@ async def create_branding(
     Requires permission
     """
     enterprise_service = EnterpriseService(db)
-    
-    # Check if user has permission to update this enterprise
+
+    # Get enterprise by ID
     enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
     if error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
     
     # Verify user has permission to update this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id):
+    if not await enterprise_service.has_permission(enterprise, current_user.id): # type: ignore
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to update this enterprise"
@@ -182,13 +183,13 @@ async def update_branding(
     """
     enterprise_service = EnterpriseService(db)
     
-    # Check if user has permission to update this enterprise
+    # Get enterprise by ID
     enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
     if error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
     
     # Verify user has permission to update this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id):
+    if not await enterprise_service.has_permission(enterprise, current_user.id): # pyright: ignore[reportArgumentType]
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to update this enterprise"
@@ -217,13 +218,13 @@ async def get_branding(
     """
     enterprise_service = EnterpriseService(db)
     
-    # Check if user has permission to view this enterprise
+    # Get enterprise by ID
     enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
     if error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
     
     # Verify user has permission to view this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id):
+    if not await enterprise_service.has_permission(enterprise, current_user.id): # type: ignore
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view this enterprise"

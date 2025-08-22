@@ -40,7 +40,6 @@ class EnterpriseService:
         except Exception as e:
             return None, str(e)
 
-
     async def invite_teammate(self, enterprise_id: int, inviter: User, invitation_data: StaffInvitation, otp: str):
         try:
             # Check if the enterprise exists

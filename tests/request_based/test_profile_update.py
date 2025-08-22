@@ -22,14 +22,16 @@ def get_profile(access_token):
 def update_profile(access_token, update_data):
     url = f"{BASE_URL}/users/me"
     headers = {"Authorization": f"Bearer {access_token}"}
-    response = requests.put(url, headers=headers, json=update_data)
+    response = requests.patch(url, headers=headers, json=update_data)
     return response.json(), response.status_code
 
 def change_password(access_token, password_data):
     url = f"{BASE_URL}/users/me/change-password"
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.put(url, headers=headers, json=password_data)
-    return response.json(), response.status_code
+
+    message = response.json() if response.status_code != 204 else "Password changed successfully"
+    return message, response.status_code
 
 def get_user_subscription(access_token):
     url = f"{BASE_URL}/users/me/subscription"
@@ -79,7 +81,7 @@ def run_profile_tests():
     # 5. Changing user password
     print("\n5. Changing user password...")
     password_data = {
-        "old_password": "Password123",
+        "old_password": "Password@123",
         "new_password": "NewPassword@123"
     }
     response, status_code = change_password(access_token, password_data)

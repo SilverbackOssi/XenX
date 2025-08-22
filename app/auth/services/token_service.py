@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
-from fastapi.security import OAuth2PasswordBearer, OAuth2AuthorizationCodeBearer
+# from fastapi.security import OAuth2PasswordBearer, OAuth2AuthorizationCodeBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -18,7 +19,8 @@ ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 20))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 1))
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+bearer_scheme = HTTPBearer()
 
 class TokenService:
     @staticmethod
@@ -99,8 +101,9 @@ class TokenService:
     
 
     @staticmethod
-    async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
+    async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer_scheme), db: AsyncSession = Depends(get_db)) -> User:
         '''Get the current user from the token'''
+        token = creds.credentials
         payload = TokenService.verify_token(token)
         user_id = int(payload.get("sub"))
         user = await db.get(User, user_id)

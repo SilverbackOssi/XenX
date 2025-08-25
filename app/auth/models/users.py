@@ -71,6 +71,8 @@ class Staff(Base):
     invite_token_expires_at = Column(DateTime, nullable=True)
     role = Column(SQLAEnum(StaffRole), nullable=False)
 
+    # Add Permissions
+
     is_active = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 

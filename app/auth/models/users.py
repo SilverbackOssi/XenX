@@ -48,7 +48,7 @@ class User(Base):
     # Relationships
     enterprises = relationship("Enterprise", back_populates="owner")
     staff_profiles = relationship("Staff", back_populates="user_details", foreign_keys="Staff.user_id")
-    client_profiles = relationship("Client", back_populates="user_details")
+    client_profiles = relationship("Client", back_populates="user_details", foreign_keys="Client.user_id")
 
     # A relationship for staff members where this user is the inviter
     invited_staffs = relationship("Staff", back_populates="inviter", foreign_keys="Staff.inviter_id")
@@ -77,7 +77,7 @@ class Staff(Base):
     # Relationships 
     user_details = relationship("User", back_populates="staff_profiles", foreign_keys=[user_id])
     enterprise = relationship("Enterprise", back_populates="staffs")
-    inviter = relationship("User", back_populates="invited_staff", foreign_keys=[inviter_id])
+    inviter = relationship("User", back_populates="invited_staffs", foreign_keys=[inviter_id])
     
     def activate(self):
         is_active = True
@@ -109,10 +109,10 @@ class Client(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    user_details = relationship("User", back_populates="client_profiles")
+    user_details = relationship("User", back_populates="client_profiles", foreign_keys=[user_id])
     enterprise = relationship("Enterprise", back_populates="clients")
 
-    inviter = relationship("User", back_populates="invited_clients", foreign_keys="Client.inviter_id")
+    inviter = relationship("User", back_populates="invited_clients", foreign_keys=[inviter_id])
 
     def activate(self):
         is_active = True

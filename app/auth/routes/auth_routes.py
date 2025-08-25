@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
 from app.schemas.schema import UserCreate, UserResponse, UserRegisterResponse
@@ -7,9 +7,13 @@ from app.auth.services.auth_service import AuthService
 from app.auth.services.email_service import EmailService
 from typing import Dict, Any
 
+from fastapi.responses import RedirectResponse
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 
-from app.auth.routes.password_reset_routes import auth_router
+auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @auth_router.post("/register", response_model=UserRegisterResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
@@ -28,10 +32,13 @@ async def register_user(
     )
 
     if error:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error
-        )
+        if "user created" in error.lower():
+            return user, error
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error
+            )
 
     return user, {"message": "User successfully created, check your spam mail for verification mail"}
 
@@ -73,7 +80,10 @@ async def verify_email(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=result
         )
-    return result
+    # return result    
+    # Redirect to frontend login page after successful verification
+    frontend_url = os.getenv("FRONTEND_LOGIN_URL", "https://xentoba.pxxl.pro/login")
+    return RedirectResponse(url=frontend_url, status_code=status.HTTP_302_FOUND)
 
 
 @auth_router.post("/login", response_model=LoginResponse)
@@ -95,4 +105,3 @@ async def refresh_token(
 ) -> Dict[str, str]:
     auth_service = AuthService(db)
     return await auth_service.refresh_token(refresh_data.refresh_token)
-

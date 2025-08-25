@@ -243,6 +243,36 @@ class AuthService:
         user.otp_code = None
         user.otp_code_expires_at = None
         await self.session.commit()
+        
+    async def update_password(self, user_id: int, new_password: str) -> bool:
+        """Update a user's password after account recovery
+        
+        Args:
+            user_id: The ID of the user
+            new_password: The new password to set
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Validate password first
+            is_valid, error_msg = PasswordPolicy.validate(new_password)
+            if not is_valid:
+                raise ValueError(error_msg)
+                
+            # Get the user
+            user = await self.session.get(User, user_id)
+            if not user:
+                return False
+                
+            # Update the password
+            hashed_password = self.get_password_hash(new_password)
+            user.password_hash = hashed_password
+            await self.session.commit()
+            return True
+        except Exception:
+            await self.session.rollback()
+            return False
 
     # New access token
     async def refresh_token(self, refresh_token: str) -> Dict[str, str]:

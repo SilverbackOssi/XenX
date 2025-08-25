@@ -30,11 +30,19 @@ def invite_teammate(access_token, enterprise_id, invitation_data):
     response = requests.post(url, headers=headers, json=invitation_data)
     return response.json(), response.status_code
 
+def invite_multiple_teammates(access_token, enterprise_id, invitations):
+    """Invite multiple teammates to an enterprise"""
+    url = f"{BASE_URL}/enterprises/{enterprise_id}/invite-multiple"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    data = {"invitations": invitations}
+    response = requests.post(url, headers=headers, json=data)
+    return response.json(), response.status_code
+
 def accept_invitation(token):
     """Accept an invitation to join an enterprise"""
     url = f"{BASE_URL}/enterprises/accept-invitation"
     params = {"token": token}
-    response = requests.post(url, params=params)
+    response = requests.get(url, params=params)
     return response.json(), response.status_code
 
 def run_enterprise_tests():
@@ -108,23 +116,23 @@ def run_enterprise_tests():
     print("\n5. Inviting staff to enterprise...")
     invitation_data = {
         "email": "staff_member@example.com",
-        "role": "staff"
+        "role": "assistant"
     }
     
     invitation_response, status_code = invite_teammate(owner_token, enterprise_id, invitation_data)
     print(f"Response: {invitation_response}, Status Code: {status_code}")
+
+    # 5b. Invite multiple teammates to enterprise
+    print("\n5b. Inviting multiple teammates to enterprise...")
+    multiple_invitations = [
+        {"email": "staff1@example.com", "role": "assistant"},
+        {"email": "staff2@example.com", "role": "assistant"},
+        {"email": "staff3@example.com", "role": "assistant"}
+    ]
+    multi_invite_response, multi_invite_status = invite_multiple_teammates(owner_token, enterprise_id, multiple_invitations)
+    print(f"Response: {multi_invite_response}, Status Code: {multi_invite_status}")
     
-    # Note: In a real test, we would need to extract the token from the email
-    # For this test, we'll simulate it by assuming we know the token
-    # This would require modifying the code to expose the token or reading it from the database
-    print("\n6. Accepting invitation (would require token from email or database)...")
-    print("   This step is simulated as it requires accessing the invitation token.")
-    
-    # Testing with an invalid token to show the flow
-    fake_token = "invalid_token"
-    response, status_code = accept_invitation(fake_token)
-    print(f"Response with invalid token: {response}, Status Code: {status_code}")
-    print("Note: A successful test would require extracting the real token.")
+    # Can not truly test accepting invite
 
 if __name__ == "__main__":
     run_enterprise_tests()

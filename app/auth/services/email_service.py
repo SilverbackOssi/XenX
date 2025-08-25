@@ -29,7 +29,7 @@ class EmailService:
 
         try:
             sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
-            print(message)
+            print(message) # Debug
             response = sg.send(message)
             print(f"SendGrid Status Code: {response.status_code}")
         except Exception as e:
@@ -76,6 +76,49 @@ class EmailService:
         <p>If you did not request this, please ignore this email.</p>
         <p>Best regards,<br>The XenToba Team</p>
         """
+        
+    async def send_account_recovery_email(self, to_email: str, otp_code: str, recovery_link: str | None = None):
+        """
+        Send an account recovery email with OTP code and optional recovery link.
+        
+        Args:
+            to_email: Email address to send the recovery instructions to
+            otp_code: The one-time password for account recovery
+            recovery_link: Optional direct link to the recovery page with pre-filled values
+        """
+        subject = "Account Recovery Instructions"
+        
+        recovery_link_html = ""
+        if recovery_link:
+            recovery_link_html = f"""
+            <p>Click the link below to reset your password:</p>
+            <p><a href="{recovery_link}">Reset Your Password</a></p>
+            """
+            
+        html_content = f"""
+        <strong>Account Recovery Instructions</strong>
+        <p>You have requested to recover your account. Please use the following verification code:</p>
+        <h2 style="font-family: monospace; background-color: #f0f0f0; padding: 10px; text-align: center;">{otp_code}</h2>
+        <p>This code is valid for 15 minutes and can be used to reset your password.</p>
+        {recovery_link_html}
+        <p>If you did not request account recovery, please ignore this email or contact our support team.</p>
+        <p>Best regards,<br>The XenToba Team</p>
+        """
+        
+        message = Mail(
+            from_email=self.FROM_EMAIL,
+            to_emails=to_email,
+            subject=subject,
+            html_content=html_content
+        )
+
+        try:
+            sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+            response = sg.send(message)
+            print(f"SendGrid Status Code: {response.status_code}")
+        except Exception as e:
+            print(f"Failed to send account recovery email: {str(e)}")
+            raise
         message = Mail(
             from_email=self.FROM_EMAIL,
             to_emails=to_email,

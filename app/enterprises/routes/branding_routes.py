@@ -17,6 +17,109 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 branding_router = APIRouter(prefix="/enterprises", tags=["Enterprise Branding"])
 
+@branding_router.patch("/{enterprise_id}/branding", status_code=status.HTTP_200_OK)
+async def update_branding(
+    enterprise_id: int,
+    branding_data: Optional[str] = Form(None),
+    logo: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(TokenService.get_current_user),
+):
+    """
+    Update branding information for the enterprise, optionally including a logo image.
+    Accepts multipart/form-data with branding_data as a JSON string and an optional logo file.
+    """
+    import json
+    enterprise_service = EnterpriseService(db)
+
+    # Get enterprise by ID
+    enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
+    if error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
+
+    # Verify user has permission to update this enterprise
+    if not await enterprise_service.has_permission(enterprise, current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to update this enterprise"
+        )
+
+    branding_update = {}
+    if branding_data:
+        try:
+            branding_update = json.loads(branding_data)
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid branding_data: {e}")
+
+    # If a logo is provided, process and save it
+    if logo:
+        allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".svg"}
+        filename = logo.filename or ""
+        file_ext = os.path.splitext(filename)[1].lower()
+        if file_ext not in allowed_extensions:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid file type. Allowed types: {', '.join(allowed_extensions)}"
+            )
+        # Create a unique filename
+        filename = f"enterprise_{enterprise_id}{file_ext}"
+        file_path: Path = UPLOAD_DIR / filename
+        try:
+            # Delete existing logo if it exists
+            if enterprise is not None and getattr(enterprise, "logo_url", None) is not None:
+                old_file_path = Path(enterprise.logo_url.replace("/logos/", "uploads/logos/"))
+                if old_file_path.exists():
+                    os.remove(old_file_path)
+            # Save the new logo
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(logo.file, buffer)
+            # Update the logo_url in the branding update
+            branding_update["logo_url"] = f"/logos/{filename}"
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Logo upload failed: {e}")
+
+    # Update the branding in the database
+    enterprise, error = await enterprise_service.update_enterprise_branding(
+        enterprise_id=enterprise_id,
+        branding_data=branding_update
+    )
+    if error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+
+    return {"message": "Branding updated successfully", "branding": enterprise}
+
+@branding_router.get("/{enterprise_id}/branding", status_code=status.HTTP_200_OK, response_model=BrandingResponse)
+async def get_branding(
+    enterprise_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(TokenService.get_current_user),
+):
+    """
+    Get branding information for the enterprise.
+    Requires permission
+    """
+    enterprise_service = EnterpriseService(db)
+    
+    # Get enterprise by ID
+    enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
+    if error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
+    
+    # Verify user has permission to view this enterprise
+    if not await enterprise_service.has_permission(enterprise, current_user.id): # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view this enterprise"
+        )
+    
+    # Return the branding information
+    return BrandingResponse(
+        logo_url=enterprise.logo_url,
+        primary_color=enterprise.primary_color,
+        accent_color=enterprise.accent_color,
+        footer_text=enterprise.footer_text
+    )
+
 @branding_router.post("/{enterprise_id}/branding/logo", status_code=status.HTTP_200_OK)
 async def upload_logo(
     enterprise_id: int,
@@ -134,71 +237,3 @@ async def delete_logo(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-
-@branding_router.patch("/{enterprise_id}/branding", status_code=status.HTTP_200_OK)
-async def update_branding(
-    enterprise_id: int,
-    branding_data: BrandingUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(TokenService.get_current_user),
-):
-    """
-    Update branding information for the enterprise.
-    Requires permission
-    """
-    enterprise_service = EnterpriseService(db)
-    
-    # Get enterprise by ID
-    enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
-    if error:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
-    
-    # Verify user has permission to update this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id): # pyright: ignore[reportArgumentType]
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to update this enterprise"
-        )
-    
-    # Update the branding
-    enterprise, error = await enterprise_service.update_enterprise_branding(
-        enterprise_id=enterprise_id,
-        branding_data=branding_data.model_dump(exclude_unset=True)
-    )
-    
-    if error:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-        
-    return {"message": "Branding updated successfully", "branding": enterprise}
-
-@branding_router.get("/{enterprise_id}/branding", status_code=status.HTTP_200_OK, response_model=BrandingResponse)
-async def get_branding(
-    enterprise_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(TokenService.get_current_user),
-):
-    """
-    Get branding information for the enterprise.
-    Requires permission
-    """
-    enterprise_service = EnterpriseService(db)
-    
-    # Get enterprise by ID
-    enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
-    if error:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
-    
-    # Verify user has permission to view this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id): # type: ignore
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to view this enterprise"
-        )
-    
-    # Return the branding information
-    return BrandingResponse(
-        logo_url=enterprise.logo_url,
-        primary_color=enterprise.primary_color,
-        accent_color=enterprise.accent_color,
-        footer_text=enterprise.footer_text
-    )

@@ -8,7 +8,7 @@ from fastapi import APIRouter
 from app.auth.models.users import User
 
 
-dev_router = APIRouter(prefix="/dev", tags=["temp"])
+admin_router = APIRouter(prefix="/dev", tags=["Admin"])
 '''
 GET /dev/users/all
 GET /dev/users/{user_id}
@@ -17,35 +17,35 @@ PUT /dev/users/update/{user_id}
 DELETE /dev/users/delete/{user_id}
 '''
 
-@dev_router.get("/users/all")
+@admin_router.get("/users/all")
 async def get_all_users():
     pass
 
-@dev_router.get("/users/{user_id}")
+@admin_router.get("/users/{user_id}")
 async def get_user(user_id: int):
     pass
 
-@dev_router.post("/users/create")
+@admin_router.post("/users/create")
 async def create_user():
     pass
 
-@dev_router.post("/users/create/batch")
+@admin_router.post("/users/create/batch")
 async def create_users_batch():
     pass
 
-@dev_router.post("/users/create-super")
+@admin_router.post("/users/create-super")
 async def create_super_user():
     # create a user, then set is_superuser to True
     pass
 
-@dev_router.put("/users/update/{user_id}")
+@admin_router.put("/users/update/{user_id}")
 async def update_user(user_id: int):
     pass
 
-@dev_router.delete("/users/delete/{user_id}")
+@admin_router.delete("/users/delete/{user_id}")
 async def delete_user(user_id: int):
     pass
 
-@dev_router.post("/users/{user_id}/subscription")
+@admin_router.post("/users/{user_id}/subscription")
 async def update_user_subscription(user_id: int):
     pass

@@ -10,7 +10,7 @@ from app.auth.services.profile_service import ProfileService
 from app.auth.services.token_service import TokenService
 
 
-profile_router = APIRouter(prefix="/users", tags=["User Profile"])
+profile_router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @profile_router.get("/me", response_model=UserResponse)

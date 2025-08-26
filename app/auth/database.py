@@ -1,11 +1,13 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-# from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import declarative_base
+from app.config import get_settings
 
-# Use environment variables in production
-DATABASE_URL = "sqlite+aiosqlite:///./auth.db"
+settings = get_settings()
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(
+    settings.USERS_DATABASE_URL,
+    echo=settings.DATABASE_ECHO
+)
 AsyncSessionLocal = async_sessionmaker(
     engine, expire_on_commit=False
 )

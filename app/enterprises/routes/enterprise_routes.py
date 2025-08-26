@@ -9,9 +9,9 @@ from app.enterprises.services.enterprise_service import EnterpriseService
 from app.auth.services.auth_service import AuthService
 from app.enterprises.schemas.staff_schemas import StaffInvitation, MultipleStaffInvitations
 from fastapi.responses import RedirectResponse
-import os
-from dotenv import load_dotenv
-load_dotenv()
+from app.config import get_settings
+
+settings = get_settings()
 
 enterprise_router = APIRouter(prefix="/enterprises", tags=["Enterprises"])
 
@@ -129,5 +129,5 @@ async def accept_invitation(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
     # Redirect to frontend login page after successful acceptance
     
-    frontend_url = os.getenv("FRONTEND_LOGIN_URL", "https://xentoba.pxxl.pro/login")
+    frontend_url = settings.FRONTEND_LOGIN_URL
     return RedirectResponse(url=frontend_url, status_code=status.HTTP_302_FOUND)

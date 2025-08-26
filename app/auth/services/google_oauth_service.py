@@ -8,6 +8,8 @@ from app.auth.models.users import User
 from app.auth.services.auth_service import AuthService
 import secrets
 from datetime import datetime, timezone
+import urllib.parse
+
 
 class GoogleOAuthService:
     def __init__(self, 
@@ -23,6 +25,7 @@ class GoogleOAuthService:
     
     def get_auth_url(self) -> str:
         """Generate Google OAuth authorization URL"""
+        
         params = {
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
@@ -31,8 +34,10 @@ class GoogleOAuthService:
             "access_type": "offline",
             "prompt": "consent"
         }
-        param_str = "&".join(f"{key}={value}" for key, value in params.items())
-        return f"https://accounts.google.com/o/oauth2/auth?{param_str}"
+        
+        # Properly URL encode all parameters
+        encoded_params = urllib.parse.urlencode(params)
+        return f"https://accounts.google.com/o/oauth2/auth?{encoded_params}"
     
     async def exchange_code_for_token(self, code: str) -> Dict[str, Any]:
         """Exchange authorization code for access token"""

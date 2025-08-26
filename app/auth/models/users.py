@@ -28,7 +28,9 @@ class User(Base):
     first_name = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
     subscription_plan = Column(SQLAEnum(SubscriptionPlans), default=SubscriptionPlans.FREE, nullable=False)
+    google_id = Column(String, unique=True, nullable=True)
 
+    
 
     # role = Column(SQLAEnum(UserRole), nullable=False)
     

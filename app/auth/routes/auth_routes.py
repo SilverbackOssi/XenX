@@ -6,11 +6,11 @@ from app.auth.schemas.auth_schemas import LoginRequest, TokenResponse, RefreshRe
 from app.auth.services.auth_service import AuthService
 from app.auth.services.email_service import EmailService
 from typing import Dict, Any
+from app.config import get_settings
 
 from fastapi.responses import RedirectResponse
-import os
-from dotenv import load_dotenv
-load_dotenv()
+
+settings = get_settings()
 
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -82,7 +82,7 @@ async def verify_email(
         )
     # return result    
     # Redirect to frontend login page after successful verification
-    frontend_url = os.getenv("FRONTEND_LOGIN_URL", "https://xentoba.pxxl.pro/login")
+    frontend_url = settings.FRONTEND_LOGIN_URL
     return RedirectResponse(url=frontend_url, status_code=status.HTTP_302_FOUND)
 
 

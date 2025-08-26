@@ -22,6 +22,7 @@ app.include_router(profile_routes.profile_router)
 app.include_router(enterprise_routes.enterprise_router)
 app.include_router(branding_routes.branding_router)
 app.include_router(admin_routes.admin_router)
+app.include_router(google_oauth_router)
 
 # sync tables
 # Mount the uploads directory to make logos accessible

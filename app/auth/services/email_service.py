@@ -1,11 +1,11 @@
-import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-import dotenv
-dotenv.load_dotenv()
+from app.config import get_settings
+
+settings = get_settings()
 
 class EmailService:
-    FROM_EMAIL = os.environ.get("FROM_EMAIL", "")
+    FROM_EMAIL = settings.FROM_EMAIL
 
     # Onboarding Mails
     async def send_verification_email(self, to_email: str, verification_link: str):
@@ -28,7 +28,7 @@ class EmailService:
         )
 
         try:
-            sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+            sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
             print(message) # Debug
             response = sg.send(message)
             print(f"SendGrid Status Code: {response.status_code}")
@@ -54,7 +54,7 @@ class EmailService:
         )
 
         try:
-            sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+            sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
             response = sg.send(message)
             print(f"SendGrid Status Code: {response.status_code}")
         except Exception as e:
@@ -113,7 +113,7 @@ class EmailService:
         )
 
         try:
-            sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+            sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
             response = sg.send(message)
             print(f"SendGrid Status Code: {response.status_code}")
         except Exception as e:
@@ -127,7 +127,7 @@ class EmailService:
         )
 
         try:
-            sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+            sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
             response = sg.send(message)
             print(f"SendGrid Status Code: {response.status_code}")
         except Exception as e:
@@ -154,7 +154,7 @@ class EmailService:
         )
 
         try:
-            sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+            sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
             response = sg.send(message)
             print(f"SendGrid Status Code: {response.status_code}")
         except Exception as e:
@@ -188,7 +188,7 @@ class EmailService:
         )
 
         try:
-            sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+            sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
             response = sg.send(message)
             print(f"SendGrid Status Code: {response.status_code}")
         except Exception as e:

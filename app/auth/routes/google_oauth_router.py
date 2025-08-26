@@ -11,7 +11,6 @@ settings = get_settings()
 
 router = APIRouter(prefix="/auth/google", tags=["Google OAuth"])
 
-# Get these from your environment variables or settings
 GOOGLE_CLIENT_ID = settings.GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET = settings.GOOGLE_CLIENT_SECRET
 FRONTEND_BASE_URL = settings.FRONTEND_BASE_URL  # URL to redirect after login
@@ -62,7 +61,7 @@ async def google_callback(
         # Generate tokens
         auth_tokens = TokenService.create_tokens_for_user(user)
         
-        # Redirect to frontend with token #XXX
+        # Redirect to frontend with token #XXX get the frontend to accept this
         redirect_url = f"{FRONTEND_BASE_URL}?access_token={auth_tokens['access_token']}&refresh_token={auth_tokens['refresh_token']}"
         return RedirectResponse(url=redirect_url)
         

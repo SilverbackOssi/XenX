@@ -16,34 +16,66 @@ GOOGLE_CLIENT_SECRET = settings.GOOGLE_CLIENT_SECRET
 FRONTEND_BASE_URL = settings.FRONTEND_BASE_URL  # URL to redirect after login
 
 @router.get("/login")
-async def google_login():
+async def google_login(request: Request):
     """Redirect to Google OAuth login page"""
+    # For development purposes, detect if we're running locally
+    host = request.headers.get("host", "")
+    is_local = host.startswith("localhost") or host.startswith("127.0.0.1")
+    
+    # Use the correct redirect URI based on environment
+    if is_local:
+        redirect_uri = f"http://{host}/auth/google/callback"
+    else:
+        redirect_uri = settings.GOOGLE_REDIRECT_URI
+    
+    print(f"Using redirect URI: {redirect_uri}")
+    
     oauth_service = GoogleOAuthService(
         client_id=GOOGLE_CLIENT_ID,
         client_secret=GOOGLE_CLIENT_SECRET,
-        redirect_uri=f"{settings.API_BASE_URL}/auth/google/callback"
+        redirect_uri=redirect_uri
     )
     auth_url = oauth_service.get_auth_url()
-    print(auth_url)
+    print(f"Generated auth URL: {auth_url}")
     return RedirectResponse(url=auth_url)
 
 @router.get("/callback")
 async def google_callback(
+    request: Request,
     code: str = Query(...), 
     db: AsyncSession = Depends(get_db)
 ):
     """Handle the OAuth callback from Google"""
     try:
+        # For development purposes, detect if we're running locally
+        host = request.headers.get("host", "")
+        is_local = host.startswith("localhost") or host.startswith("127.0.0.1")
+        
+        # Use the correct redirect URI based on environment
+        if is_local:
+            redirect_uri = f"http://{host}/auth/google/callback"
+        else:
+            redirect_uri = settings.GOOGLE_REDIRECT_URI
+        
+        print(f"Using callback redirect URI: {redirect_uri}")
+        
         oauth_service = GoogleOAuthService(
             client_id=GOOGLE_CLIENT_ID,
             client_secret=GOOGLE_CLIENT_SECRET,
-            redirect_uri=f"{settings.API_BASE_URL}/auth/google/callback",
+            redirect_uri=redirect_uri,
             session=db
         )
         
         # Exchange code for token
         tokens = await oauth_service.exchange_code_for_token(code)
         id_token_jwt = tokens.get("id_token")
+        
+        if not id_token_jwt:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="No ID token received from Google",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
         
         # Get user info from ID token
         user_info = await oauth_service.get_user_info(id_token_jwt)

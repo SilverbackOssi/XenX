@@ -25,6 +25,9 @@ A robust frontend testing interface is now available to easily test all API endp
 3. Complete the Google authentication flow
 4. You'll be redirected back to the application and automatically logged in
 
+#### Important: Google OAuth Configuration
+For Google OAuth to work properly in your local development environment, follow the detailed setup instructions in [GOOGLE_OAUTH_SETUP.md](GOOGLE_OAUTH_SETUP.md).
+
 ## Enterprise Branding API Endpoints
 
 ### Logo Management

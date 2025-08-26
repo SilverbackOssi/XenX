@@ -36,16 +36,37 @@ class GoogleOAuthService:
     
     async def exchange_code_for_token(self, code: str) -> Dict[str, Any]:
         """Exchange authorization code for access token"""
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://oauth2.googleapis.com/token",
-                data={
-                    "client_id": self.client_id,
-                    "client_secret": self.client_secret,
-                    "code": code,
-                    "redirect_uri": self.redirect_uri,
-                    "grant_type": "authorization_code"
-                }
+        print(f"Exchanging code for token with redirect_uri: {self.redirect_uri}")
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    "https://oauth2.googleapis.com/token",
+                    data={
+                        "client_id": self.client_id,
+                        "client_secret": self.client_secret,
+                        "code": code,
+                        "redirect_uri": self.redirect_uri,
+                        "grant_type": "authorization_code"
+                    }
+                )
+                
+                if response.status_code != 200:
+                    print(f"OAuth token exchange failed: {response.status_code} - {response.text}")
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail=f"Failed to exchange authorization code: {response.text}",
+                        headers={"WWW-Authenticate": "Bearer"}
+                    )
+                    
+                return response.json()
+                
+        except Exception as e:
+            print(f"OAuth token exchange error: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"OAuth token exchange failed: {str(e)}",
+                headers={"WWW-Authenticate": "Bearer"}
             )
             
             if response.status_code != 200:

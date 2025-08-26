@@ -61,8 +61,8 @@ async def google_callback(
         # Generate tokens
         auth_tokens = TokenService.create_tokens_for_user(user)
         
-        # Redirect to frontend with token #XXX get the frontend to accept this
-        redirect_url = f"{FRONTEND_BASE_URL}?access_token={auth_tokens['access_token']}&refresh_token={auth_tokens['refresh_token']}"
+        # Redirect to our frontend with tokens
+        redirect_url = f"/google-callback?access_token={auth_tokens['access_token']}&refresh_token={auth_tokens['refresh_token']}"
         return RedirectResponse(url=redirect_url)
         
     except Exception as e:

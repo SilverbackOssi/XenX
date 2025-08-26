@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XenToba - Testing Interface</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Handle Google OAuth tokens -->
+    <script>
+    function getParameterByName(name, url = window.location.href) {
+        name = name.replace(/[\[\]]/g, '\\$&');
+        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
+
+    // Check for access_token in URL (from Google OAuth)
+    const accessToken = getParameterByName('access_token');
+    const refreshToken = getParameterByName('refresh_token');
+    
+    if (accessToken) {
+        localStorage.setItem('xentoba_token', accessToken);
+        localStorage.setItem('google_auth_success', 'true');
+        if (refreshToken) {
+            localStorage.setItem('xentoba_refresh_token', refreshToken);
+        }
+        // Remove tokens from URL
+        const currentUrl = window.location.href;
+        const cleanUrl = currentUrl.split('?')[0];
+        window.history.replaceState({}, document.title, cleanUrl + '?auth=success');
+    }
+    </script>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <h1>Xen<span>Toba</span> Test</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/" id="nav-home">Home</a></li>
+                    <li><a href="/admin" id="nav-admin">Admin</a></li>
+                    <li><a href="/auth" id="nav-auth">Auth</a></li>
+                    <li><a href="/enterprises" id="nav-enterprises">Enterprises</a></li>
+                    <li><a href="/api-explorer" id="nav-api">API Explorer</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" class="container">
+        <!-- Content will be loaded here dynamically -->
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 XenToba. For development purposes only.</p>
+        </div>
+    </footer>
+    
+    <!-- Core JS -->
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

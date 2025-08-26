@@ -45,7 +45,8 @@ class Settings(BaseSettings):
     # OAuth Settings
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
-    
+    GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
+
     # Email Settings
     FROM_EMAIL: str = os.getenv("FROM_EMAIL", "noreply@xenx.com")
     SENDGRID_API_KEY: str = os.getenv("SENDGRID_API_KEY", "")

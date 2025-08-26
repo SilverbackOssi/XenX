@@ -24,7 +24,8 @@ async def google_login(request: Request):
     
     # Use the correct redirect URI based on environment
     if is_local:
-        redirect_uri = f"http://{host}/auth/google/callback"
+        redirect_uri = f"http://{host}/api/v1/auth/google/callback"
+        print(f"Using local redirect URI: {redirect_uri}")
     else:
         redirect_uri = settings.GOOGLE_REDIRECT_URI
     
@@ -46,6 +47,10 @@ async def google_callback(
     db: AsyncSession = Depends(get_db)
 ):
     """Handle the OAuth callback from Google"""
+    
+    # XXX: Fix the 401 error ,
+    # {"detail":"401: OAuth token exchange failed: 401: Failed to exchange authorization code: {\n  \"error\": \"redirect_uri_mismatch\",\n  \"error_description\": \"Bad Request\"\n}"}
+
     try:
         # For development purposes, detect if we're running locally
         host = request.headers.get("host", "")

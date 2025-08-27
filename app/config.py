@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     """
     # Application Settings
     APP_NAME: str = "XenX"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "0.1.0"
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
@@ -46,7 +46,11 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
     GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/auth/google/callback")
-
+    
+    GOOGLE_AUTH_URI: str = os.getenv("GOOGLE_AUTH_URI", "https://accounts.google.com/o/oauth2/auth")
+    GOOGLE_TOKEN_URI: str = os.getenv("GOOGLE_TOKEN_URI", "https://oauth2.googleapis.com/token")
+    GOOGLE_USERINFO_URI: str = os.getenv("GOOGLE_USERINFO_URI", "https://www.googleapis.com/oauth2/v3/userinfo")
+    
     # Email Settings
     FROM_EMAIL: str = os.getenv("FROM_EMAIL", "noreply@xenx.com")
     SENDGRID_API_KEY: str = os.getenv("SENDGRID_API_KEY", "")

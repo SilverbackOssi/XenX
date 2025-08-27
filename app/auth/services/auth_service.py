@@ -9,20 +9,32 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 import re
 import secrets
+import string
 from app.auth.services.email_service import EmailService
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class PasswordPolicy:
     MIN_LENGTH = 8
-    PATTERN = re.compile(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$')
+    # Define allowed special characters in one place for easier maintenance.
+    ALLOWED_SPECIAL_CHARS = "@$!%*?&"
+    
+    # Build the pattern dynamically for clarity and to avoid repetition.
+    # re.escape is used to ensure characters are treated as literals in the regex.
+    PATTERN = re.compile(
+        r'^(?=.*[a-z])'
+        r'(?=.*[A-Z])'
+        r'(?=.*\d)'
+        rf'(?=.*[{re.escape(ALLOWED_SPECIAL_CHARS)}])'
+        rf'[A-Za-z\d{re.escape(ALLOWED_SPECIAL_CHARS)}]+$'
+    )
 
     @classmethod
     def validate(cls, password: str) -> tuple[bool, str]:
         if len(password) < cls.MIN_LENGTH:
             return False, f"Password must be at least {cls.MIN_LENGTH} characters long"
         if not cls.PATTERN.match(password):
-            return False, "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+            return False, f"Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character from the set: {cls.ALLOWED_SPECIAL_CHARS}"
         return True, ""
 
 class AuthService:
@@ -35,6 +47,42 @@ class AuthService:
 
     def get_password_hash(self, password: str) -> str:
         return pwd_context.hash(password)
+
+    # Create user from google
+    async def create_user_from_google(
+        self,
+        email: str,
+        username: str,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None
+    ) -> tuple[User | None, str]:
+        # Generate a random password that user won't use (for OAuth users)
+        def generate_strong_password(length=16):
+            special_chars = "@$!%*?&"
+            alphabet = string.ascii_letters + string.digits + special_chars
+            while True:
+                password = ''.join(secrets.choice(alphabet) for _ in range(length))
+                if (any(c.islower() for c in password) and
+                    any(c.isupper() for c in password) and
+                    any(c.isdigit() for c in password) and
+                    any(c in special_chars for c in password)):
+                    return password
+
+        random_password = generate_strong_password()
+
+        user = User(
+                email=email,
+                username=username,
+                password_hash=self.get_password_hash(random_password),
+                first_name=first_name,
+                last_name=last_name,
+                phone_number=None,
+                )
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
+
+        return user, ""
 
     # Create user
     async def create_user(

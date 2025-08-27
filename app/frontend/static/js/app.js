@@ -278,7 +278,7 @@ function renderHome(container) {
     const welcome = document.createElement('div');
     welcome.classList.add('card');
     welcome.innerHTML = `
-        <h2>Welcome to XenToba Test Interface</h2>
+        <h2>XenToba Test Interface</h2>
         <p>This interface allows us to test all API endpoints and manage application data.</p>
         <p>Use the navigation menu to access different sections:</p>
         <ul>
@@ -297,14 +297,6 @@ function renderHome(container) {
     const actionsGrid = document.createElement('div');
     actionsGrid.classList.add('card-grid');
     
-    // Admin Quick Action
-    const adminCard = createCard(
-        'Admin Panel',
-        'Access user management and other administrative features',
-        [createButton('Go to Admin', 'primary', () => navigateTo('admin'))]
-    );
-    actionsGrid.appendChild(adminCard);
-    
     // Auth Quick Action
     const authCard = createCard(
         'Authentication',
@@ -312,6 +304,14 @@ function renderHome(container) {
         [createButton('Go to Auth', 'primary', () => navigateTo('auth'))]
     );
     actionsGrid.appendChild(authCard);
+    
+    // Admin Quick Action
+    const adminCard = createCard(
+        'Admin Panel',
+        'Access user management and other administrative features',
+        [createButton('Go to Admin', 'primary', () => navigateTo('admin'))]
+    );
+    actionsGrid.appendChild(adminCard);
     
     // Enterprises Quick Action
     const enterprisesCard = createCard(

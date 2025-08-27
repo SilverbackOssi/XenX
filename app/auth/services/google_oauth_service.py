@@ -8,6 +8,8 @@ from app.auth.models.users import User
 from app.auth.services.auth_service import AuthService
 import secrets
 from datetime import datetime, timezone
+import string
+import random
 import urllib.parse
 
 
@@ -123,9 +125,6 @@ class GoogleOAuthService:
             return user, ""
         
         # Create new user
-        # Generate a random password that user won't use (for OAuth users)
-        random_password = secrets.token_urlsafe(16)
-        
         # Extract username from email or create one
         username = user_info.get("email").split("@")[0]
         # Ensure username is unique by appending digits if needed
@@ -135,10 +134,9 @@ class GoogleOAuthService:
             username = f"{base_username}{suffix}"
             suffix += 1
             
-        user, error = await self.auth_service.create_user(
+        user, error = await self.auth_service.create_user_from_google(
             email=user_info.get("email"),
             username=username,
-            password=random_password,  # Random password
             first_name=user_info.get("given_name"),
             last_name=user_info.get("family_name"),
         )

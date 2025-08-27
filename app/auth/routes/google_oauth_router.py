@@ -48,9 +48,6 @@ async def google_callback(
 ):
     """Handle the OAuth callback from Google"""
     
-    # XXX: Fix the 401 error ,
-    # {"detail":"401: OAuth token exchange failed: 401: Failed to exchange authorization code: {\n  \"error\": \"redirect_uri_mismatch\",\n  \"error_description\": \"Bad Request\"\n}"}
-
     try:
         # For development purposes, detect if we're running locally
         host = request.headers.get("host", "")
@@ -58,10 +55,10 @@ async def google_callback(
         
         # Use the correct redirect URI based on environment
         if is_local:
-            redirect_uri = f"http://{host}/auth/google/callback"
+            redirect_uri = f"http://{host}/api/v1/auth/google/callback"
         else:
             redirect_uri = settings.GOOGLE_REDIRECT_URI
-        
+            
         print(f"Using callback redirect URI: {redirect_uri}")
         
         oauth_service = GoogleOAuthService(
@@ -98,7 +95,7 @@ async def google_callback(
         # Generate tokens
         auth_tokens = TokenService.create_tokens_for_user(user)
         
-        # Redirect to our frontend with tokens
+        # Redirect to our frontend auth page with tokens
         redirect_url = f"/google-callback?access_token={auth_tokens['access_token']}&refresh_token={auth_tokens['refresh_token']}"
         return RedirectResponse(url=redirect_url)
         

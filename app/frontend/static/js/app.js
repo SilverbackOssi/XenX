@@ -278,7 +278,7 @@ function renderHome(container) {
     const welcome = document.createElement('div');
     welcome.classList.add('card');
     welcome.innerHTML = `
-        <h2>XenToba Test Interface</h2>
+        <h2>XenToba Admin Testing Interface</h2>
         <p>This interface allows us to test all API endpoints and manage application data.</p>
         <p>Use the navigation menu to access different sections:</p>
         <ul>

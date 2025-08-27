@@ -19,6 +19,7 @@ cryptography==45.0.6
 dnspython==2.7.0
 ecdsa==0.19.1
 email_validator==2.2.0
+Faker==33.2.0
 fakeredis==2.31.0
 fastapi==0.116.1
 fastapi-cli==0.0.8

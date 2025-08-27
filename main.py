@@ -4,6 +4,12 @@ from pathlib import Path
 from app.routes.routes import *
 from app.auth.database import engine, Base
 from app.frontend import init_frontend
+from app.auth.seeder import seed_database
+from app.config import get_settings
+
+import logging
+settings = get_settings()
+logger = logging.getLogger(__name__)
 
 # Create uploads directory if it doesn't exist
 UPLOAD_DIR = Path("uploads").mkdir(parents=True, exist_ok=True)
@@ -46,8 +52,19 @@ app.mount("/logos", StaticFiles(directory="uploads/logos"), name="logos")
 async def startup_event():
     # Create database tables
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+        # Run database seeder to populate with test data
+        if settings.RUN_SEEDER_ON_STARTUP:
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
+            try:
+                logger.info("🌱 Running database seeder...")
+                await seed_database()
+                logger.info("✅ Database seeded successfully!")
+            except Exception as e:
+                logger.error(f"❌ Error seeding database: {e}")
+            # Don't fail startup if seeding fails
+    
+        
 
 @api_app.get("/")
 def api_index():

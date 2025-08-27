@@ -24,7 +24,12 @@ class Settings(BaseSettings):
     APP_NAME: str = "XenX"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "dev")
+    
+    # Seeder Settings
+    RUN_SEEDER_ON_STARTUP: bool = os.getenv("RUN_SEEDER_ON_STARTUP", "False").lower() == "true"
+    CLEAR_DB_BEFORE_SEED: bool = os.getenv("CLEAR_DB_BEFORE_SEED", "True").lower() == "true"
+    
     
     # API URLs
     API_BASE_URL: str = os.getenv("API_BASE_URL", "http://xenx.onrender.com")

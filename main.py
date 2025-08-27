@@ -42,7 +42,7 @@ init_frontend(app)
 # Mount the uploads directory to make logos accessible
 app.mount("/logos", StaticFiles(directory="uploads/logos"), name="logos")
 
-@api_app.on_event("startup")
+@app.on_event("startup")
 async def startup_event():
     # Create database tables
     async with engine.begin() as conn:

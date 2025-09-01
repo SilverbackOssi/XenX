@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import secrets, json
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple, Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.auth.services.email_service import EmailService
@@ -356,5 +356,64 @@ class EnterpriseService:
             }
             
             return StaffResponse(**response_data), None
+        except Exception as e:
+            return None, str(e)
+            
+    async def get_all_staffs(self, enterprise_id: int):
+        """
+        Get all staff members of an enterprise.
+        Returns a list of StaffResponse objects.
+        """
+        try:
+            # Check if enterprise exists
+            enterprise = await self.db.get(Enterprise, enterprise_id)
+            if not enterprise:
+                return None, "Enterprise not found"
+            
+            # Get all staff members with relationships
+            stmt = select(Staff).filter_by(enterprise_id=enterprise_id)
+            result = await self.db.execute(stmt)
+            staffs = result.scalars().all()
+            
+            if not staffs:
+                return [], None  # Return empty list instead of error if no staffs
+            
+            # Load related user data for each staff
+            staff_responses = []
+            for staff in staffs:
+                await self.db.refresh(staff, ["user_details"])
+                
+                # Get invited staffs by this staff
+                invited_staff_query = select(Staff).filter_by(
+                    enterprise_id=enterprise_id,
+                    inviter_id=staff.user_id
+                )
+                invited_staff_result = await self.db.execute(invited_staff_query)
+                invited_staffs = invited_staff_result.scalars().all()
+                
+                # Get clients created by this staff
+                invited_client_query = select(Client).filter_by(
+                    enterprise_id=enterprise_id,
+                    created_by=staff.user_id
+                )
+                invited_client_result = await self.db.execute(invited_client_query)
+                invited_clients = invited_client_result.scalars().all()
+                
+                # Prepare StaffResponse data
+                from app.enterprises.schemas.staff_schemas import StaffResponse
+                
+                response_data = {
+                    "email": staff.user_details.email,
+                    "role": staff.role,
+                    "permission": staff.permission,
+                    "enterprise_id": enterprise_id,
+                    "invited_by": staff.inviter_id or enterprise.owner_id,
+                    "invited_staff_ids": [s.id for s in invited_staffs],
+                    "invited_client_ids": [c.id for c in invited_clients]
+                }
+                
+                staff_responses.append(StaffResponse(**response_data))
+            
+            return staff_responses, None
         except Exception as e:
             return None, str(e)

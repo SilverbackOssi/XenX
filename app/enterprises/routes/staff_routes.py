@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 from app.auth.database import get_db
 from app.auth.models.users import User
 from app.auth.services.token_service import TokenService
@@ -10,10 +11,10 @@ from app.enterprises.services.enterprise_service import EnterpriseService
 from app.enterprises.services.permission_service import PermissionService
 
 
-# STAFFS
 staff_router = APIRouter(prefix="/enterprises", tags=["Enterprise Staffs"])
 
-@staff_router.get("/{enterprise_id}/staffs", response_model=list[StaffResponse], status_code=status.HTTP_200_OK)
+# STAFFS
+@staff_router.get("/{enterprise_id}/staffs", response_model=List[StaffResponse], status_code=status.HTTP_200_OK)
 async def get_all_staffs(
     enterprise_id: int,
     db: AsyncSession = Depends(get_db),
@@ -21,7 +22,8 @@ async def get_all_staffs(
 ):
     """
     Get all staff members of an enterprise.
-    Requires VIEW permission
+    Requires VIEW permission.
+    Returns list of staff members with their details, including invited staff and client IDs.
     """
     enterprise_service = EnterpriseService(db)
     permission_service = PermissionService(db)
@@ -45,9 +47,12 @@ async def get_all_staffs(
     staffs, error = await enterprise_service.get_all_staffs(enterprise_id)
     if error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
-
+    
+    # Return empty array if no staffs found
+    if not staffs:
+        return []
+        
     return staffs
-
 
 @staff_router.get("/{enterprise_id}/staffs/{staff_id}", response_model=StaffResponse, status_code=status.HTTP_200_OK)
 async def get_staff_profile(
@@ -84,7 +89,6 @@ async def get_staff_profile(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
     
     return staff
-
 
 #  PERMISSIONS
 @staff_router.put("/{enterprise_id}/staffs/{staff_id}/permissions", response_model=StaffPermissionUpdate, status_code=status.HTTP_200_OK)

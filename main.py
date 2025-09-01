@@ -35,6 +35,8 @@ api_app.include_router(password_reset_routes.recovery_router)
 api_app.include_router(profile_routes.profile_router)
 api_app.include_router(enterprise_routes.enterprise_router)
 api_app.include_router(branding_routes.branding_router)
+api_app.include_router(staff_routes.staff_router)
+api_app.include_router(staff_routes.client_router)
 api_app.include_router(admin_routes.admin_router)
 api_app.include_router(google_oauth_router)
 

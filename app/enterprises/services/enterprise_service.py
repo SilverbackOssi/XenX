@@ -1,18 +1,33 @@
 from datetime import datetime, timedelta, timezone
-import secrets
+import secrets, json
 from typing import Dict, Any, Tuple, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.auth.services.email_service import EmailService
-from app.enterprises.models.enterprises import Enterprise
+from app.auth.services.auth_service import AuthService
+from app.enterprises.models.enterprises import Enterprise, Staff, StaffPermission, Client
 from app.enterprises.schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse
 from app.enterprises.schemas.staff_schemas import StaffInvitation
-from app.auth.models.users import Staff, User
+from app.auth.models.users import User
+from app.config import get_settings
 
 class EnterpriseService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
+    async def get_enterprise_by_id(self, enterprise_id: int) -> Tuple[Optional[Enterprise], Optional[str]]:
+        """
+        Get an enterprise by its ID.
+        """
+        try:
+            enterprise = await self.db.get(Enterprise, enterprise_id)
+            if not enterprise:
+                return None, "Enterprise not found"
+                
+            return enterprise, None
+        except Exception as e:
+            return None, str(e)
+ 
     async def create_enterprise(self, user_id: int, enterprise_data: EnterpriseCreate):
         try:
             user = await self.db.get(User, user_id)
@@ -23,7 +38,7 @@ class EnterpriseService:
                 name=enterprise_data.name,
                 email=enterprise_data.email,
                 type=enterprise_data.type,
-                default_tax_year=enterprise_data.default_tax_year,
+                tax_year=enterprise_data.tax_year,
                 country=enterprise_data.country,
                 city=enterprise_data.city,
                 description=getattr(enterprise_data, "description", None),
@@ -40,29 +55,20 @@ class EnterpriseService:
         except Exception as e:
             return None, str(e)
 
-    async def invite_teammate(self, enterprise_id: int, inviter: User, invitation_data: StaffInvitation, hashed_otp: str):
+    async def invite_teammate(self, enterprise_id: int, inviter: User, invitation_data: StaffInvitation):
         try:
             # Check if the enterprise exists
-            enterprise = await self.db.get(Enterprise, enterprise_id)
-            if not enterprise:
-                return None, "Enterprise not found"
-            
+            enterprise, error = await self.get_enterprise_by_id(enterprise_id)
+            if error:
+                return None, error
+
+            auth_service = AuthService(self.db)
+            otp=secrets.token_hex(4)  # Generate a random 4-byte OTP
+            hashed_otp = auth_service.get_password_hash(otp)
+
             # User cannot invite themselves
             if inviter.email == invitation_data.email:
                 return None, "You cannot invite yourself"
-
-            # Check if the inviter is part of the enterprise
-            if enterprise.owner_id != inviter.id:
-                # XXX add permission levels and check for permissions
-                
-                # check if inviter is a staff member
-                async with self.db.begin():
-                    result = await self.db.execute(
-                        select(Staff).filter_by(user_id=inviter.id, enterprise_id=enterprise_id)
-                    )
-                    existing_staff = result.scalar_one_or_none()
-                    if not existing_staff:
-                        return None, "You do not have permission to invite users to this enterprise"
 
             # Check if the user is already a staff member
             async with self.db.begin():
@@ -80,7 +86,6 @@ class EnterpriseService:
                         return None, "User is already a member of this enterprise"
 
             
-
             # If user does not exist, create a new user
             if not user:
                 # Create a new user with the provided email and OTP as password
@@ -104,6 +109,7 @@ class EnterpriseService:
                 user_id=user.id,
                 enterprise_id=enterprise_id,
                 role=invitation_data.role,
+                permission=invitation_data.permission,
                 inviter_id=inviter.id,
                 invite_token=invite_token,
                 invite_token_expires_at=invite_token_expires_at,
@@ -113,21 +119,22 @@ class EnterpriseService:
 
             # Send the invitation email
             email_service = EmailService()
-            invitation_link = f"http://xenx.onrender.com/accept-invitation?token={invite_token}"
+            settings = get_settings()
+            invitation_link = f"{settings.ACCEPT_INVITATION_URL}?token={invite_token}"
 
             await email_service.send_teammate_invitation_mail(
                 to_email=invitation_data.email,
                 inviter_name=f"{inviter.first_name} {inviter.last_name}",
                 enterprise_name=enterprise.name,
                 invitation_link=invitation_link,
-                otp=hashed_otp
+                otp=otp
             )
 
             return new_staff, None
         except Exception as e:
             return None, str(e)
             
-    async def invite_multiple_teammates(self, enterprise_id: int, inviter: User, invitations: list, auth_service):
+    async def invite_multiple_teammates(self, enterprise_id: int, inviter: User, invitations: list) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         """
         Invite multiple teammates to an enterprise.
         
@@ -142,27 +149,17 @@ class EnterpriseService:
         """
         try:
             # Check if the enterprise exists
-            enterprise = await self.db.get(Enterprise, enterprise_id)
-            if not enterprise:
-                return None, "Enterprise not found"
-                
-            # Check if the inviter is part of the enterprise
-            if enterprise.owner_id != inviter.id:
-                # check if inviter is a staff member
-                async with self.db.begin():
-                    result = await self.db.execute(
-                        select(Staff).filter_by(user_id=inviter.id, enterprise_id=enterprise_id)
-                    )
-                    existing_staff = result.scalar_one_or_none()
-                    if not existing_staff:
-                        return None, "You do not have permission to invite users to this enterprise"
-            
+            enterprise, error = await self.get_enterprise_by_id(enterprise_id)
+            if error:
+                return None, error
+
             # List to track successful invitations
             successful_invitations = []
             failed_invitations = []
             
             email_service = EmailService()
-            
+            auth_service = AuthService(self.db)
+
             for invitation in invitations:
                 try:
                     # Skip if user tries to invite themselves
@@ -213,6 +210,7 @@ class EnterpriseService:
                         user_id=user.id,
                         enterprise_id=enterprise_id,
                         role=invitation.role,
+                        permission=invitation.permission,
                         inviter_id=inviter.id,
                         invite_token=invite_token,
                         invite_token_expires_at=invite_token_expires_at,
@@ -221,8 +219,9 @@ class EnterpriseService:
                     await self.db.commit()
 
                     # Send the invitation email
-                    invitation_link = f"http://xenx.onrender.com/accept-invitation?token={invite_token}"
-
+                    settings = get_settings()
+                    invitation_link = f"{settings.ACCEPT_INVITATION_URL}?token={invite_token}"
+                    
                     await email_service.send_teammate_invitation_mail(
                         to_email=invitation.email,
                         inviter_name=f"{inviter.first_name} {inviter.last_name}",
@@ -275,53 +274,7 @@ class EnterpriseService:
             return staff, None
         except Exception as e:
             return None, str(e)
-            
-    async def get_enterprise_by_id(self, enterprise_id: int) -> Tuple[Optional[Enterprise], Optional[str]]:
-        """
-        Get an enterprise by its ID.
-        """
-        try:
-            enterprise = await self.db.get(Enterprise, enterprise_id)
-            if not enterprise:
-                return None, "Enterprise not found"
-                
-            return enterprise, None
-        except Exception as e:
-            return None, str(e)
-            
-    async def has_permission(self, enterprise: Enterprise, user_id: int) -> bool:
-        """
-        Check if a user has permission to update an enterprise.
-        """
-        try:
-            # Check if user is a superuser
-            user = await self.db.get(User, user_id)
-            if user and getattr(user, "is_superuser", False):
-                return True
-
-            # Check if user is the owner
-            if enterprise.owner_id == user_id:
-                return True
-                
-            # Check if user is staff with proper permissions
-            result = await self.db.execute(
-                select(Staff).filter_by(
-                    user_id=user_id,
-                    enterprise_id=enterprise.id,
-                    is_active=True
-                )
-            )
-            staff = result.scalar_one_or_none()
-            
-            # For now, any active staff member can update branding
-            # In the future, this would be enhanced with role-based permissions
-            if staff:
-                return True
-                
-            return False
-        except Exception:
-            return False
-            
+             
     async def update_enterprise_branding(
         self, 
         enterprise_id: int, 
@@ -331,8 +284,8 @@ class EnterpriseService:
         Update the branding information for an enterprise.
         """
         try:
-            enterprise = await self.db.get(Enterprise, enterprise_id)
-            if not enterprise:
+            enterprise, error = await self.get_enterprise_by_id(enterprise_id)
+            if error:
                 return None, "Enterprise not found"
                 
             # Update only the fields provided in branding_data
@@ -347,5 +300,61 @@ class EnterpriseService:
             await self.db.refresh(enterprise)
             
             return enterprise, None
+        except Exception as e:
+            return None, str(e)
+
+    async def get_staff_by_id(self, enterprise_id: int, staff_id: int):
+        """
+        Get a staff member by ID within an enterprise.
+        """
+        try:
+            # Check if enterprise exists
+            enterprise, error = await self.get_enterprise_by_id(enterprise_id)
+            if error:
+                return None, "Enterprise not found"
+            
+            # Get staff with relationships
+            stmt = select(Staff).filter_by(
+                id=staff_id,
+                enterprise_id=enterprise_id
+            )
+            result = await self.db.execute(stmt)
+            staff = result.scalar_one_or_none()
+            
+            if not staff:
+                return None, "Staff member not found in this enterprise"
+                
+            # Load related user data
+            await self.db.refresh(staff, ["user_details"])
+            
+            # Prepare response data with needed relationships
+            invited_staff_query = select(Staff).filter_by(
+                enterprise_id=enterprise_id,
+                inviter_id=staff.user_id
+            )
+            invited_staff_result = await self.db.execute(invited_staff_query)
+            invited_staffs = invited_staff_result.scalars().all()
+            
+            invited_client_query = select(Client).filter_by(
+                enterprise_id=enterprise_id,
+                created_by=staff.user_id
+            )
+            invited_client_result = await self.db.execute(invited_client_query)
+            invited_clients = invited_client_result.scalars().all()
+            
+            # Prepare StaffResponse data
+            from app.enterprises.schemas.staff_schemas import StaffResponse
+            
+            response_data = {
+                "email": staff.user_details.email,
+                "role": staff.role,
+                "permission": staff.permission,
+                "enterprise_id": enterprise_id,
+                "invited_by": staff.inviter_id or enterprise.owner_id,
+                "invited_staff_ids": [s.id for s in invited_staffs],
+                "invited_client_ids": [c.id for c in invited_clients]
+            }
+            
+            return StaffResponse(**response_data), None
         except Exception as e:
             return None, str(e)

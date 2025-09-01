@@ -10,6 +10,7 @@ from app.auth.services.token_service import TokenService
 from app.enterprises.models.enterprises import Enterprise
 from app.enterprises.services.enterprise_service import EnterpriseService
 from app.enterprises.schemas.branding_schemas import BrandingUpdate, BrandingResponse
+from app.enterprises.services.permission_service import PermissionService
 
 # Create uploads directory if it doesn't exist
 UPLOAD_DIR = Path("uploads/logos")
@@ -28,9 +29,11 @@ async def update_branding(
     """
     Update branding information for the enterprise, optionally including a logo image.
     Accepts multipart/form-data with branding_data as a JSON string and an optional logo file.
+    Requires at least MANAGE permission
     """
     import json
     enterprise_service = EnterpriseService(db)
+    permission_service = PermissionService(db)
 
     # Get enterprise by ID
     enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
@@ -38,7 +41,7 @@ async def update_branding(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
 
     # Verify user has permission to update this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id):
+    if not await permission_service.has_manage_access(enterprise, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to update this enterprise"
@@ -96,17 +99,18 @@ async def get_branding(
 ):
     """
     Get branding information for the enterprise.
-    Requires permission
+    Requires VIEW permission
     """
     enterprise_service = EnterpriseService(db)
-    
+    permission_service = PermissionService(db)
+
     # Get enterprise by ID
     enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
     if error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
     
     # Verify user has permission to view this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id): # type: ignore
+    if not await permission_service.has_view_access(enterprise, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view this enterprise"
@@ -129,17 +133,18 @@ async def upload_logo(
 ):
     """
     Upload a logo for the enterprise.
-    Requires permission
+    Requires at least MANAGE permission
     """
     enterprise_service = EnterpriseService(db)
-    
+    permission_service = PermissionService(db)
+
     # Get enterprise by ID
     enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
     if error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
     
     # Verify user has permission to update this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id): # type: ignore
+    if not await permission_service.has_manage_access(enterprise, current_user.id): # type: ignore
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to update this enterprise"
@@ -194,9 +199,10 @@ async def delete_logo(
 ):
     """
     Delete the enterprise logo.
-    Requires permission
+    Requires at least MANAGE permission
     """
     enterprise_service = EnterpriseService(db)
+    permission_service = PermissionService(db)
 
     # Get enterprise by ID
     enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
@@ -204,7 +210,7 @@ async def delete_logo(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
     
     # Verify user has permission to update this enterprise
-    if not await enterprise_service.has_permission(enterprise, current_user.id): # type: ignore
+    if not await permission_service.has_manage_access(enterprise, current_user.id): # type: ignore
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to update this enterprise"

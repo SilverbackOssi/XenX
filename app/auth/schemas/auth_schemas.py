@@ -3,15 +3,9 @@ from typing import Optional, Union
 
 class LoginRequest(BaseModel):
     """Schema for login request with either email or username"""
-    email: Optional[EmailStr] = None
-    username: Optional[str] = None
+    email: EmailStr = Field(..., description="Email address of the user")
     password: str
-    
-    # Validate that either email or username is provided
-    def model_post_init(self, __context):
-        if not self.email and not self.username:
-            raise ValueError("Either email or username must be provided")
-            
+               
 class AccountRecoveryRequest(BaseModel):
     """Schema for initiating the account recovery process from a mobile app or SPA"""
     email: EmailStr = Field(..., description="Email address to recover")

@@ -33,10 +33,13 @@ class Settings(BaseSettings):
     
     # API URLs
     API_BASE_URL: str = os.getenv("API_BASE_URL", "http://xenx.onrender.com")
+    
+    # Frontend URLs
     FRONTEND_BASE_URL: str = os.getenv("FRONTEND_BASE_URL", "http://xentoba.pxxl.pro")
     FRONTEND_LOGIN_URL: str = os.getenv("FRONTEND_LOGIN_URL", "https://xentoba.pxxl.pro/login")
     FRONTEND_REGISTER_URL: str = os.getenv("FRONTEND_REGISTER_URL", "https://xentoba.pxxl.pro/register")
-    
+    ACCEPT_INVITATION_URL: str = os.getenv("ACCEPT_INVITATION_URL", "https://xentoba.pxxl.pro/accept-invitation")
+
     # Database Settings
     USERS_DATABASE_URL: str = os.getenv("USERS_DATABASE_URL", "sqlite+aiosqlite:///./users.db")
     DATABASE_ECHO: bool = os.getenv("DATABASE_ECHO", "True").lower() == "true"

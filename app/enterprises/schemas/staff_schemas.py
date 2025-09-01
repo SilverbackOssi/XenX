@@ -1,14 +1,31 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List
-from app.auth.models.users import StaffRole
+from app.enterprises.models.enterprises import StaffRole, StaffPermission
 
-class StaffInvitationItem(BaseModel):
-    email: EmailStr
-    role: StaffRole
+# class StaffInvitationItem(BaseModel):
+#     email: EmailStr
+#     role: StaffRole
+#     permission: StaffPermission
 
 class StaffInvitation(BaseModel):
     email: EmailStr
     role: StaffRole
+    permission: StaffPermission
 
 class MultipleStaffInvitations(BaseModel):
-    invitations: List[StaffInvitationItem]
+    invitations: List[StaffInvitation]
+
+class StaffPermissionUpdate(BaseModel):
+    email: EmailStr
+    role: StaffRole
+    permission: StaffPermission
+
+class StaffResponse(BaseModel):
+    email: EmailStr
+    role: StaffRole
+    permission: StaffPermission
+    enterprise_id: int
+    invited_by: int
+    invited_staff_ids: List[int]
+    invited_client_ids: List[int]
+    is_active: bool

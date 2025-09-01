@@ -6,8 +6,8 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.auth.database import AsyncSessionLocal
-from app.auth.models.users import User, Staff, Client, StaffRole, SubscriptionPlans
-from app.enterprises.models.enterprises import Enterprise, EnterpriseType
+from app.auth.models.users import User, SubscriptionPlans
+from app.enterprises.models.enterprises import Staff, StaffRole, Client, Enterprise, EnterpriseType
 from app.config import get_settings
 
 fake = Faker()
@@ -101,7 +101,7 @@ async def create_enterprises(db: AsyncSession, users_with_enterprises: list[User
             country=fake.country(),
             city=fake.city(),
             type=random.choice(list(EnterpriseType)),
-            default_tax_year=datetime.now().year,
+            tax_year=datetime.now().year,
             owner_id=user.id,
             is_active=True,
             created_at=fake.date_time_between(start_date="-1y", end_date="now"),
@@ -123,7 +123,7 @@ async def create_enterprises(db: AsyncSession, users_with_enterprises: list[User
                 country=fake.country(),
                 city=fake.city(),
                 type=random.choice(list(EnterpriseType)),
-                default_tax_year=datetime.now().year,
+                tax_year=datetime.now().year,
                 owner_id=user.id,
                 is_active=True,
                 created_at=fake.date_time_between(start_date="-1y", end_date="now"),

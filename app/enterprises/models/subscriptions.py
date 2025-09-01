@@ -3,12 +3,12 @@ import enum
 from sqlalchemy import Column, Integer, String, DateTime, Float, Text, Boolean, Enum as SQLAEnum
 from app.auth.database import Base
 
-# class PlanType(str, enum.Enum):
-#     FREE = "free"
-#     PRO = "pro"
-#     BUSINESS = "business"
+class SubscriptionPlans(str, enum.Enum):
+    FREE = "free"
+    PRO = "pro"
+    BUSINESS = "business"
 
-
+# XXX
 class Plan(Base):
     __tablename__ = "plans"
 

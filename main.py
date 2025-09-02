@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # Create uploads directory if it doesn't exist
 UPLOAD_DIR = Path("uploads").mkdir(parents=True, exist_ok=True)
 LOGOS_DIR = Path("uploads/logos").mkdir(parents=True, exist_ok=True)
+TAX_RETURNS_DIR = Path("uploads/tax_returns").mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="XenToba API Demo Frontend", 
               version="0.1.0", 
@@ -40,19 +41,22 @@ api_app.include_router(staff_routes.client_router)
 api_app.include_router(admin_routes.admin_router)
 api_app.include_router(google_oauth_router)
 
-
+# Include microservices routers
+from app.microservices.tax_planner import project_router
+api_app.include_router(project_router)
 
 
 # Initialize frontend
 init_frontend(app)
 
 # sync tables
-# Mount the uploads directory to make logos accessible
+# Mount the uploads directories to make files accessible
 app.mount("/logos", StaticFiles(directory="uploads/logos"), name="logos")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.on_event("startup")
 async def startup_event():
-    # Create database tables
+    # Create database tables for main app
     async with engine.begin() as conn:
         # Run database seeder to populate with test data
         if settings.RUN_SEEDER_ON_STARTUP:
@@ -65,6 +69,15 @@ async def startup_event():
             except Exception as e:
                 logger.error(f"❌ Error seeding database: {e}")
             # Don't fail startup if seeding fails
+    
+    # Initialize Tax Planner microservice database
+    from app.microservices.tax_planner.tp_database import init_tp_db
+    try:
+        logger.info("🔄 Initializing Tax Planner database...")
+        await init_tp_db()
+        logger.info("✅ Tax Planner database initialized successfully!")
+    except Exception as e:
+        logger.error(f"❌ Error initializing Tax Planner database: {e}")
     
         
 

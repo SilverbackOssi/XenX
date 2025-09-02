@@ -64,3 +64,4 @@ class Project(TPBase):
     # Relationships
     tax_entity = relationship("TaxEntity", back_populates="project", uselist=False)
     goals = relationship("ClientGoal", back_populates="project", cascade="all, delete-orphan")
+    tax_plan = relationship("TaxPlan", back_populates="project", uselist=False, cascade="all, delete-orphan")

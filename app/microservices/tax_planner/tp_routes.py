@@ -43,9 +43,7 @@ async def create_project(
     return result
 
 @project_router.get(
-    "/{enterprise_id}/projects", 
-    response_model=List[ProjectResponse],
-    status_code=status.HTTP_200_OK,
+    "/{enterprise_id}/projects", response_model=List[ProjectResponse], status_code=status.HTTP_200_OK,
     summary="List all projects for an enterprise"
 )
 async def list_projects(
@@ -66,9 +64,7 @@ async def list_projects(
     return projects
 
 @project_router.get(
-    "/{enterprise_id}/projects/{project_id}", 
-    response_model=ProjectResponse,
-    status_code=status.HTTP_200_OK,
+    "/{enterprise_id}/projects/{project_id}", response_model=ProjectResponse, status_code=status.HTTP_200_OK,
     summary="Get project details"
 )
 async def get_project(
@@ -93,9 +89,7 @@ async def get_project(
     return project
 
 @project_router.put(
-    "/{enterprise_id}/projects/{project_id}", 
-    response_model=ProjectResponse,
-    status_code=status.HTTP_200_OK,
+    "/{enterprise_id}/projects/{project_id}", response_model=ProjectResponse, status_code=status.HTTP_200_OK,
     summary="Update a project"
 )
 async def update_project(

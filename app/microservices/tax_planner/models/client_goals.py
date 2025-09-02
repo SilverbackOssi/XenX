@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, Enum, func
+from sqlalchemy import UniqueConstraint, Column, Integer, ForeignKey, DateTime, Enum, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -15,7 +15,7 @@ class ClientGoalOptions(str, enum.Enum):
    ENSURE_COMPLIANCE = "ensure compliance"
    ENSURE_AUDITPROOF = "ensure audit-proof"
    GIFTING_FAMILY_MEMBERS = "gifting family members"
-   SAVE_FOR_KIDS_RETIREMENT = "save for kids retirement"
+   SAVE_FOR_RETIREMENT = "save for retirement"
 
 
 class ClientGoal(TPBase):
@@ -23,26 +23,18 @@ class ClientGoal(TPBase):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     goal = Column(Enum(ClientGoalOptions), nullable=False)
-    
+    project_id = Column(Integer, ForeignKey('projects.id'), nullable=False)
+
     created_at = Column(DateTime(timezone=True),  server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
-    project_client_goals = relationship("ProjectClientGoal", back_populates="goal", cascade="all, delete-orphan")
+    project = relationship("Project", back_populates="goals", uselist=False)
     tax_strategy = relationship("TaxStrategy", back_populates="related_goals", uselist=True)
+
+    # unique constraint on project_id and goal
+    __table_args__ = (UniqueConstraint('project_id', 'goal', name='uq_project_goal'),)
 
     def __repr__(self):
         return f"<ClientGoal(goal='{self.goal}')>"
 
-class ProjectClientGoal(TPBase):
-    __tablename__ = 'project_client_goals'
-
-    id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey('projects.id'), nullable=False)
-    goal_id = Column(UUID(as_uuid=True), ForeignKey('client_goals.id'), nullable=False)
-
-    created_at = Column(DateTime(timezone=True),  server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-
-    project = relationship("Project", back_populates="client_goals")
-    goal = relationship("ClientGoal", back_populates="project_client_goals")

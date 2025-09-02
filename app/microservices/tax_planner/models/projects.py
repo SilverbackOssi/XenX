@@ -61,5 +61,6 @@ class Project(TPBase):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    # Relationships
     tax_entity = relationship("TaxEntity", back_populates="project", uselist=False)
-    client_goals = relationship("ClientGoal", back_populates="project", cascade="all, delete-orphan")
+    goals = relationship("ClientGoal", back_populates="project", cascade="all, delete-orphan")

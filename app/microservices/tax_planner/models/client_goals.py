@@ -24,6 +24,7 @@ class ClientGoal(TPBase):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     goal = Column(Enum(ClientGoalOptions), nullable=False)
     project_id = Column(Integer, ForeignKey('projects.id'), nullable=False)
+    related_strategy_id = Column(Integer, ForeignKey('tax_strategies.id'), nullable=True)
 
     created_at = Column(DateTime(timezone=True),  server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

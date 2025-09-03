@@ -7,6 +7,9 @@ from app.frontend import init_frontend
 from app.auth.seeder import seed_database
 from app.config import get_settings
 
+# Include microservices routers
+from app.microservices.tax_planner import project_router, strategy_router
+
 import logging
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -31,19 +34,25 @@ api_app = FastAPI(
 )
 
 # Include API routers
+api_app.include_router(google_oauth_router)
 api_app.include_router(auth_routes.auth_router)
 api_app.include_router(password_reset_routes.recovery_router)
 api_app.include_router(profile_routes.profile_router)
+
+# Enterprise/Organization routes
 api_app.include_router(enterprise_routes.enterprise_router)
 api_app.include_router(branding_routes.branding_router)
 api_app.include_router(staff_routes.staff_router)
 api_app.include_router(staff_routes.client_router)
-api_app.include_router(admin_routes.admin_router)
-api_app.include_router(google_oauth_router)
-
-# Include microservices routers
-from app.microservices.tax_planner import project_router
 api_app.include_router(project_router)
+api_app.include_router(strategy_router)
+
+# Admin/Demo routes
+api_app.include_router(admin_router)
+
+
+
+
 
 
 # Initialize frontend

@@ -26,9 +26,10 @@ class TaxStrategy(TPBase):
     eligibility_criteria = Column(Text, nullable=True) # e.g., "Equipments must be above 50% of business use"
 
     implementation_fee = Column(DECIMAL(10, 2), nullable=True)
+    relevant_details = Column(JSON, nullable=True)
     # implementation_steps = Column(Text, nullable=True)
     
-    relevant_details = Column(JSON, nullable=True)
+    
     # Savings calculation
     calculation_formula = Column(Text, nullable=False)
 

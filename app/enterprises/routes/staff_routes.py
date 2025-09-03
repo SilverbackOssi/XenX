@@ -136,6 +136,78 @@ async def update_staff_permission(
 
 # CLIENTS
 client_router = APIRouter(prefix="/enterprises", tags=["Enterprise Clients"])
+@client_router.get("/{enterprise_id}/clients", response_model=List[StaffResponse], status_code=status.HTTP_200_OK)
+async def get_all_clients(
+    enterprise_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(TokenService.get_current_user),
+):
+    """
+    Get all clients of an enterprise.
+    Requires VIEW permission.
+    Returns list of clients with their details.
+    """
+    enterprise_service = EnterpriseService(db)
+    permission_service = PermissionService(db)
 
-# GET all clients of an enterprise
-# GET client by id
+    # Get enterprise and check if it exists
+    enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=error
+        )
+
+    # Check if user has permission to view this enterprise
+    if not await permission_service.has_view_access(enterprise, current_user.id):  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view this enterprise"
+        )
+
+    # Get all clients
+    clients, error = await enterprise_service.get_all_clients(enterprise_id)
+    if error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
+    
+    # Return empty array if no clients found
+    if not clients:
+        return []
+        
+    return clients
+
+@client_router.get("/{enterprise_id}/clients/{client_id}", response_model=StaffResponse, status_code=status.HTTP_200_OK)
+async def get_client_profile(
+    enterprise_id: int,
+    client_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(TokenService.get_current_user),
+):
+    """
+    Get client profile information.
+    Requires VIEW permission
+    """
+    enterprise_service = EnterpriseService(db)
+    permission_service = PermissionService(db)
+    
+    # Get enterprise and check if it exists
+    enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=error
+        )
+    
+    # Check if user has permission to view this enterprise
+    if not await permission_service.has_view_access(enterprise, current_user.id):  # type: ignore
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view this enterprise"
+        )
+    
+    # Get client details
+    client, error = await enterprise_service.get_client_by_id(enterprise_id, client_id)
+    if error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
+    
+    return client

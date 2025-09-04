@@ -1,6 +1,6 @@
 
 
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, Enum, JSON
 from sqlalchemy.orm import relationship
 from app.microservices.tax_planner.tp_database import TPBase
 import enum
@@ -16,6 +16,10 @@ class TaxPlan(TPBase):
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey('projects.id'))
     strategy_id = Column(Integer, ForeignKey('tax_strategies.id'))
+    
+    extracted_tax_return_document = Column(JSON, nullable=True)
+    tax_return_document_url = Column(String, nullable=True)
+
     
     start_date = Column(Date)
     end_date = Column(Date)

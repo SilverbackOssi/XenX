@@ -10,11 +10,13 @@
 -----
 
 # Single FastAPI app structure
+```
 app/
 ├── auth/          # JWT, RBAC, user management
 ├── gateway/       # Request routing logic
 ├── middleware/    # Auth middleware, rate limiting
 └── routes/        # Service proxy endpoints
+```
 
 -----
 

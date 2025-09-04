@@ -1,10 +1,21 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 from typing import Optional, Union
 
 class LoginRequest(BaseModel):
     """Schema for login request with either email or username"""
-    email: EmailStr = Field(..., description="Email address of the user")
+    email: Optional[EmailStr] = Field(None, description="Email address of the user")
+    username: Optional[str] = Field(None, description="Username of the user")
     password: str
+    
+    @model_validator(mode='before')
+    @classmethod
+    def validate_email_or_username(cls, values):
+        if isinstance(values, dict):
+            email = values.get('email')
+            username = values.get('username')
+            if not email and not username:
+                raise ValueError('Either email or username must be provided')
+        return values
                
 class AccountRecoveryRequest(BaseModel):
     """Schema for initiating the account recovery process from a mobile app or SPA"""
@@ -20,7 +31,7 @@ class TokenResponse(BaseModel):
 class TokenData(BaseModel):
     """Schema for token payload"""
     sub: str  # user ID
-    # role: str
+    role: str
     exp: Optional[int] = None
 
 class RefreshRequest(BaseModel):

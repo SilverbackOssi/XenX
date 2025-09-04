@@ -35,7 +35,7 @@ async def async_client():
 @pytest_asyncio.fixture(scope="function")
 async def registered_user(async_client):
     # Register a user for login tests
-    response = await async_client.post("/auth/register", json=valid_user_data)
+    response = await async_client.post("/api/v1/auth/register", json=valid_user_data)
     assert response.status_code == 201
     return response.json()
 
@@ -47,7 +47,7 @@ async def test_successful_login_with_email(async_client, registered_user):
         "email": valid_user_data["email"],
         "password": valid_user_data["password"]
     }
-    response = await async_client.post("/auth/login", json=login_data)
+    response = await async_client.post("/api/v1/auth/login", json=login_data)
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
@@ -61,7 +61,7 @@ async def test_login_with_username(async_client, registered_user):
         "username": valid_user_data["username"],
         "password": valid_user_data["password"]
     }
-    response = await async_client.post("/auth/login", json=login_data)
+    response = await async_client.post("/api/v1/auth/login", json=login_data)
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
@@ -76,13 +76,13 @@ async def test_refresh_token_usage(async_client, registered_user):
         "email": valid_user_data["email"],
         "password": valid_user_data["password"]
     }
-    login_response = await async_client.post("/auth/login", json=login_data)
+    login_response = await async_client.post("/api/v1/auth/login", json=login_data)
     assert login_response.status_code == 200
     tokens = login_response.json()
     
     # Use refresh token to get new access token
     refresh_data = {"refresh_token": tokens["refresh_token"]}
-    response = await async_client.post("/auth/refresh", json=refresh_data)
+    response = await async_client.post("/api/v1/auth/refresh", json=refresh_data)
     assert response.status_code == 200
     new_tokens = response.json()
     assert "access_token" in new_tokens
@@ -96,7 +96,7 @@ async def test_login_with_incorrect_password(async_client, registered_user):
         "email": valid_user_data["email"],
         "password": "WrongPassword@123"
     }
-    response = await async_client.post("/auth/login", json=login_data)
+    response = await async_client.post("/api/v1/auth/login", json=login_data)
     assert response.status_code == 401
     assert "Invalid credentials" in response.json()["detail"]
 
@@ -106,7 +106,7 @@ async def test_login_with_nonexistent_user(async_client):
         "email": "nonexistent@example.com",
         "password": "Test@123"
     }
-    response = await async_client.post("/auth/login", json=login_data)
+    response = await async_client.post("/api/v1/auth/login", json=login_data)
     assert response.status_code == 401
     assert "Invalid credentials" in response.json()["detail"]
 

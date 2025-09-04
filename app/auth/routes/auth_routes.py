@@ -25,7 +25,7 @@ async def register_user(
         email=user_data.email,
         username=user_data.username,
         password=user_data.password,
-        # role=user_data.role,
+        role=user_data.role,
         first_name=user_data.first_name,
         last_name=user_data.last_name,
         phone_number=user_data.phone_number
@@ -33,14 +33,58 @@ async def register_user(
 
     if error:
         if "user created" in error.lower():
-            return user, error
+            # Handle case where user is a dict (after rollback) or User object
+            if isinstance(user, dict):
+                response_data = {
+                    "id": user["id"],
+                    "email": user["email"],
+                    "username": user["username"],
+                    "subscription_plan": user["subscription_plan"].value if hasattr(user["subscription_plan"], 'value') else user["subscription_plan"],
+                    "role": user["role"].value if hasattr(user["role"], 'value') else user["role"],
+                    "last_name": user["last_name"],
+                    "first_name": user["first_name"],
+                    "phone_number": user["phone_number"],
+                    "is_active": user["is_active"],
+                    "email_verified": user["email_verified"],
+                    "message": error
+                }
+            else:
+                # User object case
+                response_data = {
+                    "id": user.id,
+                    "email": user.email,
+                    "username": user.username,
+                    "subscription_plan": user.subscription_plan.value,
+                    "role": user.role.value,
+                    "last_name": user.last_name,
+                    "first_name": user.first_name,
+                    "phone_number": user.phone_number,
+                    "is_active": user.is_active,
+                    "email_verified": user.email_verified,
+                    "message": error
+                }
+            return response_data
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=error
             )
 
-    return user, {"message": "User successfully created, check your spam mail for verification mail"}
+    # Create success response manually
+    response_data = {
+        "id": user.id,
+        "email": user.email,
+        "username": user.username,
+        "subscription_plan": user.subscription_plan.value,
+        "role": user.role.value,
+        "last_name": user.last_name,
+        "first_name": user.first_name,
+        "phone_number": user.phone_number,
+        "is_active": user.is_active,
+        "email_verified": user.email_verified,
+        "message": "User successfully created, check your spam mail for verification mail"
+    }
+    return response_data
 
 @auth_router.post("/resend-verification-email", status_code=status.HTTP_200_OK)
 async def resend_verification_email(
@@ -94,7 +138,7 @@ async def login(
     auth_service = AuthService(db)
     return await auth_service.login(
         email=login_data.email,
-        username=login_data.email,
+        username=login_data.username,
         password=login_data.password
     )
 

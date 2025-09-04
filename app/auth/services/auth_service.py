@@ -90,7 +90,7 @@ class AuthService:
         email: str, 
         username: str, 
         password: str, 
-        # role: UserRole,
+        role: "UserRole",
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
         phone_number: Optional[str] = None
@@ -108,7 +108,7 @@ class AuthService:
                 email=email,
                 username=username,
                 password_hash=self.get_password_hash(password),
-                # role=role,
+                role=role,
                 first_name=first_name,
                 last_name=last_name,
                 phone_number=phone_number,
@@ -125,8 +125,21 @@ class AuthService:
                 verification_link = f"http://xenx.onrender.com/verify-email?token={verification_token}"
                 await email_service.send_verification_email(email, verification_link)
             except Exception as e:
+                # Create user data before rollback since we can't access model attributes after rollback
+                user_data = {
+                    "id": user.id,
+                    "email": user.email,
+                    "username": user.username,
+                    "subscription_plan": user.subscription_plan,
+                    "role": user.role,
+                    "last_name": user.last_name,
+                    "first_name": user.first_name,
+                    "phone_number": user.phone_number,
+                    "is_active": user.is_active,
+                    "email_verified": user.email_verified
+                }
                 await self.session.rollback()
-                return user, f"User Created. Failed to send verification email: {str(e)}"
+                return user_data, f"User Created. Failed to send verification email: {str(e)}"
 
             return user, ""
         except IntegrityError as e:

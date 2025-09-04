@@ -4,6 +4,14 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLAE
 from sqlalchemy.orm import relationship
 from app.auth.database import Base
 from app.enterprises.models.subscriptions import SubscriptionPlans
+from enum import Enum
+
+
+class UserRole(str, Enum):
+    ADMINISTRATOR = "administrator"
+    CPA = "cpa"
+    CLIENT = "client"
+    STAFF = "staff"
 
 
 class User(Base):
@@ -16,6 +24,7 @@ class User(Base):
     last_name = Column(String, nullable=True)
     first_name = Column(String, nullable=True)
     phone_number = Column(String, nullable=True)
+    role = Column(SQLAEnum(UserRole), default=UserRole.CLIENT, nullable=False)
     subscription_plan = Column(SQLAEnum(SubscriptionPlans), default=SubscriptionPlans.FREE, nullable=False)
     google_id = Column(String, unique=True, nullable=True)
     

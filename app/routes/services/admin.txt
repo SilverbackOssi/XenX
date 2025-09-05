@@ -7,5 +7,10 @@ USER MANAGEMENT
 - soft delete a user
 
 TAX PLANNER
-- create tax strategies
-- edit tax strategies
+- create tax strategies as system strategies
+- edit tax strategies as system strategies
+- create strategies implementation tasks
+- update strategies implementation tasks
+
+- create client goals
+- edit client goals

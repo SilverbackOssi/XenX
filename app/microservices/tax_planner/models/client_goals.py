@@ -6,7 +6,7 @@ from datetime import datetime
 from app.microservices.tax_planner.tp_database import TPBase
 import enum
 
-
+# I dont think this should be hard coded, create endpoint to add and remove goals
 class ClientGoalOptions(str, enum.Enum):
    OPTIMIZE_QUARTERLY_TAXES = "optimize quarterly taxes"
    INCREASE_CASH_SAVINGS = "increase cash savings"

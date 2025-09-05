@@ -1,0 +1,11 @@
+
+Necessary admin routes
+
+USER MANAGEMENT
+- get all users
+- create a user
+- soft delete a user
+
+TAX PLANNER
+- create tax strategies
+- edit tax strategies

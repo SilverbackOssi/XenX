@@ -6,6 +6,8 @@ from app.auth.database import engine, Base
 from app.frontend import init_frontend
 from app.auth.seeder import seed_database
 from app.config import get_settings
+from app.middleware.auth_middleware import auth_gateway_middleware
+from app.middleware.rate_limiter import setup_rate_limiter
 
 import logging
 settings = get_settings()
@@ -29,6 +31,11 @@ api_app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+setup_rate_limiter(api_app)
+
+# Gateway authentication middleware
+api_app.middleware("http")(auth_gateway_middleware)
 
 # Include API routers
 api_app.include_router(auth_routes.auth_router)

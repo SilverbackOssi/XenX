@@ -7,21 +7,21 @@ from app.schemas.schema import UserResponse, UserUpdate
 from app.auth.schemas.profile_schemas import ChangePasswordRequest
 from app.auth.models.users import User
 from app.auth.services.profile_service import ProfileService
-from app.auth.services.token_service import TokenService
+from app.auth.dependencies import get_current_user
 
 
 profile_router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @profile_router.get("/me", response_model=UserResponse)
-async def get_profile(current_user: User = Depends(TokenService.get_current_user)) -> User:
+async def get_profile(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 @profile_router.patch("/me", response_model=UserResponse)
 async def update_profile(
     user_data: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(TokenService.get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     profile_service = ProfileService(db)
     updated_user, error = await profile_service.update_user_profile(
@@ -40,10 +40,10 @@ async def update_profile(
 async def change_password(
     password_data: ChangePasswordRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(TokenService.get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     profile_service = ProfileService(db)
-    await profile_service.change_password(
+    success, error =await profile_service.change_password(
         user_id=current_user.id, # type: ignore
         old_password=password_data.old_password,
         new_password=password_data.new_password
@@ -51,5 +51,5 @@ async def change_password(
     return
 
 @profile_router.get("/me/subscription")
-async def get_user_subscription(current_user: User = Depends(TokenService.get_current_user)):
+async def get_user_subscription(current_user: User = Depends(get_current_user)):
     return {"subscription_plan": current_user.subscription_plan}

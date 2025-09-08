@@ -1,5 +1,6 @@
 .env
 venv/
+env/
 xenEnv/
 /testlocale
 
@@ -7,3 +8,6 @@ __py*
 .coverage
 
 .pytest_cache/
+alembic/
+alembic.ini
+migrations/

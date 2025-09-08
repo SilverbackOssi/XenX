@@ -11,6 +11,7 @@ import re
 import secrets
 import string
 from app.auth.services.email_service import EmailService
+import jwt
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -194,45 +195,59 @@ class AuthService:
         
         return user, ""
         
-    async def login(self, email: Optional[str] = None, username: Optional[str] = None, password: str = None) -> Dict[str, Any]: # type: ignore
-        """Login a user and return tokens"""
+    async def login(self, email: Optional[str] = None, username: Optional[str] = None, password: str = None) -> Dict[str, Any]:
         if email:
-            user, error = await self.authenticate_user(email, password, is_email=True)
+            user = await self.get_user_by_email(email)
         elif username:
-            user, error = await self.authenticate_user(username, password, is_email=False)
+            user = await self.get_user_by_username(username)
         else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Either email or username must be provided"
-            )
-            
-        if error:
-            status_code = status.HTTP_401_UNAUTHORIZED
-            if error == "Account disabled":
-                status_code = status.HTTP_403_FORBIDDEN
-                
-            raise HTTPException(
-                status_code=status_code,
-                detail=error,
-                headers={"WWW-Authenticate": "Bearer"}
-            )
-            
-        # Generate tokens
-        tokens = TokenService.create_tokens_for_user(user)
-        
-        # Add user info to response
-        user_data = {
-            "id": user.id,
-            "email": user.email,
-            "username": user.username,
-            # "role": user.role.value,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "is_active": user.is_active,
-            "email_verified": user.email_verified
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email or username required")
+
+        if not user or not self.verify_password(password, user.hashed_password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
+
+        # Increment token version to invalidate all old tokens
+        user.token_version += 1
+        await self.session.commit()
+        await self.session.refresh(user)
+
+        token_data = {
+            "id": user.id, 
+            "role": user.role, 
+            "ver": user.token_version # Embed version in token
         }
+        access_token = TokenService.create_access_token(data=token_data)
+        refresh_token = TokenService.create_refresh_token(data=token_data)
+
+        return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+    
+        # # Add user info to response
+        # user_data = {
+        #     "id": user.id,
+        #     "email": user.email,
+        #     "username": user.username,
+        #     # "role": user.role.value,
+        #     "first_name": user.first_name,
+        #     "last_name": user.last_name,
+        #     "is_active": user.is_active,
+        #     "email_verified": user.email_verified
+        # }
         
-        return {**tokens, "user": user_data}
+        # return {**tokens, "user": user_data}
+    
+    async def logout(self, user: User) -> None:
+        """
+        Logs out the user by invalidating all their current tokens.
+        This is achieved by incrementing the user's token_version.
+
+        Note: This is global logout. To implement single-device logout,
+        I'd need to use redis blacklisting.
+        """
+        user.token_version += 1
+        await self.session.commit()
 
     async def login_with_code(self, email: str) -> Dict[str, Any]:
         """Login a user with one-time code and return tokens"""
@@ -323,30 +338,42 @@ class AuthService:
             return False
 
     # New access token
-    async def refresh_token(self, refresh_token: str) -> Dict[str, str]:
+    async def refresh_token(self, refresh_token: str) -> Dict[str, Any]:
         """Generate new access token using refresh token"""
         try:
             # Verify the refresh token
-            payload = TokenService.verify_token(refresh_token, token_type="refresh")
-            user_id = int(payload.get("sub"))
+            payload = TokenService.verify_and_decode_token(refresh_token, expected_type="refresh")
+            user_id = payload.get("id")
+            token_ver = payload.get("ver")
+
+            if user_id is None or token_ver is None:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
             
-            # Get the user
-            result = await self.session.execute(select(User).filter(User.id == user_id))
-            user = result.scalar_one_or_none()
+            user = await self.session.get(User, user_id)
+            if not user or user.token_version != token_ver:
+                # This is a security event: an old token was used.
+                # You could add logging here to flag potential token theft.
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has been revoked")
+
+            # Increment version for rotation
+            user.token_version += 1
+            await self.session.commit()
+            await self.session.refresh(user)
+
+            new_token_data = {
+                "id": user.id, 
+                "role": user.role, 
+                "ver": user.token_version
+            }
+            new_access_token = TokenService.create_access_token(data=new_token_data)
             
-            if not user or not user.is_active:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid refresh token",
-                    headers={"WWW-Authenticate": "Bearer"}
-                )
-                
-            # Generate new tokens
-            return TokenService.create_tokens_for_user(user)
-            
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=str(e),
-                headers={"WWW-Authenticate": "Bearer"}
-            )
+            return {"access_token": new_access_token, "token_type": "bearer"}
+        except jwt.PyJWTError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        except TokenService.jwt.InvalidTokenError as e: # Catch the specific error
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+
+
+        #     # Get the user
+        #     result = await self.session.execute(select(User).filter(User.id == user_id))
+        #     user = result.scalar_one_or_none()

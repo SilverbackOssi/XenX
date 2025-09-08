@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLAEnum, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLAEnum, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from app.auth.database import Base
 from app.enterprises.models.subscriptions import SubscriptionPlans
@@ -27,6 +27,8 @@ class User(Base):
     verification_token_expires_at = Column(DateTime, nullable=True)
     otp_code = Column(String, nullable=True)
     otp_code_expires_at = Column(DateTime, nullable=True)
+    role = Column(String, default="client")
+    token_version = Column(Integer, nullable=False, default=0)
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -35,6 +37,8 @@ class User(Base):
     enterprises = relationship("Enterprise", back_populates="owner")
     staff_profiles = relationship("Staff", back_populates="user_details", foreign_keys="Staff.user_id")
     client_profiles = relationship("Client", back_populates="user_details", foreign_keys="Client.user_id")
+    enterprise_id = Column(Integer, ForeignKey("enterprises.id"), nullable=True)
+    enterprise = relationship("Enterprise", back_populates="staffs")
 
     # A relationship for staff members where this user is the inviter
     invited_staffs = relationship("Staff", back_populates="inviter", foreign_keys="Staff.inviter_id")

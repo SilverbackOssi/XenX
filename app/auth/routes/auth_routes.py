@@ -8,9 +8,13 @@ from app.auth.services.email_service import EmailService
 from typing import Dict, Any
 from app.config import get_settings
 
+from app.auth.dependencies import get_current_user
+from app.auth.models.users import User
+
 from fastapi.responses import RedirectResponse
 
 settings = get_settings()
+
 
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -105,3 +109,15 @@ async def refresh_token(
 ) -> Dict[str, str]:
     auth_service = AuthService(db)
     return await auth_service.refresh_token(refresh_data.refresh_token)
+
+@auth_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Logs out the current user by invalidating their tokens.
+    """
+    auth_service = AuthService(db)
+    await auth_service.logout(current_user)
+    return

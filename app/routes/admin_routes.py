@@ -16,6 +16,7 @@ from app.auth.database import get_db
 from app.auth.models.users import User, SubscriptionPlans
 from app.auth.schemas.user_schemas import UserCreate, UserResponse
 from app.enterprises.models.enterprises import Enterprise
+from app.auth.dependencies import RoleChecker, get_current_user
 
 # Password context for hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -53,7 +54,11 @@ class UsersCreateBatch(BaseModel):
     users: List[UserCreateAdmin]
 
 
-admin_router = APIRouter(prefix="/admin", tags=["Admin"])
+admin_router = APIRouter(
+    prefix="/admin",
+    tags=["Admin"],
+    dependencies=[Depends(RoleChecker(["admin"]))]
+)
 
 @admin_router.get(
     "/users/all", 
@@ -63,6 +68,7 @@ admin_router = APIRouter(prefix="/admin", tags=["Admin"])
 )
 async def get_all_users(
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     skip: int = 0,
     limit: int = 100
 ):

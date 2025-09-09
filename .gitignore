@@ -1,6 +1,6 @@
 .env
 venv/
-env/
+xenv/
 xenEnv/
 /testlocale
 

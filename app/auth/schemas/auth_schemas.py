@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, Union
+from app.auth.schemas.user_schemas import UserResponse
 
 class LoginRequest(BaseModel):
     """Schema for login request with either email or username"""
@@ -32,7 +33,7 @@ class LoginResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
-    user: dict
+    user: UserResponse
 
 class ForgotPasswordSchema(BaseModel):
     """Request schema for initiating password recovery process"""

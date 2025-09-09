@@ -203,7 +203,7 @@ class AuthService:
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email or username required")
 
-        if not user or not self.verify_password(password, user.hashed_password):
+        if not user or not self.verify_password(password, user.password_hash):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
         if not user.is_active:
@@ -222,19 +222,14 @@ class AuthService:
         access_token = TokenService.create_access_token(data=token_data)
         refresh_token = TokenService.create_refresh_token(data=token_data)
 
-        return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+        return {
+            "access_token": access_token, 
+            "refresh_token": refresh_token, 
+            "token_type": "bearer",
+            "user": user
+        }
     
-        # # Add user info to response
-        # user_data = {
-        #     "id": user.id,
-        #     "email": user.email,
-        #     "username": user.username,
-        #     # "role": user.role.value,
-        #     "first_name": user.first_name,
-        #     "last_name": user.last_name,
-        #     "is_active": user.is_active,
-        #     "email_verified": user.email_verified
-        # }
+       
         
         # return {**tokens, "user": user_data}
     

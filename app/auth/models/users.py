@@ -33,12 +33,10 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
-    enterprises = relationship("Enterprise", back_populates="owner")
-    staff_profiles = relationship("Staff", back_populates="user_details", foreign_keys="Staff.user_id")
-    client_profiles = relationship("Client", back_populates="user_details", foreign_keys="Client.user_id")
-    enterprise_id = Column(Integer, ForeignKey("enterprises.id"), nullable=True)
-    enterprise = relationship("Enterprise", back_populates="staffs")
+    # ✅ Relationships
+    enterprises = relationship("Enterprise", back_populates="owner")  # enterprises this user owns
+    staff_profiles = relationship("Staff", back_populates="user_details", foreign_keys="Staff.user_id")  # where user is staff
+    client_profiles = relationship("Client", back_populates="user_details", foreign_keys="Client.user_id")  # where user is client
 
     # A relationship for staff members where this user is the inviter
     invited_staffs = relationship("Staff", back_populates="inviter", foreign_keys="Staff.inviter_id")

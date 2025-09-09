@@ -2,7 +2,7 @@ from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from app.auth.services import token_service
 from app.auth.database import AsyncSessionLocal
-from app.auth.models.users import User # Import the User model
+from app.auth.models.users import User
 
 async def auth_gateway_middleware(request: Request, call_next):
     """
@@ -13,7 +13,7 @@ async def auth_gateway_middleware(request: Request, call_next):
     public_paths = [
         "/api/v1/docs", 
         "/api/v1/redoc", 
-        "/api/v1/openapi.json", # Add swagger UI's json spec
+        "/api/v1/openapi.json",
         "/api/v1/health", 
         "/api/v1/auth/login", 
         "/api/v1/auth/register",
@@ -27,7 +27,7 @@ async def auth_gateway_middleware(request: Request, call_next):
         return await call_next(request)
 
     # Check if the request path is public
-    if any(request.url.path == path for path in public_paths):
+    if any(request.url.path.startswith(path) for path in public_paths):
         response = await call_next(request)
         return response
 
@@ -59,17 +59,17 @@ async def auth_gateway_middleware(request: Request, call_next):
                     content={"detail": "User not found or Token is invalidated/Revoked"},
                 )
             request.state.user = user
-
+    
+    except token_service.jwt.InvalidTokenError as e:
+        return JSONResponse(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content={"detail": str(e)},
+    )
     except Exception as e:
         return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"detail": f"Invalid token: {str(e)}"},
-        )
-    except token_service.jwt.InvalidTokenError as e: # Catch the specific error
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"detail": str(e)},
-        )
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content={"detail": f"Invalid token: {str(e)}"},
+    )
 
     response = await call_next(request)
     return response

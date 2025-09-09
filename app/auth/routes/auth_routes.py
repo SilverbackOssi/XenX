@@ -113,7 +113,7 @@ async def refresh_token(
 @auth_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Logs out the current user by invalidating their tokens.

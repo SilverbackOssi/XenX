@@ -15,38 +15,7 @@ from app.auth.models.users import User
 
 strategy_router = APIRouter(prefix="/enterprises", tags=["Tax Strategies"])
 
-# --- Client Goals Endpoints ---
-@strategy_router.put(
-    "/{enterprise_id}/projects/{project_id}/goals", 
-    response_model=ClientGoalsResponse, 
-    status_code=status.HTTP_200_OK,
-    summary="Update client goals for a project"
-)
-async def update_client_goals(
-    enterprise_id: int, 
-    project_id: int, 
-    goals_data: ClientGoalsUpdate, 
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(TokenService.get_current_user)
-):
-    """
-    Update tax planning goals for a specific client project.
-    These goals will be used to recommend appropriate tax strategies.
-    """
-    strategy_service = StrategyService(db)
-    updated_goals, error = await strategy_service.update_client_goals(
-        enterprise_id, project_id, goals_data
-    )
-    
-    if error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND if "not found" in error.lower() 
-            else status.HTTP_400_BAD_REQUEST,
-            detail=error
-        )
-        
-    return updated_goals
-
+# --- Strategy Recommendations Endpoint ---
 @strategy_router.get(
     "/{enterprise_id}/projects/{project_id}/recommended-strategies", 
     response_model=RecommendedStrategiesResponse, 
@@ -76,6 +45,7 @@ async def get_recommended_strategies(
         )
         
     return recommendations
+
 
 # --- System Strategy Endpoints ---
 @strategy_router.get(

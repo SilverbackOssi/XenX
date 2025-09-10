@@ -12,4 +12,4 @@ from ..auth.routes.google_oauth_router import router as google_oauth_router
 
 # Include microservices routers
 # Tax Planner routes
-from .services.tax_planner import project_router, strategy_router
+from .services.tax_planner import *

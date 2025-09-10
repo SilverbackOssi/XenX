@@ -80,6 +80,7 @@ class CustomStrategy(TaxStrategy):
 
     enterprise_id = Column(Integer, nullable=False) # Non foreign key, just a reference,  enterprises exist in a separate DB
 
+    # Relationships
     base_strategy = relationship("TaxStrategy", backref="custom_strategies", uselist=False, foreign_keys=[base_strategy_id])
 
     __mapper_args__ = { 

@@ -14,7 +14,7 @@ class TaxPlan(TPBase):
     __tablename__ = 'tax_plans'
 
     id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, ForeignKey('projects.id'))
+    project_id = Column(Integer, ForeignKey('projects.id'), unique=True)
     strategy_id = Column(Integer, ForeignKey('tax_strategies.id'))
     
     extracted_tax_return_document = Column(JSON, nullable=True)

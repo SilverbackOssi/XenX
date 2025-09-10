@@ -1,5 +1,6 @@
 
-from sqlalchemy import Enum, Column, DateTime, Integer, String, DECIMAL, Text, func, JSON, ForeignKey
+from sqlalchemy import Enum, Column, DateTime, Integer, String, DECIMAL, Text, func, JSON, ForeignKey, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
 from app.microservices.tax_planner.tp_database import TPBase
 from sqlalchemy.orm import relationship
 import enum
@@ -50,7 +51,7 @@ class TaxStrategy(TPBase):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    related_goals = relationship("ClientGoal", back_populates="tax_strategy")
+    strategy_goals = relationship("StrategyGoal", cascade="all, delete-orphan")
     implementation_tasks = relationship("ImplementationTask", back_populates="strategy", cascade="all, delete-orphan")
     tax_plans = relationship("TaxPlan", back_populates="strategy", cascade="all, delete-orphan")
 
@@ -102,3 +103,23 @@ class ImplementationTask(TPBase):
     # Relationships
     strategy = relationship("TaxStrategy", back_populates="implementation_tasks")
     # goal = relationship("ClientGoal", back_populates="implementation_tasks", uselist=False) XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+# Association table for strategy-goal relationships
+class StrategyGoal(TPBase):
+    """Association table linking strategies to goals they support"""
+    __tablename__ = 'strategy_goals'
+
+    id = Column(Integer, primary_key=True)
+    strategy_id = Column(Integer, ForeignKey('tax_strategies.id'), nullable=False)
+    goal_id = Column(UUID(as_uuid=True), ForeignKey('client_goals.id'), nullable=True)
+    custom_goal_id = Column(UUID(as_uuid=True), ForeignKey('custom_goals.id'), nullable=True)
+
+    # Ensure either goal_id or custom_goal_id is set, but not both
+    __table_args__ = (
+        UniqueConstraint('strategy_id', 'goal_id', name='uq_strategy_goal'),
+        UniqueConstraint('strategy_id', 'custom_goal_id', name='uq_strategy_custom_goal'),
+    )
+
+    def __repr__(self):
+        return f"<StrategyGoal(strategy_id={self.strategy_id}, goal_id={self.goal_id}, custom_goal_id={self.custom_goal_id})>"

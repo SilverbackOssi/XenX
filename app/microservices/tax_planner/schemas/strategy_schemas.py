@@ -4,31 +4,24 @@ from datetime import datetime
 from uuid import UUID
 from decimal import Decimal
 
-from app.microservices.tax_planner.models.client_goals import ClientGoalOptions
 from app.microservices.tax_planner.models.tax_strategies import TaxStrategyType, TaskStatus
 
 
 # --- Client Goals Schemas ---
-class ClientGoalsUpdate(BaseModel):
-    """Schema for updating client goals for a project"""
-    goals: List[ClientGoalOptions]
-    
-
 class ClientGoalBase(BaseModel):
-    """Base schema for client goal data"""
-    goal: ClientGoalOptions
-    project_id: int
+    """Base schema for system client goal data"""
+    title: str
+    description: str
 
 
 class ClientGoalCreate(ClientGoalBase):
-    """Schema for creating a client goal"""
+    """Schema for creating a system client goal"""
     pass
 
 
 class ClientGoalResponse(ClientGoalBase):
-    """Schema for client goal response data"""
+    """Schema for system client goal response data"""
     id: UUID
-    related_strategy_id: Optional[int] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -36,10 +29,62 @@ class ClientGoalResponse(ClientGoalBase):
         from_attributes = True
 
 
-class ClientGoalsResponse(BaseModel):
-    """Schema for multiple client goals response data"""
-    goals: List[ClientGoalResponse]
-    message: str = "Client goals updated successfully"
+class CustomGoalBase(BaseModel):
+    """Base schema for custom goal data"""
+    title: str
+    description: str
+
+
+class CustomGoalCreate(CustomGoalBase):
+    """Schema for creating a custom goal"""
+    enterprise_id: int
+
+
+class CustomGoalResponse(CustomGoalBase):
+    """Schema for custom goal response data"""
+    id: UUID
+    enterprise_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class GoalSelectionItem(BaseModel):
+    """Schema for selecting a goal (either system or custom)"""
+    goal_id: Optional[UUID] = None
+    custom_goal_id: Optional[UUID] = None
+    
+    @classmethod
+    def model_validate(cls, v):
+        if isinstance(v, dict):
+            if not v.get('goal_id') and not v.get('custom_goal_id'):
+                raise ValueError("Either goal_id or custom_goal_id must be provided")
+            if v.get('goal_id') and v.get('custom_goal_id'):
+                raise ValueError("Cannot specify both goal_id and custom_goal_id")
+        return super().model_validate(v)
+
+
+class ProjectGoalsUpdate(BaseModel):
+    """Schema for updating project goals"""
+    goals: List[GoalSelectionItem]
+
+
+class ProjectGoalResponse(BaseModel):
+    """Schema for project goal response data"""
+    goal: Optional[ClientGoalResponse] = None
+    custom_goal: Optional[CustomGoalResponse] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ProjectGoalsResponse(BaseModel):
+    """Schema for project goals response data"""
+    project_id: int
+    goals: List[ProjectGoalResponse]
+    message: str = "Project goals updated successfully"
 
 
 # --- Strategy Schemas ---
@@ -117,5 +162,5 @@ class RecommendedStrategiesResponse(BaseModel):
     """Schema for recommended strategies response data"""
     project_id: int
     strategies: List[StrategyResponse]
-    goals: List[ClientGoalResponse]
-    message: str = "Recommended strategies based on client goals"
+    selected_goals: List[ProjectGoalResponse]
+    message: str = "Recommended strategies based on selected goals"

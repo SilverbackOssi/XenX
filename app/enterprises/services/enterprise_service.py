@@ -5,17 +5,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.auth.services.email_service import EmailService
 from app.auth.services.auth_service import AuthService
-from app.enterprises.models.enterprises import Enterprise, Staff, StaffPermission, Client
-from app.enterprises.schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse
+from app.enterprises.models.enterprises import Tentant, Staff, StaffPermission, Client
+from app.enterprises.schemas.enterprise_schemas import TentantCreate, TentantResponse
 from app.enterprises.schemas.staff_schemas import StaffInvitation
 from app.auth.models.users import User
 from app.config import get_settings
 
-class EnterpriseService:
+class TentantService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_enterprise_by_id(self, enterprise_id: int) -> Tuple[Optional[Enterprise], Optional[str]]:
+    async def get_enterprise_by_id(self, enterprise_id: int) -> Tuple[Optional[Tentant], Optional[str]]:
         """
         Get an enterprise by its ID.
         """
@@ -28,13 +28,13 @@ class EnterpriseService:
         except Exception as e:
             return None, str(e)
  
-    async def create_enterprise(self, user_id: int, enterprise_data: EnterpriseCreate):
+    async def create_enterprise(self, user_id: int, enterprise_data: TentantCreate):
         try:
             user = await self.db.get(User, user_id)
             if not user:
                 return None, "User not found"
 
-            new_enterprise = Enterprise(
+            new_enterprise = Tentant(
                 name=enterprise_data.name,
                 email=enterprise_data.email,
                 type=enterprise_data.type,
@@ -279,7 +279,7 @@ class EnterpriseService:
         self, 
         enterprise_id: int, 
         branding_data: Dict[str, Any]
-    ) -> Tuple[Optional[Enterprise], Optional[str]]:
+    ) -> Tuple[Optional[Tentant], Optional[str]]:
         """
         Update the branding information for an enterprise.
         """

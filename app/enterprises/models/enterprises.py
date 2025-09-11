@@ -6,7 +6,7 @@ from app.auth.database import Base
 from .permissions import StaffPermission, StaffRole
 import enum
 
-class EnterpriseType(enum.Enum):
+class FirmType(enum.Enum):
     ACCOUNTING = "accounting"
     TAX_ADVISORY = "tax-advisory"
     CONSULTING = "consulting"
@@ -14,14 +14,14 @@ class EnterpriseType(enum.Enum):
     OTHER = "other"
 
 # (CPA firm)
-class Enterprise(Base):
-    __tablename__ = "enterprises"
+class Tentant(Base):
+    __tablename__ = "tentants"
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     name = Column(String, unique=True, index=True)
     email = Column(String, nullable=False)
-    type = Column(SQLAEnum(EnterpriseType), nullable=False, default=EnterpriseType.TAX_ADVISORY)
+    type = Column(SQLAEnum(FirmType), nullable=False, default=FirmType.TAX_ADVISORY)
     tax_year = Column(Integer, nullable=False)
     
     description = Column(String, nullable=True)
@@ -42,9 +42,9 @@ class Enterprise(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationship to the User model
-    owner = relationship("User", back_populates="enterprises")
-    staffs = relationship("Staff", back_populates="enterprise")
-    clients = relationship("Client", back_populates="enterprise")
+    owner = relationship("User", back_populates="tentants")
+    staffs = relationship("Staff", back_populates="tentant")
+    clients = relationship("Client", back_populates="tentant")
 
     class Config:
         from_attributes = True
@@ -54,7 +54,7 @@ class Staff(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=False, index=True, nullable=False)
-    enterprise_id = Column(Integer, ForeignKey("enterprises.id"), nullable=False)
+    enterprise_id = Column(Integer, ForeignKey("tentants.id"), nullable=False)
     inviter_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     invite_token = Column(String, nullable=True)
     invite_token_expires_at = Column(DateTime, nullable=True)
@@ -68,7 +68,7 @@ class Staff(Base):
 
     # Relationships 
     user_details = relationship("User", back_populates="staff_profiles", foreign_keys=[user_id])
-    enterprise = relationship("Enterprise", back_populates="staffs")
+    tentant = relationship("Tentant", back_populates="staffs")
     inviter = relationship("User", back_populates="invited_staffs", foreign_keys=[inviter_id])
     
     def activate(self):
@@ -85,7 +85,7 @@ class Staff(Base):
         from_attributes = True
     
     __table_args__ = (
-        UniqueConstraint('user_id', 'enterprise_id', name='uq_staff_user_enterprise'),
+        UniqueConstraint('user_id', 'enterprise_id', name='uq_staff_user_tentant'),
     )
 
 
@@ -96,7 +96,7 @@ class Client(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=False, index=True, nullable=False)
-    enterprise_id = Column(Integer, ForeignKey("enterprises.id"), nullable=False)
+    enterprise_id = Column(Integer, ForeignKey("tentants.id"), nullable=False)
     inviter_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     is_active = Column(Boolean, default=False)
@@ -104,7 +104,7 @@ class Client(Base):
 
     # Relationships
     user_details = relationship("User", back_populates="client_profiles", foreign_keys=[user_id])
-    enterprise = relationship("Enterprise", back_populates="clients")
+    tentant = relationship("Tentant", back_populates="clients")
 
     inviter = relationship("User", back_populates="invited_clients", foreign_keys=[inviter_id])
 
@@ -122,5 +122,5 @@ class Client(Base):
         from_attributes = True
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'enterprise_id', name='uq_client_user_enterprise'),
+        UniqueConstraint('user_id', 'enterprise_id', name='uq_client_user_tentant'),
     )

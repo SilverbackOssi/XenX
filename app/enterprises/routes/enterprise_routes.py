@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
 from app.auth.services.token_service import TokenService
 from app.auth.models.users import User
-from app.enterprises.schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse
-from app.enterprises.services.enterprise_service import EnterpriseService
+from app.enterprises.schemas.enterprise_schemas import TentantCreate, TentantResponse
+from app.enterprises.services.enterprise_service import TentantService
 
 from app.enterprises.schemas.staff_schemas import StaffInvitation, MultipleStaffInvitations
 from fastapi.responses import RedirectResponse
@@ -15,16 +15,16 @@ settings = get_settings()
 
 enterprise_router = APIRouter(prefix="/enterprises", tags=["Enterprises"])
 
-@enterprise_router.post("/create", response_model=EnterpriseResponse, status_code=status.HTTP_201_CREATED)
+@enterprise_router.post("/create", response_model=TentantResponse, status_code=status.HTTP_201_CREATED)
 async def create_enterprise(
-    enterprise_data: EnterpriseCreate,
+    enterprise_data: TentantCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(TokenService.get_current_user)
-) -> EnterpriseResponse:
+) -> TentantResponse:
     """
     Create a new firm for the current user.
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     enterprise, error = await enterprise_service.create_enterprise(
         user_id=current_user.id, # type: ignore
         enterprise_data=enterprise_data
@@ -36,18 +36,18 @@ async def create_enterprise(
         )
     return enterprise
 
-@enterprise_router.get("/{enterprise_id}", response_model=EnterpriseResponse, status_code=status.HTTP_200_OK)
+@enterprise_router.get("/{enterprise_id}", response_model=TentantResponse, status_code=status.HTTP_200_OK)
 async def get_enterprise(
     enterprise_id: int,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(TokenService.get_current_user)
-) -> EnterpriseResponse:
+) -> TentantResponse:
     """
     Get details of a specific enterprise.
     Access is restricted to users with at least VIEW permission.
     Returns enterprise details along with associated staff IDs and client IDs.
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
     
     # Get enterprise with full relationships
@@ -83,7 +83,7 @@ async def get_enterprise(
     }
     
     # Create the response model from the modified dict using the newer model_validate method
-    return EnterpriseResponse.model_validate(enterprise_dict)
+    return TentantResponse.model_validate(enterprise_dict)
 
 @enterprise_router.post("/{enterprise_id}/invite", status_code=status.HTTP_200_OK, summary="Invite an assistant")
 async def invite_assistant_to_enterprise(
@@ -96,7 +96,7 @@ async def invite_assistant_to_enterprise(
     Invite a single teammate to a firm.
     Requires at least MANAGE permission.
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
 
     # Check permissions
@@ -127,7 +127,7 @@ async def invite_multiple_assistants_to_enterprise(
     Invite multiple teammates to a firm in a single request.
     Requires at least MANAGE permission.
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
     
 
@@ -163,7 +163,7 @@ async def accept_invitation(
     Accept an invitation to join a firm.
     Redirects to the frontend login page on success.
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     staff, error = await enterprise_service.accept_invitation(
         token=token
     )

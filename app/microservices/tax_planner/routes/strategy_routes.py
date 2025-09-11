@@ -5,7 +5,6 @@ from typing import List, Optional
 
 from app.microservices.tax_planner.tp_database import get_db
 from app.microservices.tax_planner.schemas.strategy_schemas import (
-    ClientGoalsUpdate, ClientGoalsResponse, 
     StrategyResponse, StrategyCreate, StrategyUpdate,
     RecommendedStrategiesResponse
 )

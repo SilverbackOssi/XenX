@@ -32,7 +32,7 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    enterprises = relationship("Enterprise", back_populates="owner")
+    tentants = relationship("Tentant", back_populates="owner")
     staff_profiles = relationship("Staff", back_populates="user_details", foreign_keys="Staff.user_id")
     client_profiles = relationship("Client", back_populates="user_details", foreign_keys="Client.user_id")
 

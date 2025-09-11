@@ -4,13 +4,13 @@ from typing import Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select    
 from app.auth.models.users import User
-from app.enterprises.models.enterprises import Enterprise, Staff, StaffPermission
+from app.enterprises.models.enterprises import Tentant, Staff, StaffPermission
 
 class PermissionService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def has_owner_permission(self, enterprise: Enterprise, user_id: int) -> bool:
+    async def has_owner_permission(self, enterprise: Tentant, user_id: int) -> bool:
         """
         Check if a user is owner or system admin.
         """
@@ -28,7 +28,7 @@ class PermissionService:
         except Exception:
             return False
 
-    async def has_full_access(self, enterprise: Enterprise, user_id: int) -> bool:
+    async def has_full_access(self, enterprise: Tentant, user_id: int) -> bool:
         """
         Check if a user has permission to update an enterprise.
         """
@@ -52,7 +52,7 @@ class PermissionService:
         except Exception:
             return False
 
-    async def has_manage_access(self, enterprise: Enterprise, user_id: int) -> bool:
+    async def has_manage_access(self, enterprise: Tentant, user_id: int) -> bool:
         """
         Check if a user has permission to manage an enterprise.
         """
@@ -76,7 +76,7 @@ class PermissionService:
         except Exception:
             return False
 
-    async def has_edit_access(self, enterprise: Enterprise, user_id: int) -> bool:
+    async def has_edit_access(self, enterprise: Tentant, user_id: int) -> bool:
         """
         Check if a user has permission to edit an enterprise document.
         """
@@ -100,7 +100,7 @@ class PermissionService:
         except Exception:
             return False
 
-    async def has_view_access(self, enterprise: Enterprise, user_id: int) -> bool:
+    async def has_view_access(self, enterprise: Tentant, user_id: int) -> bool:
         try:
             if await self.has_edit_access(enterprise, user_id):
                 return True
@@ -122,7 +122,7 @@ class PermissionService:
             return False
 
     async def update_staff_permissions(self,
-        enterprise: Enterprise,
+        enterprise: Tentant,
         staff_id: int,
         permission: StaffPermission,
         current_user: User

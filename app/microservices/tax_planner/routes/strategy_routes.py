@@ -12,7 +12,7 @@ from app.microservices.tax_planner.services.strategy_service import StrategyServ
 from app.auth.services.token_service import TokenService
 from app.auth.models.users import User
 
-strategy_router = APIRouter(prefix="/enterprises", tags=["Tax Strategies"])
+strategy_router = APIRouter(prefix="/tentants", tags=["Tax Strategies"])
 
 # --- Strategy Recommendations Endpoint ---
 @strategy_router.get(

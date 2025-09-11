@@ -3,55 +3,55 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
 from app.auth.services.token_service import TokenService
 from app.auth.models.users import User
-from app.enterprises.schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse
-from app.enterprises.services.enterprise_service import EnterpriseService
+from app.tentants.schemas.enterprise_schemas import TentantCreate, TentantResponse
+from app.tentants.services.enterprise_service import TentantService
 
-from app.enterprises.schemas.staff_schemas import StaffInvitation, MultipleStaffInvitations
+from app.tentants.schemas.staff_schemas import StaffInvitation, MultipleStaffInvitations
 from fastapi.responses import RedirectResponse
 from app.config import get_settings
-from app.enterprises.services.permission_service import PermissionService
+from app.tentants.services.permission_service import PermissionService
 
 settings = get_settings()
 
-enterprise_router = APIRouter(prefix="/enterprises", tags=["Enterprises"])
+enterprise_router = APIRouter(prefix="/tentants", tags=["Tentants"])
 
-@enterprise_router.post("/create", response_model=EnterpriseResponse, status_code=status.HTTP_201_CREATED)
+@enterprise_router.post("/create", response_model=TentantResponse, status_code=status.HTTP_201_CREATED)
 async def create_enterprise(
-    enterprise_data: EnterpriseCreate,
+    tentant_data: TentantCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(TokenService.get_current_user)
-) -> EnterpriseResponse:
+) -> TentantResponse:
     """
-    Create a new firm for the current user.
+    Create a new tentant for the current user.
     """
-    enterprise_service = EnterpriseService(db)
-    enterprise, error = await enterprise_service.create_enterprise(
+    tentant_service = TentantService(db)
+    tentant, error = await tentant_service.create_enterprise(
         user_id=current_user.id, # type: ignore
-        enterprise_data=enterprise_data
+        enterprise_data=tentant_data
     )
     if error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error
         )
-    return enterprise
+    return tentant
 
-@enterprise_router.get("/{enterprise_id}", response_model=EnterpriseResponse, status_code=status.HTTP_200_OK)
+@enterprise_router.get("/{tentant_id}", response_model=TentantResponse, status_code=status.HTTP_200_OK)
 async def get_enterprise(
-    enterprise_id: int,
+    tentant_id: int,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(TokenService.get_current_user)
-) -> EnterpriseResponse:
+) -> TentantResponse:
     """
     Get details of a specific enterprise.
     Access is restricted to users with at least VIEW permission.
     Returns enterprise details along with associated staff IDs and client IDs.
     """
-    enterprise_service = EnterpriseService(db)
+    tentant_service = TentantService(db)
     permission_service = PermissionService(db)
     
     # Get enterprise with full relationships
-    enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
+    enterprise, error = await tentant_service.get_enterprise_by_id(tentant_id)
     if error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -83,11 +83,11 @@ async def get_enterprise(
     }
     
     # Create the response model from the modified dict using the newer model_validate method
-    return EnterpriseResponse.model_validate(enterprise_dict)
+    return TentantResponse.model_validate(enterprise_dict)
 
-@enterprise_router.post("/{enterprise_id}/invite", status_code=status.HTTP_200_OK, summary="Invite an assistant")
+@enterprise_router.post("/{tentant_id}/invite", status_code=status.HTTP_200_OK, summary="Invite an assistant")
 async def invite_assistant_to_enterprise(
-    enterprise_id: int,
+    tentant_id: int,
     invitation_data: StaffInvitation,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(TokenService.get_current_user),
@@ -96,19 +96,19 @@ async def invite_assistant_to_enterprise(
     Invite a single teammate to a firm.
     Requires at least MANAGE permission.
     """
-    enterprise_service = EnterpriseService(db)
+    tentant_service = TentantService(db)
     permission_service = PermissionService(db)
 
     # Check permissions
-    enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
+    enterprise, error = await tentant_service.get_enterprise_by_id(tentant_id)
     if error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
 
     if not await permission_service.has_manage_access(enterprise, current_user.id):  # type: ignore
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to invite users to this enterprise")
 
-    staff, error = await enterprise_service.invite_teammate(
-        enterprise_id=enterprise_id,
+    staff, error = await tentant_service.invite_teammate(
+        tentant_id=tentant_id,
         inviter=current_user,
         invitation_data=invitation_data
     )
@@ -116,9 +116,9 @@ async def invite_assistant_to_enterprise(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
     return {"message": "Invitation sent successfully"}
 
-@enterprise_router.post("/{enterprise_id}/invite-multiple", status_code=status.HTTP_200_OK, summary="Invite multiple assistants")
+@enterprise_router.post("/{tentant_id}/invite-multiple", status_code=status.HTTP_200_OK, summary="Invite multiple assistants")
 async def invite_multiple_assistants_to_enterprise(
-    enterprise_id: int,
+    tentant_id: int,
     invitation_data: MultipleStaffInvitations,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(TokenService.get_current_user),
@@ -127,20 +127,20 @@ async def invite_multiple_assistants_to_enterprise(
     Invite multiple teammates to a firm in a single request.
     Requires at least MANAGE permission.
     """
-    enterprise_service = EnterpriseService(db)
+    tentant_service = TentantService(db)
     permission_service = PermissionService(db)
     
 
     # Check permissions
-    enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
+    enterprise, error = await tentant_service.get_enterprise_by_id(tentant_id)
     if error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error)
 
     if not await permission_service.has_manage_access(enterprise, current_user.id):  # type: ignore
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to invite users to this enterprise")
 
-    result, error = await enterprise_service.invite_multiple_teammates(
-        enterprise_id=enterprise_id,
+    result, error = await tentant_service.invite_multiple_teammates(
+        tentant_id=tentant_id,
         inviter=current_user,
         invitations=invitation_data.invitations
     )
@@ -163,8 +163,8 @@ async def accept_invitation(
     Accept an invitation to join a firm.
     Redirects to the frontend login page on success.
     """
-    enterprise_service = EnterpriseService(db)
-    staff, error = await enterprise_service.accept_invitation(
+    tentant_service = TentantService(db)
+    staff, error = await tentant_service.accept_invitation(
         token=token
     )
     if error:

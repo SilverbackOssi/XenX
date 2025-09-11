@@ -7,16 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
 from app.auth.models.users import User
 from app.auth.services.token_service import TokenService
-from app.enterprises.models.enterprises import Enterprise
-from app.enterprises.services.enterprise_service import EnterpriseService
-from app.enterprises.schemas.branding_schemas import BrandingUpdate, BrandingResponse
-from app.enterprises.services.permission_service import PermissionService
+from app.tentants.models.enterprises import Tentant
+from app.tentants.services.enterprise_service import TentantService
+from app.tentants.schemas.branding_schemas import BrandingUpdate, BrandingResponse
+from app.tentants.services.permission_service import PermissionService
 
 # Create uploads directory if it doesn't exist
 UPLOAD_DIR = Path("uploads/logos")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-branding_router = APIRouter(prefix="/enterprises", tags=["Enterprise Branding"])
+branding_router = APIRouter(prefix="/tentants", tags=["Tentant Branding"])
 
 @branding_router.patch("/{enterprise_id}/branding", status_code=status.HTTP_200_OK)
 async def update_branding(
@@ -32,7 +32,7 @@ async def update_branding(
     Requires at least MANAGE permission
     """
     import json
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
 
     # Get enterprise by ID
@@ -101,7 +101,7 @@ async def get_branding(
     Get branding information for the enterprise.
     Requires VIEW permission
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
 
     # Get enterprise by ID
@@ -135,7 +135,7 @@ async def upload_logo(
     Upload a logo for the enterprise.
     Requires at least MANAGE permission
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
 
     # Get enterprise by ID
@@ -201,7 +201,7 @@ async def delete_logo(
     Delete the enterprise logo.
     Requires at least MANAGE permission
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
 
     # Get enterprise by ID

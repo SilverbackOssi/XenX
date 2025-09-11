@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.auth.database import AsyncSessionLocal
 from app.auth.models.users import User, SubscriptionPlans
-from app.enterprises.models.enterprises import Staff, StaffRole, Client, Enterprise, EnterpriseType
+from app.tentants.models.enterprises import Staff, StaffRole, Client, Tentant, FirmType
 from app.config import get_settings
 
 fake = Faker()
@@ -86,13 +86,13 @@ async def create_regular_users(db: AsyncSession, count: int = 9) -> list[User]:
     print(f"✅ Created {count} regular users")
     return users
 
-async def create_enterprises(db: AsyncSession, users_with_enterprises: list[User]) -> list[Enterprise]:
+async def create_tentants(db: AsyncSession, users_with_tentants: list[User]) -> list[Tentant]:
     """Create enterprises for specified users."""
     enterprises = []
     
     # First 4 users get 1 enterprise each
     for user in users_with_enterprises[:4]:
-        enterprise = Enterprise(
+        enterprise = Tentant(
             name=fake.company(),
             email=fake.company_email(),
             description=fake.text(max_nb_chars=200),
@@ -100,7 +100,7 @@ async def create_enterprises(db: AsyncSession, users_with_enterprises: list[User
             address=fake.address(),
             country=fake.country(),
             city=fake.city(),
-            type=random.choice(list(EnterpriseType)),
+            type=random.choice(list(FirmType)),
             tax_year=datetime.now().year,
             owner_id=user.id,
             is_active=True,
@@ -114,7 +114,7 @@ async def create_enterprises(db: AsyncSession, users_with_enterprises: list[User
     # Last 2 users get 2 enterprises each (more than one)
     for user in users_with_enterprises[4:6]:
         for _ in range(2):
-            enterprise = Enterprise(
+            enterprise = Tentant(
                 name=fake.company(),
                 email=fake.company_email(),
                 description=fake.text(max_nb_chars=200),
@@ -122,7 +122,7 @@ async def create_enterprises(db: AsyncSession, users_with_enterprises: list[User
                 address=fake.address(),
                 country=fake.country(),
                 city=fake.city(),
-                type=random.choice(list(EnterpriseType)),
+                type=random.choice(list(FirmType)),
                 tax_year=datetime.now().year,
                 owner_id=user.id,
                 is_active=True,
@@ -134,7 +134,7 @@ async def create_enterprises(db: AsyncSession, users_with_enterprises: list[User
             enterprises.append(enterprise)
     
     await db.commit()
-    for enterprise in enterprises:
+    for enterprise in tentants:
         await db.refresh(enterprise)
     
     print(f"✅ Created {len(enterprises)} enterprises")
@@ -174,7 +174,7 @@ async def create_additional_users(db: AsyncSession) -> tuple[list[User], list[Us
     print(f"✅ Created 5 additional users (2 future clients, 3 future staff)")
     return client_users, staff_users
 
-async def create_staff_associations(db: AsyncSession, staff_users: list[User], enterprises: list[Enterprise], enterprise_owners: list[User]):
+async def create_staff_associations(db: AsyncSession, staff_users: list[User], tentants: list[Tentant], enterprise_owners: list[User]):
     """Create staff associations for 3 users with enterprises."""
     staff_records = []
     
@@ -207,7 +207,7 @@ async def create_staff_associations(db: AsyncSession, staff_users: list[User], e
     print(f"✅ Created {len(staff_records)} staff associations")
     return staff_records
 
-async def create_client_associations(db: AsyncSession, client_users: list[User], enterprises: list[Enterprise], enterprise_owners: list[User]):
+async def create_client_associations(db: AsyncSession, client_users: list[User], tentants: list[Tentant], enterprise_owners: list[User]):
     """Create client associations for 2 users with enterprises."""
     client_records = []
     
@@ -258,7 +258,7 @@ async def seed_database():
             users_with_enterprises = random.sample(regular_users, 6)
             
             # Create enterprises
-            enterprises = await create_enterprises(db, users_with_enterprises)
+            enterprises = await create_tentants(db, users_with_enterprises)
             
             # Create additional 5 users (2 clients, 3 staff)
             client_users, staff_users = await create_additional_users(db)
@@ -273,8 +273,8 @@ async def seed_database():
             print(f"📊 Summary:")
             print(f"   - Total users: 15 (1 admin + 9 regular + 5 additional)")
             print(f"   - Admin user: testadmin@xentoba.com (password: Admin@123)")
-            print(f"   - Users with enterprises: 6")
-            print(f"   - Total enterprises: {len(enterprises)}")
+            print(f"   - Users with tentants: 6")
+            print(f"   - Total tentants: {len(enterprises)}")
             print(f"   - Staff members: 3")
             print(f"   - Clients: 2")
             

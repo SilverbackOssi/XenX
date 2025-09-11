@@ -1,12 +1,12 @@
 from typing import Optional, List
 from pydantic import BaseModel, Field
 from datetime import datetime
-from app.enterprises.models.enterprises import EnterpriseType
+from app.tentants.models.enterprises import FirmType
 
-class EnterpriseBase(BaseModel):
+class TentantBase(BaseModel):
     name: str
     email: str
-    type: EnterpriseType
+    type: FirmType
     tax_year: int
     description: Optional[str] = None
     country: str
@@ -20,13 +20,13 @@ class EnterpriseBase(BaseModel):
     accent_color: Optional[str] = None
     footer_text: Optional[str] = None
 
-class EnterpriseCreate(EnterpriseBase):
+class TentantCreate(TentantBase):
     pass
 
-class EnterpriseUpdate(BaseModel):
+class TentantUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
-    type: Optional[EnterpriseType] = None
+    type: Optional[FirmType] = None
     tax_year: Optional[int] = None
     description: Optional[str] = None
     country: Optional[str] = None
@@ -40,7 +40,7 @@ class EnterpriseUpdate(BaseModel):
     accent_color: Optional[str] = None
     footer_text: Optional[str] = None
 
-class EnterpriseResponse(EnterpriseBase):
+class TentantResponse(TentantBase):
     id: int
     owner_id: int
     is_active: bool

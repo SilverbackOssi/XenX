@@ -4,14 +4,14 @@ from typing import List
 from app.auth.database import get_db
 from app.auth.models.users import User
 from app.auth.services.token_service import TokenService
-from app.enterprises.models.enterprises import Enterprise
-from app.enterprises.models.permissions import StaffPermission
-from app.enterprises.schemas.staff_schemas import StaffPermissionUpdate, StaffResponse
-from app.enterprises.services.enterprise_service import EnterpriseService
-from app.enterprises.services.permission_service import PermissionService
+from app.tentants.models.enterprises import Tentant
+from app.tentants.models.permissions import StaffPermission
+from app.tentants.schemas.staff_schemas import StaffPermissionUpdate, StaffResponse
+from app.tentants.services.enterprise_service import TentantService
+from app.tentants.services.permission_service import PermissionService
 
 
-staff_router = APIRouter(prefix="/enterprises", tags=["Enterprise Staffs"])
+staff_router = APIRouter(prefix="/tentants", tags=["Tentant Staffs"])
 
 # STAFFS
 @staff_router.get("/{enterprise_id}/staffs", response_model=List[StaffResponse], status_code=status.HTTP_200_OK)
@@ -25,7 +25,7 @@ async def get_all_staffs(
     Requires VIEW permission.
     Returns list of staff members with their details, including invited staff and client IDs.
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
 
     # Get enterprise and check if it exists
@@ -65,7 +65,7 @@ async def get_staff_profile(
     Get staff profile information.
     Requires VIEW permission
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
     
     # Get enterprise and check if it exists
@@ -104,7 +104,7 @@ async def update_staff_permission(
     Only the owner or a staff member with FULL permission can update permissions.
     """
     permission_service = PermissionService(db)
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     
     # Get enterprise and check if it exists
     enterprise, error = await enterprise_service.get_enterprise_by_id(enterprise_id)
@@ -135,7 +135,7 @@ async def update_staff_permission(
 
 
 # CLIENTS
-client_router = APIRouter(prefix="/enterprises", tags=["Enterprise Clients"])
+client_router = APIRouter(prefix="/tentants", tags=["Tentant Clients"])
 @client_router.get("/{enterprise_id}/clients", response_model=List[StaffResponse], status_code=status.HTTP_200_OK)
 async def get_all_clients(
     enterprise_id: int,
@@ -147,7 +147,7 @@ async def get_all_clients(
     Requires VIEW permission.
     Returns list of clients with their details.
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
 
     # Get enterprise and check if it exists
@@ -187,7 +187,7 @@ async def get_client_profile(
     Get client profile information.
     Requires VIEW permission
     """
-    enterprise_service = EnterpriseService(db)
+    enterprise_service = TentantService(db)
     permission_service = PermissionService(db)
     
     # Get enterprise and check if it exists

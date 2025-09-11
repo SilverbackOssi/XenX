@@ -15,7 +15,7 @@ from passlib.context import CryptContext
 from app.auth.database import get_db
 from app.auth.models.users import User, SubscriptionPlans
 from app.auth.schemas.user_schemas import UserCreate, UserResponse
-from app.enterprises.models.enterprises import Enterprise
+from app.tentants.models.enterprises import Tentant
 
 # Password context for hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -420,6 +420,6 @@ async def get_all_enterprises(
     Returns:
         List of all enterprises
     """
-    result = await db.execute(select(Enterprise).order_by(Enterprise.id))
+    result = await db.execute(select(Tentant).order_by(Tentant.id))
     enterprises = result.scalars().all()
     return enterprises

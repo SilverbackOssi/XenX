@@ -11,7 +11,7 @@ from app.microservices.tax_planner.services.project_service import ProjectServic
 from app.auth.services.token_service import TokenService
 from app.auth.models.users import User
 
-project_router = APIRouter(prefix="/enterprises", tags=["Enterprise Projects"])
+project_router = APIRouter(prefix="/tentants", tags=["Tentant Projects"])
 
 # --- Project Endpoints ---
 @project_router.post(

@@ -31,9 +31,9 @@ async def serve_auth(request: Request):
     """Serve the auth page"""
     return templates.TemplateResponse("index.html", {"request": request})
 
-@frontend_router.get("/enterprises", response_class=HTMLResponse)
-async def serve_enterprises(request: Request):
-    """Serve the enterprises page"""
+@frontend_router.get("/tentants", response_class=HTMLResponse)
+async def serve_tentants(request: Request):
+    """Serve the tentants page"""
     return templates.TemplateResponse("index.html", {"request": request})
 
 @frontend_router.get("/api-explorer", response_class=HTMLResponse)

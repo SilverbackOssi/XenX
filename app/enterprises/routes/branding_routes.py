@@ -16,7 +16,7 @@ from app.enterprises.services.permission_service import PermissionService
 UPLOAD_DIR = Path("uploads/logos")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-branding_router = APIRouter(prefix="/enterprises", tags=["Enterprise Branding"])
+branding_router = APIRouter(prefix="/tentants", tags=["Tentant Branding"])
 
 @branding_router.patch("/{enterprise_id}/branding", status_code=status.HTTP_200_OK)
 async def update_branding(

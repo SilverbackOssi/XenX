@@ -30,10 +30,10 @@ const pages = {
         title: 'Authentication',
         render: renderAuth
     },
-    enterprises: {
-        id: 'enterprises',
-        title: 'Enterprises',
-        render: renderEnterprises
+    tentants: {
+        id: 'tentants',
+        title: 'Tentants',
+        render: renderTentants
     },
     apiExplorer: {
         id: 'api-explorer',
@@ -60,9 +60,9 @@ async function initApp() {
         navigateTo('auth');
     });
     
-    document.getElementById('nav-enterprises').addEventListener('click', (e) => {
+    document.getElementById('nav-tentants').addEventListener('click', (e) => {
         e.preventDefault();
-        navigateTo('enterprises');
+        navigateTo('tentants');
     });
     
     document.getElementById('nav-api').addEventListener('click', (e) => {
@@ -104,8 +104,8 @@ function handleUrlRouting() {
         navigateTo('admin');
     } else if (path === '/auth') {
         navigateTo('auth');
-    } else if (path === '/enterprises') {
-        navigateTo('enterprises');
+    } else if (path === '/tentants') {
+        navigateTo('tentants');
     } else if (path === '/api-explorer') {
         navigateTo('apiExplorer');
     } else {
@@ -284,7 +284,7 @@ function renderHome(container) {
         <ul>
             <li><strong>Admin:</strong> Manage users and administrative tasks</li>
             <li><strong>Auth:</strong> Test authentication endpoints</li>
-            <li><strong>Enterprises:</strong> Manage enterprise data</li>
+            <li><strong>Tentants:</strong> Manage enterprise data</li>
             <li><strong>API Explorer:</strong> Interactive API documentation and testing</li>
         </ul>
     `;
@@ -313,13 +313,13 @@ function renderHome(container) {
     );
     actionsGrid.appendChild(adminCard);
     
-    // Enterprises Quick Action
-    const enterprisesCard = createCard(
-        'Enterprises',
+    // Tentants Quick Action
+    const tentantsCard = createCard(
+        'Tentants',
         'Manage enterprise data and subscriptions',
-        [createButton('Go to Enterprises', 'primary', () => navigateTo('enterprises'))]
+        [createButton('Go to Tentants', 'primary', () => navigateTo('tentants'))]
     );
-    actionsGrid.appendChild(enterprisesCard);
+    actionsGrid.appendChild(tentantsCard);
     
     statsSection.appendChild(actionsGrid);
     container.appendChild(statsSection);
@@ -978,15 +978,15 @@ function updateProfileData() {
     `;
 }
 
-// Render enterprises page
-function renderEnterprises(container) {
-    const enterprisesCard = document.createElement('div');
-    enterprisesCard.classList.add('card');
-    enterprisesCard.innerHTML = `
+// Render tentants page
+function renderTentants(container) {
+    const tentantsCard = document.createElement('div');
+    tentantsCard.classList.add('card');
+    tentantsCard.innerHTML = `
         <h2>Enterprise Management</h2>
-        <p>Manage enterprises and their subscriptions</p>
-        <div id="enterprises-list">
-            <p>Loading enterprises...</p>
+        <p>Manage tentants and their subscriptions</p>
+        <div id="tentants-list">
+            <p>Loading tentants...</p>
         </div>
     `;
     
@@ -1008,29 +1008,29 @@ function renderEnterprises(container) {
         </form>
     `;
     
-    container.appendChild(enterprisesCard);
+    container.appendChild(tentantsCard);
     container.appendChild(createEnterpriseForm);
     
-    // Initialize enterprises page
-    loadEnterprises();
+    // Initialize tentants page
+    loadTentants();
 }
 
-// Load enterprises
-async function loadEnterprises() {
-    const enterprisesList = document.getElementById('enterprises-list');
-    if (!enterprisesList) return;
+// Load tentants
+async function loadTentants() {
+    const tentantsList = document.getElementById('tentants-list');
+    if (!tentantsList) return;
     
     try {
-        const enterprises = await api.getAllEnterprises();
+        const tentants = await api.getAllTentants();
         
-        if (enterprises.length === 0) {
-            enterprisesList.innerHTML = '<p>No enterprises found</p>';
+        if (tentants.length === 0) {
+            tentantsList.innerHTML = '<p>No tentants found</p>';
             return;
         }
         
         let html = '<table><thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Actions</th></tr></thead><tbody>';
         
-        enterprises.forEach(enterprise => {
+        tentants.forEach(enterprise => {
             html += `
                 <tr>
                     <td>${enterprise.id}</td>
@@ -1046,10 +1046,10 @@ async function loadEnterprises() {
         });
         
         html += '</tbody></table>';
-        enterprisesList.innerHTML = html;
+        tentantsList.innerHTML = html;
         
     } catch (error) {
-        enterprisesList.innerHTML = `<p>Error loading enterprises: ${error.message}</p>`;
+        tentantsList.innerHTML = `<p>Error loading tentants: ${error.message}</p>`;
     }
 }
 

@@ -11,7 +11,7 @@ from app.enterprises.services.enterprise_service import TentantService
 from app.enterprises.services.permission_service import PermissionService
 
 
-staff_router = APIRouter(prefix="/enterprises", tags=["Enterprise Staffs"])
+staff_router = APIRouter(prefix="/tentants", tags=["Tentant Staffs"])
 
 # STAFFS
 @staff_router.get("/{enterprise_id}/staffs", response_model=List[StaffResponse], status_code=status.HTTP_200_OK)
@@ -135,7 +135,7 @@ async def update_staff_permission(
 
 
 # CLIENTS
-client_router = APIRouter(prefix="/enterprises", tags=["Enterprise Clients"])
+client_router = APIRouter(prefix="/tentants", tags=["Tentant Clients"])
 @client_router.get("/{enterprise_id}/clients", response_model=List[StaffResponse], status_code=status.HTTP_200_OK)
 async def get_all_clients(
     enterprise_id: int,

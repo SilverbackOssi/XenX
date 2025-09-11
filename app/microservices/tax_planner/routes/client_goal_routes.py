@@ -11,7 +11,7 @@ from app.microservices.tax_planner.services.strategy_service import StrategyServ
 from app.auth.services.token_service import TokenService
 from app.auth.models.users import User
 
-client_goal_router = APIRouter(prefix="/enterprises", tags=["Client Goals"])
+client_goal_router = APIRouter(prefix="/tentants", tags=["Client Goals"])
 
 # --- Project Goals Endpoints ---
 @client_goal_router.put(

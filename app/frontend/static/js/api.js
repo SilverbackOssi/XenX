@@ -195,24 +195,24 @@ class XenTobaAPI {
     }
 
     // ENTERPRISE ENDPOINTS
-    async getAllEnterprises() {
-        return await this.get('/enterprises/all');
+    async getAllTentants() {
+        return await this.get('/tentants/all');
     }
 
-    async createEnterprise(enterpriseData) {
-        return await this.post('/enterprises/create', enterpriseData);
+    async createTentant(enterpriseData) {
+        return await this.post('/tentants/create', enterpriseData);
     }
 
-    async getEnterpriseById(enterpriseId) {
-        return await this.get(`/enterprises/${enterpriseId}`);
+    async getTentantById(enterpriseId) {
+        return await this.get(`/tentants/${enterpriseId}`);
     }
 
-    async updateEnterprise(enterpriseId, enterpriseData) {
-        return await this.put(`/enterprises/${enterpriseId}`, enterpriseData);
+    async updateTentant(enterpriseId, enterpriseData) {
+        return await this.put(`/tentants/${enterpriseId}`, enterpriseData);
     }
 
-    async deleteEnterprise(enterpriseId) {
-        return await this.delete(`/enterprises/${enterpriseId}`);
+    async deleteTentant(enterpriseId) {
+        return await this.delete(`/tentants/${enterpriseId}`);
     }
 
     // PROFILE ENDPOINTS

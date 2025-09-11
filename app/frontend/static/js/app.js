@@ -284,7 +284,7 @@ function renderHome(container) {
         <ul>
             <li><strong>Admin:</strong> Manage users and administrative tasks</li>
             <li><strong>Auth:</strong> Test authentication endpoints</li>
-            <li><strong>Tentants:</strong> Manage enterprise data</li>
+            <li><strong>Tentants:</strong> Manage tentant data</li>
             <li><strong>API Explorer:</strong> Interactive API documentation and testing</li>
         </ul>
     `;
@@ -316,7 +316,7 @@ function renderHome(container) {
     // Tentants Quick Action
     const tentantsCard = createCard(
         'Tentants',
-        'Manage enterprise data and subscriptions',
+        'Manage tentant data and subscriptions',
         [createButton('Go to Tentants', 'primary', () => navigateTo('tentants'))]
     );
     actionsGrid.appendChild(tentantsCard);
@@ -983,7 +983,7 @@ function renderTentants(container) {
     const tentantsCard = document.createElement('div');
     tentantsCard.classList.add('card');
     tentantsCard.innerHTML = `
-        <h2>Enterprise Management</h2>
+        <h2>Tentant Management</h2>
         <p>Manage tentants and their subscriptions</p>
         <div id="tentants-list">
             <p>Loading tentants...</p>
@@ -994,7 +994,7 @@ function renderTentants(container) {
     const createEnterpriseForm = document.createElement('div');
     createEnterpriseForm.classList.add('card');
     createEnterpriseForm.innerHTML = `
-        <h2>Create Enterprise</h2>
+        <h2>Create Tentant</h2>
         <form id="create-enterprise-form">
             <div class="form-group">
                 <label for="enterprise-name">Name</label>
@@ -1004,7 +1004,7 @@ function renderTentants(container) {
                 <label for="enterprise-description">Description</label>
                 <textarea id="enterprise-description" name="description"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Create Enterprise</button>
+            <button type="submit" class="btn btn-primary">Create Tentant</button>
         </form>
     `;
     

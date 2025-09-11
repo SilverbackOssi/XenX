@@ -15,7 +15,7 @@ from passlib.context import CryptContext
 from app.auth.database import get_db
 from app.auth.models.users import User, SubscriptionPlans
 from app.auth.schemas.user_schemas import UserCreate, UserResponse
-from app.enterprises.models.enterprises import Tentant
+from app.tentants.models.enterprises import Tentant
 
 # Password context for hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

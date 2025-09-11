@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select    
 from app.auth.models.users import User
-from app.enterprises.models.enterprises import Tentant, Staff, StaffPermission
+from app.tentants.models.enterprises import Tentant, Staff, StaffPermission
 
 class PermissionService:
     def __init__(self, db: AsyncSession):

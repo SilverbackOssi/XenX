@@ -1,7 +1,7 @@
 from typing import Optional, List
 from pydantic import BaseModel, Field
 from datetime import datetime
-from app.enterprises.models.enterprises import FirmType
+from app.tentants.models.enterprises import FirmType
 
 class TentantBase(BaseModel):
     name: str

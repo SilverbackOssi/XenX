@@ -3,13 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
 from app.auth.services.token_service import TokenService
 from app.auth.models.users import User
-from app.enterprises.schemas.enterprise_schemas import TentantCreate, TentantResponse
-from app.enterprises.services.enterprise_service import TentantService
+from app.tentants.schemas.enterprise_schemas import TentantCreate, TentantResponse
+from app.tentants.services.enterprise_service import TentantService
 
-from app.enterprises.schemas.staff_schemas import StaffInvitation, MultipleStaffInvitations
+from app.tentants.schemas.staff_schemas import StaffInvitation, MultipleStaffInvitations
 from fastapi.responses import RedirectResponse
 from app.config import get_settings
-from app.enterprises.services.permission_service import PermissionService
+from app.tentants.services.permission_service import PermissionService
 
 settings = get_settings()
 

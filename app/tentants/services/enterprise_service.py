@@ -5,9 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.auth.services.email_service import EmailService
 from app.auth.services.auth_service import AuthService
-from app.enterprises.models.enterprises import Tentant, Staff, StaffPermission, Client
-from app.enterprises.schemas.enterprise_schemas import TentantCreate, TentantResponse
-from app.enterprises.schemas.staff_schemas import StaffInvitation
+from app.tentants.models.enterprises import Tentant, Staff, StaffPermission, Client
+from app.tentants.schemas.enterprise_schemas import TentantCreate, TentantResponse
+from app.tentants.schemas.staff_schemas import StaffInvitation
 from app.auth.models.users import User
 from app.config import get_settings
 
@@ -343,7 +343,7 @@ class TentantService:
             invited_clients = invited_client_result.scalars().all()
             
             # Prepare StaffResponse data
-            from app.enterprises.schemas.staff_schemas import StaffResponse
+            from app.tentants.schemas.staff_schemas import StaffResponse
             
             response_data = {
                 "email": staff.user_details.email,
@@ -400,7 +400,7 @@ class TentantService:
                 invited_clients = invited_client_result.scalars().all()
                 
                 # Prepare StaffResponse data
-                from app.enterprises.schemas.staff_schemas import StaffResponse
+                from app.tentants.schemas.staff_schemas import StaffResponse
                 
                 response_data = {
                     "email": staff.user_details.email,

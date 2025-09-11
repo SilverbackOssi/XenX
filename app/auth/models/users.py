@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLAEnum, ForeignKey
 from sqlalchemy.orm import relationship
 from app.auth.database import Base
-from app.enterprises.models.subscriptions import SubscriptionPlans
+from app.tentants.models.subscriptions import SubscriptionPlans
 
 
 class User(Base):

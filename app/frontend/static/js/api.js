@@ -71,6 +71,11 @@ const api = {
         return { success: true };
     },
     
+    // Development endpoints
+    async getAllUsersForTesting() {
+        return await this.request('/admin/users/all');
+    },
+    
     // Health check
     async healthCheck() {
         return await this.request('/health');

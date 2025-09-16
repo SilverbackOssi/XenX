@@ -328,32 +328,17 @@ const components = {
                 <h3><i class="fas fa-building"></i> Owned Enterprises</h3>
                 <div class="enterprises-grid">
                     ${owned_enterprises.map(enterprise => `
-                        <div class="enterprise-card owned">
+                        <div class="enterprise-card owned" data-enterprise-id="${enterprise.id}">
                             <div class="enterprise-header">
-                                ${enterprise.logo_url ? `<img src="${enterprise.logo_url}" alt="${enterprise.name} logo" class="enterprise-logo">` : ''}
                                 <div class="enterprise-info">
                                     <h4>${enterprise.name}</h4>
-                                    <p class="enterprise-type">${enterprise.type}</p>
-                                    <p class="enterprise-location">${enterprise.city}, ${enterprise.country}</p>
+                                    <p class="enterprise-type">${enterprise.type.replace(/_/g, ' ')}</p>
                                 </div>
-                                <div class="enterprise-status ${enterprise.is_active ? 'active' : 'inactive'}">
-                                    ${enterprise.is_active ? 'Active' : 'Inactive'}
+                                <div class="enterprise-actions">
+                                    <button class="btn btn-sm btn-outline view-enterprise-btn" data-id="${enterprise.id}">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="enterprise-details">
-                                <p><strong>Email:</strong> ${enterprise.email}</p>
-                                <p><strong>Tax Year:</strong> ${enterprise.tax_year}</p>
-                                ${enterprise.description ? `<p><strong>Description:</strong> ${enterprise.description}</p>` : ''}
-                                ${enterprise.website ? `<p><strong>Website:</strong> <a href="${enterprise.website}" target="_blank">${enterprise.website}</a></p>` : ''}
-                                <div class="enterprise-stats">
-                                    <span class="stat">
-                                        <i class="fas fa-users"></i> ${enterprise.staff_count} Staff
-                                    </span>
-                                    <span class="stat">
-                                        <i class="fas fa-user-friends"></i> ${enterprise.client_count} Clients
-                                    </span>
-                                </div>
-                                <p class="enterprise-created">Created: ${formatDate(enterprise.created_at)}</p>
                             </div>
                         </div>
                     `).join('')}
@@ -366,24 +351,18 @@ const components = {
                 <h3><i class="fas fa-user-tie"></i> Staff Positions</h3>
                 <div class="enterprises-grid">
                     ${staff_enterprises.map(enterprise => `
-                        <div class="enterprise-card staff">
+                        <div class="enterprise-card staff" data-enterprise-id="${enterprise.id}">
                             <div class="enterprise-header">
-                                ${enterprise.logo_url ? `<img src="${enterprise.logo_url}" alt="${enterprise.name} logo" class="enterprise-logo">` : ''}
                                 <div class="enterprise-info">
                                     <h4>${enterprise.name}</h4>
-                                    <p class="enterprise-type">${enterprise.type}</p>
-                                    <p class="enterprise-location">${enterprise.city}, ${enterprise.country}</p>
+                                    <p class="enterprise-type">${enterprise.type.replace(/_/g, ' ')}</p>
+                                    <p class="staff-role"><strong>Role:</strong> <span class="role-badge">${enterprise.role}</span></p>
                                 </div>
-                                <div class="enterprise-status ${enterprise.is_active ? 'active' : 'inactive'}">
-                                    ${enterprise.is_active ? 'Active' : 'Inactive'}
+                                <div class="enterprise-actions">
+                                    <button class="btn btn-sm btn-outline view-enterprise-btn" data-id="${enterprise.id}">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="enterprise-details">
-                                <p><strong>Email:</strong> ${enterprise.email}</p>
-                                <p><strong>Role:</strong> <span class="role-badge">${enterprise.role}</span></p>
-                                <p><strong>Permission:</strong> <span class="permission-badge">${enterprise.permission}</span></p>
-                                ${enterprise.website ? `<p><strong>Website:</strong> <a href="${enterprise.website}" target="_blank">${enterprise.website}</a></p>` : ''}
-                                <p class="enterprise-joined">Joined: ${formatDate(enterprise.joined_at)}</p>
                             </div>
                         </div>
                     `).join('')}
@@ -450,6 +429,53 @@ const components = {
                         <i class="fas fa-key"></i> Change Password
                     </button>
                 </div>
+            </div>
+        `;
+    },
+
+    createUserSwitcher(users, currentUserId) {
+        const userOptions = users.map(user => {
+            const displayName = `${user.first_name} ${user.last_name}`.trim() || user.username;
+            const isCurrentUser = user.id === currentUserId;
+            return `
+                <option value="${user.id}" data-email="${user.email}" data-username="${user.username}" 
+                        ${isCurrentUser ? 'selected' : ''}>
+                    ${displayName} (${user.email})${isCurrentUser ? ' - Current' : ''}
+                </option>
+            `;
+        }).join('');
+
+        return `
+            <div class="user-switcher">
+                <label for="user-select">
+                    <i class="fas fa-user-friends"></i> Switch User (Testing)
+                </label>
+                <select id="user-select" class="user-select">
+                    <option value="">Select a user...</option>
+                    ${userOptions}
+                </select>
+            </div>
+        `;
+    },
+
+    createPasswordPromptModal(userEmail) {
+        return `
+            <div class="password-prompt-modal">
+                <h3><i class="fas fa-key"></i> Password Required</h3>
+                <p>Please enter the password for <strong>${userEmail}</strong>:</p>
+                <form id="password-prompt-form">
+                    <div class="form-group">
+                        <input type="password" id="switch-password" name="password" 
+                               placeholder="Enter password" required>
+                        <small class="form-hint">
+                            Try: <code>Password@123</code> for regular users or <code>Admin@123</code> for admin
+                        </small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="ui.closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Switch User</button>
+                    </div>
+                </form>
             </div>
         `;
     }

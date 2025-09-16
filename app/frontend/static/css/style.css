@@ -841,3 +841,82 @@ label input[type="checkbox"] {
     background: #3a7bd5;
 }
 
+/* User Switcher (Testing) */
+.user-switcher {
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-switcher label {
+    display: block;
+    font-weight: 600;
+    color: #856404;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.user-switcher label i {
+    margin-right: 5px;
+}
+
+.user-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.user-select:hover {
+    border-color: #bbb;
+}
+
+.user-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+/* Password Prompt Modal */
+.password-prompt-modal {
+    max-width: 400px;
+    width: 100%;
+}
+
+.password-prompt-modal h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.password-prompt-modal p {
+    margin-bottom: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+}
+
+.form-hint code {
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #e83e8c;
+}
+

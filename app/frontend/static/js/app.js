@@ -27,7 +27,7 @@ const app = {
         }
 
         this.setupRoutes();
-        ui.renderSidebar(!!this.user);
+        await ui.renderSidebar(!!this.user);
         router.handle();
     },
 
@@ -290,6 +290,7 @@ const app = {
             
             if (response.success) {
                 ui.render(components.createProfilePage(response.data));
+                this.attachProfileEventListeners();
             } else {
                 ui.render('<h2>Could not load profile.</h2><p>Please try again later.</p>');
                 ui.showNotification('Failed to load profile', 'error');
@@ -299,6 +300,26 @@ const app = {
             ui.render('<h2>Error loading profile.</h2><p>Please try again later.</p>');
             ui.showNotification('Error loading profile', 'error');
         }
+    },
+
+    attachProfileEventListeners() {
+        // Handle "View Details" buttons for enterprises in profile
+        document.querySelectorAll('.view-enterprise-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const id = e.target.dataset.id || e.target.closest('.view-enterprise-btn').dataset.id;
+                
+                if (id) {
+                    // Navigate to enterprise page or show enterprise details
+                    router.navigate(`/enterprises`); // Will show enterprise list where user can see full details
+                    // Alternative: could show enterprise details modal
+                    // const response = await api.getEnterprise(id);
+                    // if (response.success) {
+                    //     ui.showModal(components.createEnterpriseDetails(response.data), 'Enterprise Details');
+                    // }
+                }
+            });
+        });
     },
 
     showEditProfile() {
@@ -514,7 +535,7 @@ const app = {
     async logout() {
         await api.logout();
         this.user = null;
-        ui.renderSidebar(false);
+        await ui.renderSidebar(false);
         router.navigate('/auth');
     }
 };

@@ -3,7 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 from app.auth.models.users import User
-from app.auth.schemas.profile_schemas import UserUpdate, UserProfileResponse, OwnedEnterpriseResponse, StaffEnterpriseResponse
+from app.auth.schemas.profile_schemas import UserUpdate, UserProfileResponse, SimpleEnterpriseResponse, SimpleStaffEnterpriseResponse
 from app.auth.services.auth_service import AuthService, PasswordPolicy
 from app.enterprises.models.enterprises import Enterprise, Staff, Client
 from fastapi import HTTPException, status
@@ -100,47 +100,25 @@ class ProfileService:
         if not user:
             return None
 
-        # Build owned enterprises data
+        # Build owned enterprises data (simplified)
         owned_enterprises = []
         for enterprise in user.enterprises:
-            staff_count = len([s for s in enterprise.staffs if s.is_active])
-            client_count = len([c for c in enterprise.clients if c.is_active])
-            
-            owned_enterprises.append(OwnedEnterpriseResponse(
+            owned_enterprises.append(SimpleEnterpriseResponse(
                 id=enterprise.id,
                 name=enterprise.name,
-                email=enterprise.email,
-                type=enterprise.type,
-                tax_year=enterprise.tax_year,
-                description=enterprise.description,
-                country=enterprise.country,
-                city=enterprise.city,
-                website=enterprise.website,
-                logo_url=enterprise.logo_url,
-                is_active=enterprise.is_active,
-                created_at=enterprise.created_at,
-                staff_count=staff_count,
-                client_count=client_count
+                type=enterprise.type
             ))
 
-        # Build staff enterprises data
+        # Build staff enterprises data (simplified)
         staff_enterprises = []
         for staff_profile in user.staff_profiles:
             if staff_profile.is_active:
                 enterprise = staff_profile.enterprise
-                staff_enterprises.append(StaffEnterpriseResponse(
+                staff_enterprises.append(SimpleStaffEnterpriseResponse(
                     id=enterprise.id,
                     name=enterprise.name,
-                    email=enterprise.email,
                     type=enterprise.type,
-                    country=enterprise.country,
-                    city=enterprise.city,
-                    website=enterprise.website,
-                    logo_url=enterprise.logo_url,
-                    role=staff_profile.role,
-                    permission=staff_profile.permission,
-                    is_active=enterprise.is_active,
-                    joined_at=staff_profile.created_at
+                    role=staff_profile.role
                 ))
 
         return UserProfileResponse(

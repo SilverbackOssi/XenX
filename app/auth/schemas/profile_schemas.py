@@ -17,40 +17,21 @@ class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     phone_number: Optional[str] = None
 
-class OwnedEnterpriseResponse(BaseModel):
-    """Schema for enterprises owned by the user"""
+class SimpleEnterpriseResponse(BaseModel):
+    """Simplified schema for enterprise info in profile (id, name, type only)"""
     id: int
     name: str
-    email: str
     type: EnterpriseType
-    tax_year: int
-    description: Optional[str] = None
-    country: str
-    city: str
-    website: Optional[str] = None
-    logo_url: Optional[str] = None
-    is_active: bool
-    created_at: datetime
-    staff_count: int = 0
-    client_count: int = 0
     
     class Config:
         from_attributes = True
 
-class StaffEnterpriseResponse(BaseModel):
-    """Schema for enterprises where user is a staff member"""
+class SimpleStaffEnterpriseResponse(BaseModel):
+    """Simplified schema for staff enterprises in profile (id, name, type, role only)"""
     id: int
     name: str
-    email: str
     type: EnterpriseType
-    country: str
-    city: str
-    website: Optional[str] = None
-    logo_url: Optional[str] = None
     role: StaffRole
-    permission: StaffPermission
-    is_active: bool
-    joined_at: datetime
     
     class Config:
         from_attributes = True
@@ -71,8 +52,8 @@ class UserProfileResponse(BaseModel):
     last_login: Optional[datetime] = None
     
     # Enterprise relationships
-    owned_enterprises: List[OwnedEnterpriseResponse] = Field(default_factory=list)
-    staff_enterprises: List[StaffEnterpriseResponse] = Field(default_factory=list)
+    owned_enterprises: List[SimpleEnterpriseResponse] = Field(default_factory=list)
+    staff_enterprises: List[SimpleStaffEnterpriseResponse] = Field(default_factory=list)
     
     class Config:
         from_attributes = True

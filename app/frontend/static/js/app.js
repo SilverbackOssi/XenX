@@ -1054,168 +1054,164 @@ async function loadEnterprises() {
 }
 
 // Render API explorer page
-function renderApiExplorer(container) {
-    const apiExplorerCard = document.createElement('div');
-    apiExplorerCard.classList.add('card');
-    apiExplorerCard.innerHTML = `
-        <h2>API Explorer</h2>
-        <p>Test API endpoints directly</p>
-        
-        <div class="form-group">
-            <label for="api-endpoint">Endpoint</label>
-            <input type="text" id="api-endpoint" placeholder="/admin/users/all">
-        </div>
-        
-        <div class="form-group">
-            <label for="api-method">Method</label>
-            <select id="api-method">
-                <option value="GET">GET</option>
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="DELETE">DELETE</option>
-            </select>
-        </div>
-        
-        <div class="form-group" id="request-body-container">
-            <label for="api-body">Request Body (JSON)</label>
-            <textarea id="api-body" rows="10" placeholder='{"key": "value"}'></textarea>
-        </div>
-        
-        <button id="send-api-request" class="btn btn-primary">Send Request</button>
-        
-        <div id="api-response" style="display: none;">
-            <h3>Response</h3>
-            <div id="response-status"></div>
-            <pre id="response-body" class="json-viewer"></pre>
-        </div>
-    `;
-    
-    container.appendChild(apiExplorerCard);
-    
-    // Add endpoint suggestions
-    const endpointSuggestions = document.createElement('div');
-    endpointSuggestions.classList.add('card');
-    endpointSuggestions.innerHTML = `
-        <h3>Common Endpoints</h3>
-        <div class="endpoint-list">
-            <button class="endpoint-btn" data-endpoint="/admin/users/all" data-method="GET">GET /admin/users/all</button>
-            <button class="endpoint-btn" data-endpoint="/admin/users/1" data-method="GET">GET /admin/users/1</button>
-            <button class="endpoint-btn" data-endpoint="/admin/users/create" data-method="POST" data-body='{"email": "test@example.com", "username": "testuser", "password": "Password123!", "is_active": true}'>POST /admin/users/create</button>
-            <button class="endpoint-btn" data-endpoint="/auth/login" data-method="POST" data-body='{"email": "test@example.com", "password": "Password123!"}'>POST /auth/login</button>
-            <button class="endpoint-btn" data-endpoint="/health" data-method="GET">GET /health</button>
-        </div>
-    `;
-    
-    container.appendChild(endpointSuggestions);
-    
-    // Initialize API explorer
-    initApiExplorer();
-}
+// function renderApiExplorer(container) {
+//     // Create the main layout for the API explorer
+//     const explorerLayout = document.createElement('div');
+//     explorerLayout.classList.add('api-explorer-layout');
 
-// Initialize API explorer
-function initApiExplorer() {
-    const methodSelect = document.getElementById('api-method');
-    const bodyContainer = document.getElementById('request-body-container');
-    const sendBtn = document.getElementById('send-api-request');
-    
-    // Show/hide request body based on method
-    if (methodSelect) {
-        methodSelect.addEventListener('change', () => {
-            const method = methodSelect.value;
-            bodyContainer.style.display = (method === 'GET' || method === 'DELETE') ? 'none' : 'block';
-        });
+//     const sidebar = document.createElement('div');
+//     sidebar.id = 'api-explorer-sidebar';
+//     sidebar.classList.add('api-explorer-sidebar');
+
+//     const content = document.createElement('div');
+//     content.classList.add('api-explorer-content');
+
+//     explorerLayout.appendChild(sidebar);
+//     explorerLayout.appendChild(content);
+//     container.appendChild(explorerLayout);
+
+//     // Original API Explorer content
+//     const apiTester = document.createElement('div');
+//     apiTester.classList.add('card');
+//     apiTester.innerHTML = `
+//         <h2>API Request Tester</h2>
+//         <form id="api-request-form">
+//             <div class="form-group">
+//                 <label for="api-endpoint">Endpoint</label>
+//                 <input type="text" id="api-endpoint" name="api-endpoint" placeholder="/user/me">
+//             </div>
+//             <div class="form-group">
+//                 <label for="api-method">Method</label>
+//                 <select id="api-method" name="api-method">
+//                     <option value="GET">GET</option>
+//                     <option value="POST">POST</option>
+//                     <option value="PUT">PUT</option>
+//                     <option value="DELETE">DELETE</option>
+//                 </select>
+//             </div>
+//             <div class="form-group">
+//                 <label for="api-body">Request Body (JSON)</label>
+//                 <textarea id="api-body" name="api-body" rows="10" placeholder='{"key": "value"}'></textarea>
+//             </div>
+//             <button type="submit" class="btn btn-primary">Send Request</button>
+//         </form>
+//     `;
+//     content.appendChild(apiTester);
+
+//     const responseContainer = document.createElement('div');
+//     responseContainer.classList.add('card');
+//     responseContainer.innerHTML = `
+//         <h2>API Response</h2>
+//         <pre id="api-response" class="json-viewer">{}</pre>
+//     `;
+//     content.appendChild(responseContainer);
+
+//     // Add form submission handler
+//     const apiForm = document.getElementById('api-request-form');
+//     apiForm.addEventListener('submit', async (e) => {
+//         e.preventDefault();
         
-        // Initial state
-        const method = methodSelect.value;
-        bodyContainer.style.display = (method === 'GET' || method === 'DELETE') ? 'none' : 'block';
-    }
-    
-    // Send API request
-    if (sendBtn) {
-        sendBtn.addEventListener('click', async () => {
-            const endpoint = document.getElementById('api-endpoint').value;
-            const method = document.getElementById('api-method').value;
-            const bodyInput = document.getElementById('api-body');
+//         const endpoint = document.getElementById('api-endpoint').value;
+//         const method = document.getElementById('api-method').value;
+//         const body = document.getElementById('api-body').value;
+        
+//         const responsePre = document.getElementById('api-response');
+//         responsePre.textContent = 'Loading...';
+        
+//         try {
+//             let data = null;
+//             if (body.trim() !== '') {
+//                 try {
+//                     data = JSON.parse(body);
+//                 } catch (err) {
+//                     throw new Error('Invalid JSON in request body');
+//                 }
+//             }
             
-            // Validate endpoint
-            if (!endpoint) {
-                showNotification('Please enter an endpoint', 'danger');
-                return;
-            }
-            
-            let body = null;
-            
-            // Parse body if needed
-            if (method === 'POST' || method === 'PUT') {
-                try {
-                    body = JSON.parse(bodyInput.value || '{}');
-                } catch (error) {
-                    showNotification('Invalid JSON in request body', 'danger');
-                    return;
+//             const response = await api.request(endpoint, method, data);
+//             responsePre.textContent = JSON.stringify(response, null, 2);
+//         } catch (error) {
+//             const errorResponse = {
+//                 error: true,
+//                 status: error.status,
+//                 message: error.message,
+//                 data: error.data
+//             };
+//             responsePre.textContent = JSON.stringify(errorResponse, null, 2);
+//         }
+//     });
+
+//     // Fetch and populate sidebar
+//     populateApiSidebar(sidebar);
+// }
+
+
+async function populateApiSidebar(sidebar) {
+    sidebar.innerHTML = '<h2>Available Endpoints</h2>';
+    const endpointList = document.createElement('ul');
+    endpointList.classList.add('endpoint-list');
+    sidebar.appendChild(endpointList);
+
+    try {
+        const schema = await api.getOpenAPISchema();
+        const paths = schema.paths;
+
+        for (const path in paths) {
+            for (const method in paths[path]) {
+                const endpoint = paths[path][method];
+                const listItem = document.createElement('li');
+                
+                const methodSpan = document.createElement('span');
+                methodSpan.classList.add('method', method.toUpperCase());
+                methodSpan.textContent = method.toUpperCase();
+                
+                const pathSpan = document.createElement('span');
+                pathSpan.classList.add('path');
+                pathSpan.textContent = path;
+
+                listItem.appendChild(methodSpan);
+                listItem.appendChild(pathSpan);
+
+                listItem.dataset.path = path;
+                listItem.dataset.method = method;
+                
+                // Add request body to dataset if it exists
+                if (endpoint.requestBody && endpoint.requestBody.content && endpoint.requestBody.content['application/json']) {
+                    const schemaRef = endpoint.requestBody.content['application/json'].schema.$ref;
+                    if (schemaRef) {
+                        const schemaName = schemaRef.split('/').pop();
+                        const componentSchema = schema.components.schemas[schemaName];
+                        if (componentSchema && componentSchema.properties) {
+                            const exampleBody = {};
+                            for (const prop in componentSchema.properties) {
+                                const propDetails = componentSchema.properties[prop];
+                                exampleBody[prop] = propDetails.example || (propDetails.type === 'integer' ? 0 : (propDetails.type === 'boolean' ? false : ''));
+                            }
+                            listItem.dataset.body = JSON.stringify(exampleBody, null, 2);
+                        }
+                    }
                 }
+
+                endpointList.appendChild(listItem);
             }
-            
-            // Send request
-            try {
-                sendBtn.disabled = true;
-                sendBtn.innerHTML = '<span class="spinner"></span> Sending...';
-                
-                let response;
-                
-                if (method === 'GET') {
-                    response = await api.get(endpoint);
-                } else if (method === 'POST') {
-                    response = await api.post(endpoint, body);
-                } else if (method === 'PUT') {
-                    response = await api.put(endpoint, body);
-                } else if (method === 'DELETE') {
-                    response = await api.delete(endpoint);
-                }
-                
-                // Show response
-                const responseContainer = document.getElementById('api-response');
-                const responseStatus = document.getElementById('response-status');
-                const responseBody = document.getElementById('response-body');
-                
-                responseContainer.style.display = 'block';
-                responseStatus.innerHTML = `<div class="alert alert-success">Request successful</div>`;
-                responseBody.textContent = JSON.stringify(response, null, 2);
-                
-            } catch (error) {
-                const responseContainer = document.getElementById('api-response');
-                const responseStatus = document.getElementById('response-status');
-                const responseBody = document.getElementById('response-body');
-                
-                responseContainer.style.display = 'block';
-                responseStatus.innerHTML = `<div class="alert alert-danger">Error: ${error.status} ${error.message}</div>`;
-                responseBody.textContent = JSON.stringify(error.data || {}, null, 2);
-                
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.textContent = 'Send Request';
-            }
+        }
+
+        // Add click event listener to the list
+        endpointList.addEventListener('click', (e) => {
+            const listItem = e.target.closest('li');
+            if (!listItem) return;
+
+            const path = listItem.dataset.path;
+            const method = listItem.dataset.method;
+            const body = listItem.dataset.body || '';
+
+            document.getElementById('api-endpoint').value = path;
+            document.getElementById('api-method').value = method.toUpperCase();
+            document.getElementById('api-body').value = body;
         });
+
+    } catch (error) {
+        console.error('Failed to load API endpoints:', error);
+        endpointList.innerHTML = '<li>Failed to load endpoints.</li>';
     }
-    
-    // Add endpoint suggestion click handlers
-    const endpointBtns = document.querySelectorAll('.endpoint-btn');
-    endpointBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const endpoint = btn.getAttribute('data-endpoint');
-            const method = btn.getAttribute('data-method');
-            const body = btn.getAttribute('data-body');
-            
-            document.getElementById('api-endpoint').value = endpoint;
-            document.getElementById('api-method').value = method;
-            
-            const bodyInput = document.getElementById('api-body');
-            if (body && bodyInput) {
-                bodyInput.value = body;
-            }
-            
-            // Trigger method change event to show/hide body
-            const event = new Event('change');
-            document.getElementById('api-method').dispatchEvent(event);
-        });
-    });
 }

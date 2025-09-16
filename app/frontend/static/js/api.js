@@ -137,7 +137,7 @@ class XenTobaAPI {
     }
 
     async getCurrentUser() {
-        return await this.get('/auth/me');
+        return await this.get('/users/me');
     }
     
     getGoogleLoginUrl() {
@@ -217,15 +217,24 @@ class XenTobaAPI {
 
     // PROFILE ENDPOINTS
     async getProfile() {
-        return await this.get('/profile');
+        return await this.get('/users/me');
     }
 
     async updateProfile(profileData) {
-        return await this.put('/profile/update', profileData);
+        return await this.put('/users/me', profileData);
     }
 
     async changePassword(passwordData) {
-        return await this.put('/profile/change-password', passwordData);
+        return await this.put('/users/me/change-password', passwordData);
+    }
+
+    async getOpenAPISchema() {
+        // The request is not going through the /api/v1 prefix, so we do a direct fetch
+        const response = await fetch('/api/v1/openapi.json');
+        if (!response.ok) {
+            throw new Error('Failed to fetch OpenAPI schema');
+        }
+        return await response.json();
     }
 }
 

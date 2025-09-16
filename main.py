@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from app.routes.routes import *
 from app.auth.database import engine, Base
-from app.frontend import init_frontend
+from app.frontend import create_frontend_app
 from app.auth.seeder import seed_database
 from app.config import get_settings
 
@@ -16,9 +16,12 @@ UPLOAD_DIR = Path("uploads").mkdir(parents=True, exist_ok=True)
 LOGOS_DIR = Path("uploads/logos").mkdir(parents=True, exist_ok=True)
 TAX_RETURNS_DIR = Path("uploads/tax_returns").mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="XenToba API Demo Frontend", 
-              version="0.1.0", 
-              description="Frontend routes for the XenToba API")
+# Main application
+app = FastAPI(
+    title="XenToba",
+    description="Main application hosting the API and Frontend.",
+    version="0.1.0"
+)
 
 # Create API app with versioned path
 api_app = FastAPI(
@@ -45,52 +48,10 @@ api_app.include_router(staff_routes.client_router)
 api_app.include_router(project_router)
 api_app.include_router(strategy_router)
 api_app.include_router(client_goal_router)
-api_app.include_router(client_goal_router)
 api_app.include_router(tax_plan_router)
-
 
 # Admin/Demo routes
 api_app.include_router(admin_router)
-
-
-
-
-
-
-# Initialize frontend
-init_frontend(app)
-
-# sync tables
-# Mount the uploads directories to make files accessible
-app.mount("/logos", StaticFiles(directory="uploads/logos"), name="logos")
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
-@app.on_event("startup")
-async def startup_event():
-    # Create database tables for main app
-    async with engine.begin() as conn:
-        # Run database seeder to populate with test data
-        if settings.RUN_SEEDER_ON_STARTUP:
-            await conn.run_sync(Base.metadata.drop_all)
-            await conn.run_sync(Base.metadata.create_all)
-            try:
-                logger.info("🌱 Running database seeder...")
-                await seed_database()
-                logger.info("✅ Database seeded successfully!")
-            except Exception as e:
-                logger.error(f"❌ Error seeding database: {e}")
-            # Don't fail startup if seeding fails
-    
-    # Initialize Tax Planner microservice database
-    from app.microservices.tax_planner.tp_database import init_tp_db
-    try:
-        logger.info("🔄 Initializing Tax Planner database...")
-        await init_tp_db()
-        logger.info("✅ Tax Planner database initialized successfully!")
-    except Exception as e:
-        logger.error(f"❌ Error initializing Tax Planner database: {e}")
-    
-        
 
 @api_app.get("/")
 def api_index():
@@ -101,5 +62,46 @@ def api_index():
 async def health_check():
     return {"status": "healthy"}
 
-# Mount API app under /api/v1
+# Create Frontend app
+frontend_app = create_frontend_app()
+
+# Mount the uploads directories to make files accessible
+app.mount("/logos", StaticFiles(directory="uploads/logos"), name="logos")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# Mount API and Frontend apps
 app.mount("/api/v1", api_app)
+app.mount("/", frontend_app)
+
+@app.get("/api/v1/openapi.json", include_in_schema=False)
+async def get_open_api_endpoint():
+    return api_app.openapi()
+
+# @app.on_event("startup")
+# async def startup_event():
+    # Create database tables for main app
+    # async with engine.begin() as conn:
+    #     # Run database seeder to populate with test data
+    #     if settings.RUN_SEEDER_ON_STARTUP:
+    #         await conn.run_sync(Base.metadata.drop_all)
+    #         await conn.run_sync(Base.metadata.create_all)
+    #         try:
+    #             logger.info("🌱 Running database seeder...")
+    #             await seed_database()
+    #             logger.info("✅ Database seeded successfully!")
+    #         except Exception as e:
+    #             logger.error(f"❌ Error seeding database: {e}")
+    #         # Don't fail startup if seeding fails
+    
+    # Initialize Tax Planner microservice database
+    # from app.microservices.tax_planner.tp_database import init_tp_db
+    # try:
+    #     logger.info("🔄 Initializing Tax Planner database...")
+    #     await init_tp_db()
+    #     logger.info("✅ Tax Planner database initialized successfully!")
+    # except Exception as e:
+    #     logger.error(f"❌ Error initializing Tax Planner database: {e}")
+
+
+
+

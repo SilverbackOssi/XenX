@@ -17,7 +17,7 @@ FRONTEND_BASE_URL = settings.FRONTEND_BASE_URL  # URL to redirect after login
 
 @router.get("/login")
 async def google_login(request: Request):
-    """Redirect to Google OAuth login page"""
+    """Get Google OAuth login URL"""
     # For development purposes, detect if we're running locally
     host = request.headers.get("host", "")
     is_local = host.startswith("localhost") or host.startswith("127.0.0.1")
@@ -31,14 +31,31 @@ async def google_login(request: Request):
     
     print(f"Using redirect URI: {redirect_uri}")
     
-    oauth_service = GoogleOAuthService(
-        client_id=GOOGLE_CLIENT_ID,
-        client_secret=GOOGLE_CLIENT_SECRET,
-        redirect_uri=redirect_uri
-    )
-    auth_url = oauth_service.get_auth_url()
-    print(f"Generated auth URL: {auth_url}")
-    return RedirectResponse(url=auth_url)
+    # Check if Google OAuth is configured
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google OAuth is not configured"
+        )
+    
+    try:
+        oauth_service = GoogleOAuthService(
+            client_id=GOOGLE_CLIENT_ID,
+            client_secret=GOOGLE_CLIENT_SECRET,
+            redirect_uri=redirect_uri
+        )
+        auth_url = oauth_service.get_auth_url()
+        print(f"Generated auth URL: {auth_url}")
+        
+        # Return JSON response for the frontend
+        return {"auth_url": auth_url}
+        # return RedirectResponse(url=auth_url)
+    except Exception as e:
+        print(f"Error generating Google auth URL: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate Google login URL"
+        )
 
 @router.get("/callback")
 async def google_callback(

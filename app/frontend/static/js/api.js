@@ -1,242 +1,140 @@
-/**
- * API utility for XenToba frontend
- * Handles all API calls to the backend
- */
+// Handles all API communication
+const api = {
+    baseUrl: '/api/v1',
+    token: null,
 
-class XenTobaAPI {
-    constructor() {
-        this.baseUrl = '/api/v1';
-        this.token = localStorage.getItem('xentoba_token') || null;
-    }
-
-    /**
-     * Set authentication token
-     * @param {string} token - JWT token
-     */
-    setToken(token) {
-        this.token = token;
-        localStorage.setItem('xentoba_token', token);
-    }
-
-    /**
-     * Clear authentication token
-     */
-    clearToken() {
-        this.token = null;
-        localStorage.removeItem('xentoba_token');
-    }
-
-    /**
-     * Get request headers including auth token if available
-     * @returns {Object} Headers object
-     */
-    getHeaders() {
-        const headers = {
-            'Content-Type': 'application/json'
-        };
-
+    async request(endpoint, method = 'GET', body = null) {
+        const headers = { 'Content-Type': 'application/json' };
         if (this.token) {
             headers['Authorization'] = `Bearer ${this.token}`;
         }
 
-        return headers;
-    }
-
-    /**
-     * Make API request
-     * @param {string} endpoint - API endpoint
-     * @param {string} method - HTTP method
-     * @param {Object} data - Request body data
-     * @returns {Promise} Promise resolving to response data
-     */
-    async request(endpoint, method = 'GET', data = null) {
-        const url = `${this.baseUrl}${endpoint}`;
-        const options = {
+        const config = {
             method,
-            headers: this.getHeaders()
+            headers,
+            body: body ? JSON.stringify(body) : null
         };
 
-        if (data && (method === 'POST' || method === 'PUT')) {
-            options.body = JSON.stringify(data);
-        }
-
         try {
-            const response = await fetch(url, options);
-            const responseData = await response.json();
-
+            const response = await fetch(this.baseUrl + endpoint, config);
             if (!response.ok) {
-                throw {
-                    status: response.status,
-                    message: responseData.detail || 'An error occurred',
-                    data: responseData
-                };
+                // Handle non-2xx responses
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch {
+                    errorData = { detail: `HTTP ${response.status}: ${response.statusText}` };
+                }
+                console.error('API Error:', errorData);
+                return { success: false, error: errorData };
             }
-
-            return responseData;
+            return { success: true, data: await response.json() };
         } catch (error) {
-            console.error('API Error:', error);
-            throw error;
+            console.error('Fetch Error:', error);
+            return { success: false, error: { detail: 'Network error - please check your connection' } };
         }
-    }
+    },
 
-    /**
-     * GET request wrapper
-     * @param {string} endpoint - API endpoint
-     * @returns {Promise} Promise resolving to response data
-     */
-    get(endpoint) {
-        return this.request(endpoint, 'GET');
-    }
+    setToken(token) {
+        this.token = token;
+        localStorage.setItem('authToken', token);
+    },
 
-    /**
-     * POST request wrapper
-     * @param {string} endpoint - API endpoint
-     * @param {Object} data - Request body data
-     * @returns {Promise} Promise resolving to response data
-     */
-    post(endpoint, data) {
-        return this.request(endpoint, 'POST', data);
-    }
+    clearToken() {
+        this.token = null;
+        localStorage.removeItem('authToken');
+    },
 
-    /**
-     * PUT request wrapper
-     * @param {string} endpoint - API endpoint
-     * @param {Object} data - Request body data
-     * @returns {Promise} Promise resolving to response data
-     */
-    put(endpoint, data) {
-        return this.request(endpoint, 'PUT', data);
-    }
-
-    /**
-     * DELETE request wrapper
-     * @param {string} endpoint - API endpoint
-     * @returns {Promise} Promise resolving to response data
-     */
-    delete(endpoint) {
-        return this.request(endpoint, 'DELETE');
-    }
-
-    // AUTH ENDPOINTS
+    // Auth endpoints
     async login(email, password) {
-        const data = { email, password };
-        const response = await this.post('/auth/login', data);
-        if (response.access_token) {
-            this.setToken(response.access_token);
-        }
-        return response;
-    }
+        return await this.request('/auth/login', 'POST', { email, password });
+    },
 
     async register(userData) {
-        return await this.post('/auth/register', userData);
-    }
+        return await this.request('/auth/register', 'POST', userData);
+    },
+
+    async getCurrentUser() {
+        return await this.request('/users/me');
+    },
+    
+    async getGoogleLoginUrl() {
+        return this.request('/auth/google/login');
+    },
 
     async logout() {
         this.clearToken();
         return { success: true };
-    }
-
-    async getCurrentUser() {
-        return await this.get('/users/me');
-    }
+    },
     
-    getGoogleLoginUrl() {
-        return `${this.baseUrl}/auth/google/login`;
-    }
-    
-    processGoogleCallback(urlParams) {
-        const params = new URLSearchParams(urlParams);
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        
-        if (accessToken) {
-            this.setToken(accessToken);
-            return {
-                success: true,
-                access_token: accessToken,
-                refresh_token: refreshToken
-            };
-        }
-        
-        return { success: false };
-    }
+    // Health check
+    async healthCheck() {
+        return await this.request('/health');
+    },
 
-    // ADMIN ENDPOINTS
-    async getAllUsers(skip = 0, limit = 100) {
-        return await this.get(`/admin/users/all?skip=${skip}&limit=${limit}`);
-    }
+    // Enterprise endpoints
+    async getEnterprises() {
+        return await this.request('/enterprises/');
+    },
 
-    async getUserById(userId) {
-        return await this.get(`/admin/users/${userId}`);
-    }
+    async createEnterprise(data) {
+        return await this.request('/enterprises/', 'POST', data);
+    },
 
-    async createUser(userData) {
-        return await this.post('/admin/users/create', userData);
-    }
+    async getEnterprise(id) {
+        return await this.request(`/enterprises/${id}`);
+    },
 
-    async createSuperUser(userData) {
-        return await this.post('/admin/users/create-super', userData);
-    }
+    async updateEnterprise(id, data) {
+        return await this.request(`/enterprises/${id}`, 'PUT', data);
+    },
 
-    async updateUser(userId, userData) {
-        return await this.put(`/admin/users/update/${userId}`, userData);
-    }
+    async deleteEnterprise(id) {
+        return await this.request(`/enterprises/${id}`, 'DELETE');
+    },
 
-    async deleteUser(userId) {
-        return await this.delete(`/admin/users/delete/${userId}`);
-    }
+    // Tax Planner endpoints
+    async getTaxProjects() {
+        return await this.request('/tax-planner/projects/');
+    },
 
-    async updateUserSubscription(userId, subscriptionData) {
-        return await this.post(`/admin/users/${userId}/subscription`, subscriptionData);
-    }
+    async createTaxProject(data) {
+        return await this.request('/tax-planner/projects/', 'POST', data);
+    },
 
-    async createBatchUsers(usersData) {
-        return await this.post('/admin/users/create/batch', { users: usersData });
-    }
+    async getTaxProject(id) {
+        return await this.request(`/tax-planner/projects/${id}`);
+    },
 
-    // ENTERPRISE ENDPOINTS
-    async getAllEnterprises() {
-        return await this.get('/enterprises/all');
-    }
+    async updateTaxProject(id, data) {
+        return await this.request(`/tax-planner/projects/${id}`, 'PUT', data);
+    },
 
-    async createEnterprise(enterpriseData) {
-        return await this.post('/enterprises/create', enterpriseData);
-    }
+    async deleteTaxProject(id) {
+        return await this.request(`/tax-planner/projects/${id}`, 'DELETE');
+    },
 
-    async getEnterpriseById(enterpriseId) {
-        return await this.get(`/enterprises/${enterpriseId}`);
-    }
+    // Admin endpoints
+    async getAllUsers() {
+        return await this.request('/admin/users/');
+    },
 
-    async updateEnterprise(enterpriseId, enterpriseData) {
-        return await this.put(`/enterprises/${enterpriseId}`, enterpriseData);
-    }
+    async createUser(data) {
+        return await this.request('/admin/users/', 'POST', data);
+    },
 
-    async deleteEnterprise(enterpriseId) {
-        return await this.delete(`/enterprises/${enterpriseId}`);
-    }
+    async updateUser(id, data) {
+        return await this.request(`/admin/users/${id}`, 'PUT', data);
+    },
 
-    // PROFILE ENDPOINTS
-    async getProfile() {
-        return await this.get('/users/me');
-    }
+    async deleteUser(id) {
+        return await this.request(`/admin/users/${id}`, 'DELETE');
+    },
 
-    async updateProfile(profileData) {
-        return await this.put('/users/me', profileData);
+    async getSystemStats() {
+        return await this.request('/admin/stats');
     }
+};
 
-    async changePassword(passwordData) {
-        return await this.put('/users/me/change-password', passwordData);
-    }
-
-    async getOpenAPISchema() {
-        // The request is not going through the /api/v1 prefix, so we do a direct fetch
-        const response = await fetch('/api/v1/openapi.json');
-        if (!response.ok) {
-            throw new Error('Failed to fetch OpenAPI schema');
-        }
-        return await response.json();
-    }
-}
-
-// Initialize global API instance
-const api = new XenTobaAPI();
+// Load token from storage on startup
+api.token = localStorage.getItem('authToken');

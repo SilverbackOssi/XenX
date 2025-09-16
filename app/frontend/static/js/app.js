@@ -384,9 +384,19 @@ const app = {
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
+            // Convert tax_year to number
+            if (data.tax_year) {
+                data.tax_year = parseInt(data.tax_year, 10);
+            }
+            
             // Basic validation
             if (!data.name || !data.email || !data.type) {
                 ui.showNotification('Please fill in all required fields (Name, Email, Type)', 'error');
+                return;
+            }
+            
+            if (!data.country || !data.city) {
+                ui.showNotification('Please fill in all required fields (Country, City)', 'error');
                 return;
             }
 
@@ -397,16 +407,22 @@ const app = {
             submitBtn.disabled = true;
 
             try {
+                // Debug: Log the data being sent
+                console.log('Sending enterprise data:', data);
+                
                 const response = id 
                     ? await api.updateEnterprise(id, data)
                     : await api.createEnterprise(data);
+
+                console.log('API response:', response);
 
                 if (response.success) {
                     ui.closeModal();
                     this.showEnterprisesPage();
                     ui.showNotification(`Enterprise ${id ? 'updated' : 'created'} successfully!`, 'success');
                 } else {
-                    ui.showNotification(response.error || 'An error occurred', 'error');
+                    console.error('API error details:', response);
+                    ui.showNotification(response.error || response.detail || 'An error occurred', 'error');
                 }
             } catch (error) {
                 console.error('Enterprise form submit error:', error);

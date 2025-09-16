@@ -87,39 +87,39 @@ app.mount("/", frontend_app)
 async def get_open_api_endpoint():
     return api_app.openapi()
 
-@app.on_event("startup")
-async def startup_event():
-    # Create database tables for main app
-    async with engine.begin() as conn:
-        # Run database seeder to populate with test data
-        if settings.RUN_SEEDER_ON_STARTUP:
-            try:
-                await conn.run_sync(Base.metadata.drop_all)
-            except Exception as e:
-                # Ignore errors when dropping tables that don't exist
-                logger.warning(f"Warning dropping tables (this is normal on first run): {e}")
+# @app.on_event("startup")
+# async def startup_event():
+#     # Create database tables for main app
+#     async with engine.begin() as conn:
+#         # Run database seeder to populate with test data
+#         if settings.RUN_SEEDER_ON_STARTUP:
+#             try:
+#                 await conn.run_sync(Base.metadata.drop_all)
+#             except Exception as e:
+#                 # Ignore errors when dropping tables that don't exist
+#                 logger.warning(f"Warning dropping tables (this is normal on first run): {e}")
             
-            await conn.run_sync(Base.metadata.create_all)
-            try:
-                logger.info("🌱 Running database seeder...")
-                await seed_database()
-                logger.info("✅ Database seeded successfully!")
-            except Exception as e:
-                logger.error(f"❌ Error seeding database: {e}")
-                # Don't fail startup if seeding fails
-        else:
-            # Just create tables without seeding
-            await conn.run_sync(Base.metadata.create_all)
-            logger.info("✅ Database tables created!")
+#             await conn.run_sync(Base.metadata.create_all)
+#             try:
+#                 logger.info("🌱 Running database seeder...")
+#                 await seed_database()
+#                 logger.info("✅ Database seeded successfully!")
+#             except Exception as e:
+#                 logger.error(f"❌ Error seeding database: {e}")
+#                 # Don't fail startup if seeding fails
+#         else:
+#             # Just create tables without seeding
+#             await conn.run_sync(Base.metadata.create_all)
+#             logger.info("✅ Database tables created!")
     
-    # Initialize Tax Planner microservice database
-    from app.microservices.tax_planner.tp_database import init_tp_db
-    try:
-        logger.info("🔄 Initializing Tax Planner database...")
-        await init_tp_db()
-        logger.info("✅ Tax Planner database initialized successfully!")
-    except Exception as e:
-        logger.error(f"❌ Error initializing Tax Planner database: {e}")
+#     # Initialize Tax Planner microservice database
+#     from app.microservices.tax_planner.tp_database import init_tp_db
+#     try:
+#         logger.info("🔄 Initializing Tax Planner database...")
+#         await init_tp_db()
+#         logger.info("✅ Tax Planner database initialized successfully!")
+#     except Exception as e:
+#         logger.error(f"❌ Error initializing Tax Planner database: {e}")
 
 
 

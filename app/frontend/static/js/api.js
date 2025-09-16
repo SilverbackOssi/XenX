@@ -82,7 +82,7 @@ const api = {
     },
 
     async createEnterprise(data) {
-        return await this.request('/enterprises/', 'POST', data);
+        return await this.request('/enterprises/create', 'POST', data);
     },
 
     async getEnterprise(id) {

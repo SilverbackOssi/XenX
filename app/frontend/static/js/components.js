@@ -108,16 +108,16 @@ const components = {
 
     createEnterpriseForm(enterprise = {}) {
         const enterpriseTypes = [
-            'ACCOUNTING',
-            'TAX_ADVISORY',
-            'CONSULTING', 
-            'BOOKKEEPING',
-            'OTHER'
+            { value: 'accounting', label: 'Accounting' },
+            { value: 'tax-advisory', label: 'Tax Advisory' },
+            { value: 'consulting', label: 'Consulting' }, 
+            { value: 'bookkeeping', label: 'Bookkeeping' },
+            { value: 'other', label: 'Other' }
         ];
 
         const typeOptions = enterpriseTypes.map(type => 
-            `<option value="${type}" ${enterprise.type === type ? 'selected' : ''}>
-                ${type.replace(/_/g, ' ')}
+            `<option value="${type.value}" ${enterprise.type === type.value ? 'selected' : ''}>
+                ${type.label}
             </option>`
         ).join('');
 

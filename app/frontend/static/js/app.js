@@ -220,28 +220,62 @@ const app = {
     },
 
     attachEnterpriseEventListeners() {
-        document.getElementById('add-enterprise-btn').addEventListener('click', () => {
-            ui.showModal(components.createEnterpriseForm(), 'Add Enterprise');
-            this.handleEnterpriseFormSubmit();
-        });
+        // Add enterprise button
+        const addBtn = document.getElementById('add-enterprise-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                ui.showModal(components.createEnterpriseForm(), 'Add Enterprise');
+                this.handleEnterpriseFormSubmit();
+            });
+        }
 
-        document.querySelectorAll('.edit-btn').forEach(btn => {
+        // Edit enterprise buttons (on cards)
+        document.querySelectorAll('.enterprise-card .edit-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                const id = e.target.dataset.id;
-                const response = await api.getEnterprise(id);
-                if (response.success) {
-                    ui.showModal(components.createEnterpriseForm(response.data), `Edit Enterprise`);
-                    this.handleEnterpriseFormSubmit(id);
+                e.stopPropagation();
+                const enterpriseCard = e.target.closest('.enterprise-card');
+                const id = enterpriseCard.dataset.enterpriseId;
+                
+                if (id) {
+                    const response = await api.getEnterprise(id);
+                    if (response.success) {
+                        ui.showModal(components.createEnterpriseForm(response.data), `Edit Enterprise`);
+                        this.handleEnterpriseFormSubmit(id);
+                    } else {
+                        ui.showNotification('Could not load enterprise details', 'error');
+                    }
                 }
             });
         });
 
-        document.querySelectorAll('.delete-btn').forEach(btn => {
+        // Delete enterprise buttons (on cards)
+        document.querySelectorAll('.enterprise-card .delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                const id = e.target.dataset.id;
-                if (confirm('Are you sure you want to delete this enterprise?')) {
-                    await api.deleteEnterprise(id);
-                    this.showEnterprisesPage();
+                e.stopPropagation();
+                const enterpriseCard = e.target.closest('.enterprise-card');
+                const id = enterpriseCard.dataset.enterpriseId;
+                const name = enterpriseCard.querySelector('h3').textContent;
+                
+                if (id && confirm(`Are you sure you want to delete "${name}"?`)) {
+                    const response = await api.deleteEnterprise(id);
+                    if (response.success) {
+                        this.showEnterprisesPage();
+                        ui.showNotification('Enterprise deleted successfully', 'success');
+                    } else {
+                        ui.showNotification('Could not delete enterprise', 'error');
+                    }
+                }
+            });
+        });
+
+        // Click on enterprise card to view details (optional)
+        document.querySelectorAll('.enterprise-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                // Only trigger if clicking the card itself, not buttons
+                if (!e.target.classList.contains('btn') && !e.target.closest('.btn')) {
+                    const id = card.dataset.enterpriseId;
+                    // Could navigate to enterprise details page in the future
+                    console.log('Enterprise card clicked:', id);
                 }
             });
         });
@@ -338,21 +372,49 @@ const app = {
 
     handleEnterpriseFormSubmit(id = null) {
         const form = document.getElementById('enterprise-form');
+        if (!form) {
+            console.error('Enterprise form not found');
+            return;
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Get form data
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
-            const response = id 
-                ? await api.updateEnterprise(id, data)
-                : await api.createEnterprise(data);
+            // Basic validation
+            if (!data.name || !data.email || !data.type) {
+                ui.showNotification('Please fill in all required fields (Name, Email, Type)', 'error');
+                return;
+            }
 
-            if (response.success) {
-                ui.closeModal();
-                this.showEnterprisesPage();
-                ui.showNotification(`Enterprise ${id ? 'updated' : 'created'} successfully!`, 'success');
-            } else {
-                ui.showNotification('An error occurred.', 'error');
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = id ? 'Updating...' : 'Creating...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = id 
+                    ? await api.updateEnterprise(id, data)
+                    : await api.createEnterprise(data);
+
+                if (response.success) {
+                    ui.closeModal();
+                    this.showEnterprisesPage();
+                    ui.showNotification(`Enterprise ${id ? 'updated' : 'created'} successfully!`, 'success');
+                } else {
+                    ui.showNotification(response.error || 'An error occurred', 'error');
+                }
+            } catch (error) {
+                console.error('Enterprise form submit error:', error);
+                ui.showNotification('Network error occurred', 'error');
+            } finally {
+                // Reset button state
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
             }
         });
     },

@@ -33,51 +33,165 @@ const components = {
     },
 
     createEnterpriseList(enterprises) {
-        const tableRows = enterprises.map(enterprise => `
-            <tr>
-                <td>${enterprise.name}</td>
-                <td>${enterprise.industry}</td>
-                <td>${enterprise.owner_id}</td>
-                <td class="actions">
-                    <a data-id="${enterprise.id}" class="view-btn">View</a>
-                    <a data-id="${enterprise.id}" class="edit-btn">Edit</a>
-                    <a data-id="${enterprise.id}" class="delete-btn">Delete</a>
-                </td>
-            </tr>
+        if (!enterprises || enterprises.length === 0) {
+            return `
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-building"></i> My Enterprises</h2>
+                        <button class="btn btn-primary" id="add-enterprise-btn">
+                            <i class="fas fa-plus"></i> Create New Enterprise
+                        </button>
+                    </div>
+                    <div class="empty-state">
+                        <i class="fas fa-building" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
+                        <h3>No Enterprises Found</h3>
+                        <p>You haven't created any enterprises yet. Click the button above to get started!</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        const enterpriseCards = enterprises.map(enterprise => `
+            <div class="enterprise-card">
+                <div class="enterprise-header">
+                    <div class="enterprise-info">
+                        <h3>${enterprise.name}</h3>
+                        <p class="enterprise-type">${enterprise.type.replace(/_/g, ' ')}</p>
+                        <p class="enterprise-location">${enterprise.city}, ${enterprise.country}</p>
+                    </div>
+                    <div class="enterprise-status ${enterprise.is_active ? 'active' : 'inactive'}">
+                        ${enterprise.is_active ? 'Active' : 'Inactive'}
+                    </div>
+                </div>
+                <div class="enterprise-details">
+                    <p><strong>Email:</strong> ${enterprise.email}</p>
+                    <p><strong>Tax Year:</strong> ${enterprise.tax_year}</p>
+                    ${enterprise.description ? `<p><strong>Description:</strong> ${enterprise.description}</p>` : ''}
+                    ${enterprise.website ? `<p><strong>Website:</strong> <a href="${enterprise.website}" target="_blank">${enterprise.website}</a></p>` : ''}
+                    <div class="enterprise-stats">
+                        <span class="stat">
+                            <i class="fas fa-users"></i> ${enterprise.staff_ids.length} Staff
+                        </span>
+                        <span class="stat">
+                            <i class="fas fa-user-friends"></i> ${enterprise.client_ids.length} Clients
+                        </span>
+                    </div>
+                </div>
+                <div class="enterprise-actions">
+                    <button class="btn btn-secondary view-btn" data-id="${enterprise.id}">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                    <button class="btn btn-primary edit-btn" data-id="${enterprise.id}">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-danger delete-btn" data-id="${enterprise.id}">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
         `).join('');
 
         return `
             <div class="card">
                 <div class="card-header">
-                    <h2>Enterprises</h2>
-                    <button class="btn" id="add-enterprise-btn">Add Enterprise</button>
+                    <h2><i class="fas fa-building"></i> My Enterprises</h2>
+                    <button class="btn btn-primary" id="add-enterprise-btn">
+                        <i class="fas fa-plus"></i> Create New Enterprise
+                    </button>
                 </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Industry</th>
-                                <th>Owner ID</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tableRows}
-                        </tbody>
-                    </table>
+                <div class="enterprises-grid">
+                    ${enterpriseCards}
                 </div>
             </div>
         `;
     },
 
     createEnterpriseForm(enterprise = {}) {
+        const enterpriseTypes = [
+            'ACCOUNTING',
+            'TAX_ADVISORY',
+            'CONSULTING', 
+            'BOOKKEEPING',
+            'OTHER'
+        ];
+
+        const typeOptions = enterpriseTypes.map(type => 
+            `<option value="${type}" ${enterprise.type === type ? 'selected' : ''}>
+                ${type.replace(/_/g, ' ')}
+            </option>`
+        ).join('');
+
+        const currentYear = new Date().getFullYear();
+        const taxYear = enterprise.tax_year || currentYear;
+
         return `
             <form id="enterprise-form">
-                <input type="text" name="name" placeholder="Enterprise Name" value="${enterprise.name || ''}" required>
-                <input type="text" name="industry" placeholder="Industry" value="${enterprise.industry || ''}" required>
-                <textarea name="description" placeholder="Description">${enterprise.description || ''}</textarea>
-                <button type="submit" class="btn">${enterprise.id ? 'Update' : 'Create'}</button>
+                <div class="form-group">
+                    <label for="name">Enterprise Name *</label>
+                    <input type="text" id="name" name="name" placeholder="Enter enterprise name" 
+                           value="${enterprise.name || ''}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Enterprise Email *</label>
+                    <input type="email" id="email" name="email" placeholder="Enter enterprise email" 
+                           value="${enterprise.email || ''}" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="type">Type *</label>
+                        <select id="type" name="type" required>
+                            <option value="">Select Type</option>
+                            ${typeOptions}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tax_year">Tax Year *</label>
+                        <input type="number" id="tax_year" name="tax_year" 
+                               value="${taxYear}" min="2020" max="2030" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="country">Country *</label>
+                        <input type="text" id="country" name="country" placeholder="Enter country" 
+                               value="${enterprise.country || ''}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="city">City *</label>
+                        <input type="text" id="city" name="city" placeholder="Enter city" 
+                               value="${enterprise.city || ''}" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" placeholder="Enter address" 
+                           value="${enterprise.address || ''}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="website">Website</label>
+                    <input type="url" id="website" name="website" placeholder="https://example.com" 
+                           value="${enterprise.website || ''}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="4" 
+                              placeholder="Enter enterprise description">${enterprise.description || ''}</textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="ui.closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> ${enterprise.id ? 'Update' : 'Create'} Enterprise
+                    </button>
+                </div>
             </form>
         `;
     },

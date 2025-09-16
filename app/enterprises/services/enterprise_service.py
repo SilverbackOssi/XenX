@@ -3,6 +3,7 @@ import secrets, json
 from typing import Dict, Any, Tuple, Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from app.auth.services.email_service import EmailService
 from app.auth.services.auth_service import AuthService
 from app.enterprises.models.enterprises import Enterprise, Staff, StaffPermission, Client
@@ -28,6 +29,39 @@ class EnterpriseService:
         except Exception as e:
             return None, str(e)
  
+    async def get_user_enterprises(self, user_id: int) -> Tuple[List[Enterprise], Optional[str]]:
+        """
+        Get all enterprises owned by the user and enterprises where user is staff.
+        """
+        try:
+            # Get enterprises owned by user
+            owned_stmt = select(Enterprise).options(
+                selectinload(Enterprise.staffs),
+                selectinload(Enterprise.clients)
+            ).filter(Enterprise.owner_id == user_id, Enterprise.is_active == True)
+            owned_result = await self.db.execute(owned_stmt)
+            owned_enterprises = owned_result.scalars().all()
+
+            # Get enterprises where user is staff
+            staff_stmt = select(Staff).options(
+                selectinload(Staff.enterprise).options(
+                    selectinload(Enterprise.staffs),
+                    selectinload(Enterprise.clients)
+                )
+            ).filter(Staff.user_id == user_id, Staff.is_active == True)
+            staff_result = await self.db.execute(staff_stmt)
+            staff_relationships = staff_result.scalars().all()
+            
+            # Extract enterprises from staff relationships
+            staff_enterprises = [staff.enterprise for staff in staff_relationships if staff.enterprise.is_active]
+            
+            # Combine and deduplicate
+            all_enterprises = list(owned_enterprises) + [e for e in staff_enterprises if e not in owned_enterprises]
+            
+            return all_enterprises, None
+        except Exception as e:
+            return [], str(e)
+
     async def create_enterprise(self, user_id: int, enterprise_data: EnterpriseCreate):
         try:
             user = await self.db.get(User, user_id)

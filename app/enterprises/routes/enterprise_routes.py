@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 from app.auth.database import get_db
 from app.auth.services.token_service import TokenService
 from app.auth.models.users import User
@@ -14,6 +15,53 @@ from app.enterprises.services.permission_service import PermissionService
 settings = get_settings()
 
 enterprise_router = APIRouter(prefix="/enterprises", tags=["Enterprises"])
+
+@enterprise_router.get("/", response_model=List[EnterpriseResponse], status_code=status.HTTP_200_OK)
+async def get_user_enterprises(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(TokenService.get_current_user)
+) -> List[EnterpriseResponse]:
+    """
+    Get all enterprises associated with the current user (owned or staff member).
+    """
+    enterprise_service = EnterpriseService(db)
+    enterprises, error = await enterprise_service.get_user_enterprises(current_user.id)  # type: ignore
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve enterprises: {error}"
+        )
+    
+    # Convert to response format
+    enterprise_responses = []
+    for enterprise in enterprises:
+        staff_ids = [staff.user_id for staff in enterprise.staffs if staff.is_active]
+        client_ids = [client.user_id for client in enterprise.clients if client.is_active]
+        
+        enterprise_responses.append(EnterpriseResponse(
+            id=enterprise.id,
+            name=enterprise.name,
+            email=enterprise.email,
+            type=enterprise.type,
+            tax_year=enterprise.tax_year,
+            description=enterprise.description,
+            country=enterprise.country,
+            city=enterprise.city,
+            address=enterprise.address,
+            website=enterprise.website,
+            logo_url=enterprise.logo_url,
+            primary_color=enterprise.primary_color,
+            accent_color=enterprise.accent_color,
+            footer_text=enterprise.footer_text,
+            owner_id=enterprise.owner_id,
+            is_active=enterprise.is_active,
+            created_at=enterprise.created_at,
+            updated_at=enterprise.updated_at,
+            staff_ids=staff_ids,
+            client_ids=client_ids
+        ))
+    
+    return enterprise_responses
 
 @enterprise_router.post("/create", response_model=EnterpriseResponse, status_code=status.HTTP_201_CREATED)
 async def create_enterprise(

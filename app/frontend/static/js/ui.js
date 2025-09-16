@@ -12,6 +12,7 @@ const ui = {
         const navLinks = isLoggedIn
             ? `
                 <a href="/"><i class="material-icons">dashboard</i><span>Dashboard</span></a>
+                <a href="/profile"><i class="material-icons">person</i><span>Profile</span></a>
                 <a href="/enterprises"><i class="material-icons">business</i><span>Enterprises</span></a>
                 <a href="/tax-planner"><i class="material-icons">calculate</i><span>Tax Planner</span></a>
                 <a href="/admin"><i class="material-icons">admin_panel_settings</i><span>Admin</span></a>

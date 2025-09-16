@@ -58,6 +58,10 @@ const api = {
         return await this.request('/users/me');
     },
     
+    async getUserProfile() {
+        return await this.request('/users/me/profile');
+    },
+    
     async getGoogleLoginUrl() {
         return this.request('/auth/google/login');
     },

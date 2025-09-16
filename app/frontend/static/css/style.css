@@ -386,3 +386,342 @@ label input[type="checkbox"] {
     font-size: 1.1rem;
 }
 
+/* Profile Page Styles */
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow);
+}
+
+.profile-avatar {
+    margin-right: 30px;
+}
+
+.profile-avatar i {
+    font-size: 4rem;
+    color: var(--primary-color);
+}
+
+.profile-basic-info h1 {
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.profile-basic-info .username {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 5px 0;
+}
+
+.profile-basic-info .email {
+    color: #888;
+    margin: 5px 0;
+}
+
+.admin-badge {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.profile-section {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: var(--shadow);
+}
+
+.profile-section h3 {
+    margin: 0 0 20px 0;
+    color: var(--text-color);
+    font-size: 1.3rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-section h3 i {
+    color: var(--primary-color);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.info-item span {
+    color: #666;
+}
+
+.subscription-badge {
+    padding: 4px 8px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.subscription-badge.free {
+    background: #e8f5e8;
+    color: #4a934a;
+}
+
+.subscription-badge.business {
+    background: #e8f0ff;
+    color: #4a90e2;
+}
+
+.subscription-badge.pro {
+    background: #fef3e8;
+    color: #f5a623;
+}
+
+.enterprises-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.enterprise-card {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.enterprise-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.enterprise-card.owned {
+    border-left: 4px solid var(--primary-color);
+}
+
+.enterprise-card.staff {
+    border-left: 4px solid var(--secondary-color);
+}
+
+.enterprise-header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: #fafbfc;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.enterprise-logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    margin-right: 15px;
+    object-fit: cover;
+}
+
+.enterprise-info {
+    flex: 1;
+}
+
+.enterprise-info h4 {
+    margin: 0 0 5px 0;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.enterprise-type {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 2px 0;
+    text-transform: capitalize;
+}
+
+.enterprise-location {
+    color: #666;
+    font-size: 0.85rem;
+    margin: 2px 0;
+}
+
+.enterprise-status {
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.enterprise-status.active {
+    background: #e8f5e8;
+    color: #4a934a;
+}
+
+.enterprise-status.inactive {
+    background: #fee;
+    color: #e74c3c;
+}
+
+.enterprise-details {
+    padding: 20px;
+}
+
+.enterprise-details p {
+    margin: 8px 0;
+    font-size: 0.9rem;
+}
+
+.enterprise-details strong {
+    color: var(--text-color);
+}
+
+.enterprise-stats {
+    display: flex;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.stat i {
+    color: var(--primary-color);
+}
+
+.role-badge, .permission-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.role-badge {
+    background: #e8f0ff;
+    color: var(--primary-color);
+}
+
+.permission-badge {
+    background: #f0f8ff;
+    color: #666;
+}
+
+.enterprise-created, .enterprise-joined {
+    color: #888;
+    font-size: 0.85rem;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.profile-actions .btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.profile-actions .btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.profile-actions .btn-primary:hover {
+    background: #3a7bd5;
+    transform: translateY(-1px);
+}
+
+.profile-actions .btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.profile-actions .btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .profile-avatar {
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .enterprises-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .enterprise-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+

@@ -37,6 +37,7 @@ const app = {
         router.add('/tax-planner', () => this.showTaxPlannerPage());
         router.add('/admin', () => this.showAdminPage());
         router.add('/auth', () => this.showAuthPage());
+        router.add('/profile', () => this.showProfilePage());
         router.add('/google-callback', () => this.handleGoogleCallback());
         router.add('/404', () => ui.render('<h2>404 Not Found</h2>'));
     },
@@ -244,6 +245,36 @@ const app = {
                 }
             });
         });
+    },
+
+    async showProfilePage() {
+        try {
+            ui.render('<div class="loading-container"><h2>Loading Profile...</h2><p>Please wait while we load your profile information.</p></div>');
+            
+            const response = await api.getUserProfile();
+            console.log('Profile response:', response);
+            
+            if (response.success) {
+                ui.render(components.createProfilePage(response.data));
+            } else {
+                ui.render('<h2>Could not load profile.</h2><p>Please try again later.</p>');
+                ui.showNotification('Failed to load profile', 'error');
+            }
+        } catch (error) {
+            console.error('Error loading profile:', error);
+            ui.render('<h2>Error loading profile.</h2><p>Please try again later.</p>');
+            ui.showNotification('Error loading profile', 'error');
+        }
+    },
+
+    showEditProfile() {
+        // TODO: Implement edit profile modal
+        ui.showNotification('Edit profile feature coming soon!', 'info');
+    },
+
+    showChangePassword() {
+        // TODO: Implement change password modal
+        ui.showNotification('Change password feature coming soon!', 'info');
     },
 
     async showTaxPlannerPage() {

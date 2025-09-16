@@ -1,9 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
+from sqlalchemy import func
 from app.auth.models.users import User
-from app.auth.schemas.profile_schemas import UserUpdate
+from app.auth.schemas.profile_schemas import UserUpdate, UserProfileResponse, OwnedEnterpriseResponse, StaffEnterpriseResponse
 from app.auth.services.auth_service import AuthService, PasswordPolicy
+from app.enterprises.models.enterprises import Enterprise, Staff, Client
 from fastapi import HTTPException, status
+from typing import Optional
 
 class ProfileService:
     def __init__(self, session: AsyncSession):
@@ -75,3 +79,83 @@ class ProfileService:
 
         await self.session.commit()
         return user, ''
+
+    async def get_user_profile(self, user_id: int) -> Optional[UserProfileResponse]:
+        """Get complete user profile including enterprise relationships"""
+        
+        # Get user with all enterprise relationships
+        stmt = select(User).options(
+            selectinload(User.enterprises).options(
+                selectinload(Enterprise.staffs),
+                selectinload(Enterprise.clients)
+            ),
+            selectinload(User.staff_profiles).options(
+                selectinload(Staff.enterprise)
+            )
+        ).filter(User.id == user_id)
+        
+        result = await self.session.execute(stmt)
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            return None
+
+        # Build owned enterprises data
+        owned_enterprises = []
+        for enterprise in user.enterprises:
+            staff_count = len([s for s in enterprise.staffs if s.is_active])
+            client_count = len([c for c in enterprise.clients if c.is_active])
+            
+            owned_enterprises.append(OwnedEnterpriseResponse(
+                id=enterprise.id,
+                name=enterprise.name,
+                email=enterprise.email,
+                type=enterprise.type,
+                tax_year=enterprise.tax_year,
+                description=enterprise.description,
+                country=enterprise.country,
+                city=enterprise.city,
+                website=enterprise.website,
+                logo_url=enterprise.logo_url,
+                is_active=enterprise.is_active,
+                created_at=enterprise.created_at,
+                staff_count=staff_count,
+                client_count=client_count
+            ))
+
+        # Build staff enterprises data
+        staff_enterprises = []
+        for staff_profile in user.staff_profiles:
+            if staff_profile.is_active:
+                enterprise = staff_profile.enterprise
+                staff_enterprises.append(StaffEnterpriseResponse(
+                    id=enterprise.id,
+                    name=enterprise.name,
+                    email=enterprise.email,
+                    type=enterprise.type,
+                    country=enterprise.country,
+                    city=enterprise.city,
+                    website=enterprise.website,
+                    logo_url=enterprise.logo_url,
+                    role=staff_profile.role,
+                    permission=staff_profile.permission,
+                    is_active=enterprise.is_active,
+                    joined_at=staff_profile.created_at
+                ))
+
+        return UserProfileResponse(
+            id=user.id,
+            email=user.email,
+            username=user.username,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            phone_number=user.phone_number,
+            subscription_plan=user.subscription_plan.value,
+            is_active=user.is_active,
+            email_verified=user.email_verified,
+            is_superuser=user.is_superuser,
+            created_at=user.created_at,
+            last_login=user.last_login,
+            owned_enterprises=owned_enterprises,
+            staff_enterprises=staff_enterprises
+        )

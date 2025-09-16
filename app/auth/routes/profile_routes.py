@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
 from app.schemas.schema import UserResponse, UserUpdate
-from app.auth.schemas.profile_schemas import ChangePasswordRequest
+from app.auth.schemas.profile_schemas import ChangePasswordRequest, UserProfileResponse
 from app.auth.models.users import User
 from app.auth.services.profile_service import ProfileService
 from app.auth.services.token_service import TokenService
@@ -16,6 +16,21 @@ profile_router = APIRouter(prefix="/users", tags=["Users"])
 @profile_router.get("/me", response_model=UserResponse)
 async def get_profile(current_user: User = Depends(TokenService.get_current_user)) -> User:
     return current_user
+
+@profile_router.get("/me/profile", response_model=UserProfileResponse)
+async def get_complete_profile(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(TokenService.get_current_user)
+):
+    """Get complete user profile including enterprise relationships"""
+    profile_service = ProfileService(db)
+    profile = await profile_service.get_user_profile(current_user.id)  # type: ignore
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Profile not found"
+        )
+    return profile
 
 @profile_router.patch("/me", response_model=UserResponse)
 async def update_profile(

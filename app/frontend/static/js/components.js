@@ -197,6 +197,147 @@ const components = {
                 <button type="submit" class="btn">${user.id ? 'Update' : 'Create'} User</button>
             </form>
         `;
+    },
+
+    createProfilePage(profileData) {
+        const { 
+            first_name, last_name, username, email, phone_number, 
+            subscription_plan, is_superuser, created_at, last_login,
+            owned_enterprises, staff_enterprises 
+        } = profileData;
+
+        const fullName = [first_name, last_name].filter(n => n).join(' ') || 'Not specified';
+        const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString() : 'Never';
+
+        const ownedEnterprisesSection = owned_enterprises && owned_enterprises.length > 0 ? `
+            <div class="profile-section">
+                <h3><i class="fas fa-building"></i> Owned Enterprises</h3>
+                <div class="enterprises-grid">
+                    ${owned_enterprises.map(enterprise => `
+                        <div class="enterprise-card owned">
+                            <div class="enterprise-header">
+                                ${enterprise.logo_url ? `<img src="${enterprise.logo_url}" alt="${enterprise.name} logo" class="enterprise-logo">` : ''}
+                                <div class="enterprise-info">
+                                    <h4>${enterprise.name}</h4>
+                                    <p class="enterprise-type">${enterprise.type}</p>
+                                    <p class="enterprise-location">${enterprise.city}, ${enterprise.country}</p>
+                                </div>
+                                <div class="enterprise-status ${enterprise.is_active ? 'active' : 'inactive'}">
+                                    ${enterprise.is_active ? 'Active' : 'Inactive'}
+                                </div>
+                            </div>
+                            <div class="enterprise-details">
+                                <p><strong>Email:</strong> ${enterprise.email}</p>
+                                <p><strong>Tax Year:</strong> ${enterprise.tax_year}</p>
+                                ${enterprise.description ? `<p><strong>Description:</strong> ${enterprise.description}</p>` : ''}
+                                ${enterprise.website ? `<p><strong>Website:</strong> <a href="${enterprise.website}" target="_blank">${enterprise.website}</a></p>` : ''}
+                                <div class="enterprise-stats">
+                                    <span class="stat">
+                                        <i class="fas fa-users"></i> ${enterprise.staff_count} Staff
+                                    </span>
+                                    <span class="stat">
+                                        <i class="fas fa-user-friends"></i> ${enterprise.client_count} Clients
+                                    </span>
+                                </div>
+                                <p class="enterprise-created">Created: ${formatDate(enterprise.created_at)}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : '';
+
+        const staffEnterprisesSection = staff_enterprises && staff_enterprises.length > 0 ? `
+            <div class="profile-section">
+                <h3><i class="fas fa-user-tie"></i> Staff Positions</h3>
+                <div class="enterprises-grid">
+                    ${staff_enterprises.map(enterprise => `
+                        <div class="enterprise-card staff">
+                            <div class="enterprise-header">
+                                ${enterprise.logo_url ? `<img src="${enterprise.logo_url}" alt="${enterprise.name} logo" class="enterprise-logo">` : ''}
+                                <div class="enterprise-info">
+                                    <h4>${enterprise.name}</h4>
+                                    <p class="enterprise-type">${enterprise.type}</p>
+                                    <p class="enterprise-location">${enterprise.city}, ${enterprise.country}</p>
+                                </div>
+                                <div class="enterprise-status ${enterprise.is_active ? 'active' : 'inactive'}">
+                                    ${enterprise.is_active ? 'Active' : 'Inactive'}
+                                </div>
+                            </div>
+                            <div class="enterprise-details">
+                                <p><strong>Email:</strong> ${enterprise.email}</p>
+                                <p><strong>Role:</strong> <span class="role-badge">${enterprise.role}</span></p>
+                                <p><strong>Permission:</strong> <span class="permission-badge">${enterprise.permission}</span></p>
+                                ${enterprise.website ? `<p><strong>Website:</strong> <a href="${enterprise.website}" target="_blank">${enterprise.website}</a></p>` : ''}
+                                <p class="enterprise-joined">Joined: ${formatDate(enterprise.joined_at)}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : '';
+
+        return `
+            <div class="profile-container">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="profile-basic-info">
+                        <h1>${fullName}</h1>
+                        <p class="username">@${username}</p>
+                        <p class="email">${email}</p>
+                        ${is_superuser ? '<span class="admin-badge">Administrator</span>' : ''}
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <h3><i class="fas fa-user"></i> Personal Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Full Name:</label>
+                            <span>${fullName}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Username:</label>
+                            <span>${username}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Email:</label>
+                            <span>${email}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Phone:</label>
+                            <span>${phone_number || 'Not specified'}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Subscription:</label>
+                            <span class="subscription-badge ${subscription_plan.toLowerCase()}">${subscription_plan}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Member Since:</label>
+                            <span>${formatDate(created_at)}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Last Login:</label>
+                            <span>${formatDate(last_login)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${ownedEnterprisesSection}
+                ${staffEnterprisesSection}
+
+                <div class="profile-actions">
+                    <button class="btn btn-primary" onclick="app.showEditProfile()">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </button>
+                    <button class="btn btn-secondary" onclick="app.showChangePassword()">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
+                </div>
+            </div>
+        `;
     }
     // Add more components like tables, modals, etc. later
 };

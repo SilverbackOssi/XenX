@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status, APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
-from app.schemas.schema import UserCreate, UserResponse, UserRegisterResponse
+from app.auth.schemas.user_schemas import UserCreate, UserResponse, UserRegisterResponse
 from app.auth.schemas.auth_schemas import LoginRequest, TokenResponse, RefreshRequest, LoginResponse
 from app.auth.services.auth_service import AuthService
 from app.auth.services.email_service import EmailService

@@ -3,8 +3,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
-from app.schemas.schema import UserResponse, UserUpdate
-from app.auth.schemas.profile_schemas import ChangePasswordRequest, UserProfileResponse
+from app.auth.schemas.user_schemas import UserResponse
+from app.auth.schemas.profile_schemas import ChangePasswordRequest, UserProfileResponse, UserUpdate
 from app.auth.models.users import User
 from app.auth.services.profile_service import ProfileService
 from app.auth.services.token_service import TokenService

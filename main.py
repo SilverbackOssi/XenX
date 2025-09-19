@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-from app.routes.routes import *
+from app.gateway.routes.routes import *
 from app.auth.database import engine, Base
 from app.frontend import create_frontend_app
 from app.auth.seeder import seed_database

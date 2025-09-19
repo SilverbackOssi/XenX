@@ -1,5 +1,5 @@
 '''
-Temporal routes to aid development and testing.
+Temporal unprotected routes to aid development and testing.
 These endpoints are designed to facilitate development and testing processes.
 NOTE: These routes are intended for development purposes only and may be deprecated in the future.
 '''
@@ -9,13 +9,13 @@ from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
-from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 
 from app.auth.database import get_db
 from app.auth.models.users import User, SubscriptionPlans
 from app.auth.schemas.user_schemas import UserCreate, UserResponse
 from app.enterprises.models.enterprises import Enterprise
+from app.gateway.users.admin.schemas.schema import UserCreateAdmin, UserUpdateAdmin, UserSubscriptionUpdate, UsersCreateBatch
 
 # Password context for hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -23,34 +23,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def hash_password(password: str) -> str:
     """Hash a password using bcrypt"""
     return pwd_context.hash(password)
-
-
-# Define admin-specific schemas
-class UserCreateAdmin(UserCreate):
-    """Schema for admin to create users with additional fields"""
-    is_active: bool = True
-    is_superuser: bool = False
-    email_verified: bool = False
-
-class UserUpdateAdmin(BaseModel):
-    """Schema for admin to update users"""
-    email: Optional[EmailStr] = None
-    username: Optional[str] = None
-    last_name: Optional[str] = None
-    first_name: Optional[str] = None
-    phone_number: Optional[str] = None
-    is_active: Optional[bool] = None
-    is_superuser: Optional[bool] = None
-    email_verified: Optional[bool] = None
-    subscription_plan: Optional[SubscriptionPlans] = None
-
-class UserSubscriptionUpdate(BaseModel):
-    """Schema for updating user subscription"""
-    subscription_plan: SubscriptionPlans
-
-class UsersCreateBatch(BaseModel):
-    """Schema for batch user creation"""
-    users: List[UserCreateAdmin]
 
 
 admin_router = APIRouter(prefix="/admin", tags=["Admin"])

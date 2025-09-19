@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.auth.database import get_db
-from app.auth.schemas.auth_schemas import (
+from app.gateway.auth.database import get_db
+from ..schemas.auth_schemas import (
     ForgotPasswordSchema, 
     LoginWithCodeSchema, 
     ResetPasswordSchema, 
@@ -11,8 +11,8 @@ from app.auth.schemas.auth_schemas import (
     MessageResponse,
     AccountRecoveryRequest
 )
-from app.auth.services.auth_service import AuthService
-from app.auth.services.email_service import EmailService
+from ..services.auth_service import AuthService
+from ..services.email_service import EmailService
 
 
 email_service = EmailService()

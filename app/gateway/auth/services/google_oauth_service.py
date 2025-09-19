@@ -4,8 +4,8 @@ from google.auth.transport import requests
 import httpx
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.auth.models.users import User
-from app.auth.services.auth_service import AuthService
+from ..models.users import User
+from ..services.auth_service import AuthService
 import secrets
 from datetime import datetime, timezone
 import string

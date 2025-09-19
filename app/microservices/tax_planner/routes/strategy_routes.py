@@ -9,8 +9,8 @@ from app.microservices.tax_planner.schemas.strategy_schemas import (
     RecommendedStrategiesResponse
 )
 from app.microservices.tax_planner.services.strategy_service import StrategyService
-from app.auth.services.token_service import TokenService
-from app.auth.models.users import User
+from app.gateway.auth.services.token_service import TokenService
+from app.gateway.auth.models.users import User
 
 strategy_router = APIRouter(prefix="/enterprises", tags=["Tax Strategies"])
 

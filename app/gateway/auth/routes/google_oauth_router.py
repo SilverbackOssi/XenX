@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.database import get_db
-from app.auth.services.google_oauth_service import GoogleOAuthService
-from app.auth.services.token_service import TokenService
+from app.gateway.auth.database import get_db
+from ..services.google_oauth_service import GoogleOAuthService
+from ..services.token_service import TokenService
 from app.config import get_settings
 
 settings = get_settings()

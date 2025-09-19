@@ -4,8 +4,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 import jwt
 from fastapi import Depends, HTTPException, status
-from app.auth.models.users import User
-from app.auth.database import get_db
+from ..models.users import User
+from app.gateway.auth.database import get_db
 from app.config import get_settings
 
 settings = get_settings()

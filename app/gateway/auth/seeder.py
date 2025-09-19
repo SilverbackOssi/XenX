@@ -5,8 +5,8 @@ from faker import Faker
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from app.auth.database import AsyncSessionLocal
-from app.auth.models.users import User, SubscriptionPlans
+from app.gateway.auth.database import AsyncSessionLocal
+from app.gateway.auth.models.users import User, SubscriptionPlans
 from app.gateway.enterprises.models.enterprises import Staff, StaffRole, Client, Enterprise, EnterpriseType
 from app.config import get_settings
 

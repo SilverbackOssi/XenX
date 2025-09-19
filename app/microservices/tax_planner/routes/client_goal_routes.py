@@ -8,8 +8,8 @@ from app.microservices.tax_planner.schemas.strategy_schemas import (
 	ClientGoalResponse, CustomGoalResponse, CustomGoalCreate
 )
 from app.microservices.tax_planner.services.strategy_service import StrategyService
-from app.auth.services.token_service import TokenService
-from app.auth.models.users import User
+from app.gateway.auth.services.token_service import TokenService
+from app.gateway.auth.models.users import User
 
 client_goal_router = APIRouter(prefix="/enterprises", tags=["Client Goals"])
 

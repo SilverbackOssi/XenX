@@ -1,7 +1,7 @@
 from datetime import datetime
 import enum
 from sqlalchemy import Column, Integer, String, DateTime, Float, Text, Boolean, Enum as SQLAEnum
-from app.auth.database import Base
+from app.gateway.auth.database import Base
 
 class SubscriptionPlans(str, enum.Enum):
     FREE = "free"

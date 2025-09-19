@@ -9,6 +9,7 @@ from app.auth.services.auth_service import AuthService
 from ..models.enterprises import Enterprise, Staff, StaffPermission, Client
 from ..schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse
 from ..schemas.staff_schemas import StaffInvitation
+from ..schemas.staff_schemas import StaffResponse
 from app.auth.models.users import User
 from app.config import get_settings
 
@@ -375,10 +376,8 @@ class EnterpriseService:
             )
             invited_client_result = await self.db.execute(invited_client_query)
             invited_clients = invited_client_result.scalars().all()
-            
+
             # Prepare StaffResponse data
-            from app.enterprises.schemas.staff_schemas import StaffResponse
-            
             response_data = {
                 "email": staff.user_details.email,
                 "role": staff.role,
@@ -434,8 +433,6 @@ class EnterpriseService:
                 invited_clients = invited_client_result.scalars().all()
                 
                 # Prepare StaffResponse data
-                from app.enterprises.schemas.staff_schemas import StaffResponse
-                
                 response_data = {
                     "email": staff.user_details.email,
                     "role": staff.role,

@@ -1653,6 +1653,41 @@ label input[type="checkbox"] {
     background-color: var(--background-color);
 }
 
+.tab-content {
+    margin-top: 20px;
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.tab-btn {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tab-btn:hover {
+    background-color: var(--background-color);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background-color: var(--background-color);
+}
+
 .admin-table {
     width: 100%;
     border-collapse: collapse;
@@ -2078,6 +2113,97 @@ label input[type="checkbox"] {
     .admin-table th,
     .admin-table td {
         padding: 8px 12px;
+    }
+}
+
+/* Auth Required and Error Pages */
+.auth-required-page,
+.access-denied-page,
+.error-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    padding: 40px 20px;
+}
+
+.auth-card,
+.error-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    max-width: 500px;
+    width: 100%;
+}
+
+.auth-card h2,
+.error-card h2 {
+    margin: 0 0 16px 0;
+    color: var(--text-color);
+}
+
+.auth-card p,
+.error-card p {
+    margin: 0 0 24px 0;
+    color: var(--text-color);
+    opacity: 0.8;
+    line-height: 1.5;
+}
+
+.user-info {
+    background: var(--background-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 20px 0;
+}
+
+.user-info p {
+    margin: 8px 0;
+    font-size: 0.9rem;
+}
+
+.auth-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.error-details {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.error-details summary {
+    cursor: pointer;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.error-details pre {
+    background: var(--background-color);
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 0.8rem;
+    overflow-x: auto;
+    color: #e74c3c;
+}
+
+@media (max-width: 768px) {
+    .auth-card,
+    .error-card {
+        padding: 24px;
+    }
+    
+    .auth-actions {
+        flex-direction: column;
+    }
+    
+    .auth-actions .btn {
+        width: 100%;
     }
 }
 

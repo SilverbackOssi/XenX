@@ -5,7 +5,7 @@ from sqlalchemy import func
 from app.auth.models.users import User
 from app.auth.schemas.profile_schemas import UserUpdate, UserProfileResponse, SimpleEnterpriseResponse, SimpleStaffEnterpriseResponse
 from app.auth.services.auth_service import AuthService, PasswordPolicy
-from app.enterprises.models.enterprises import Enterprise, Staff, Client
+from app.gateway.enterprises.models.enterprises import Enterprise, Staff, Client
 from fastapi import HTTPException, status
 from typing import Optional
 

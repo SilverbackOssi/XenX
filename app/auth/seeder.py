@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.auth.database import AsyncSessionLocal
 from app.auth.models.users import User, SubscriptionPlans
-from app.enterprises.models.enterprises import Staff, StaffRole, Client, Enterprise, EnterpriseType
+from app.gateway.enterprises.models.enterprises import Staff, StaffRole, Client, Enterprise, EnterpriseType
 from app.config import get_settings
 
 fake = Faker()

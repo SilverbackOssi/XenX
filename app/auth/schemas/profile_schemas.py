@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field, EmailStr, StringConstraints
 from typing import Optional, Annotated, List
 from datetime import datetime
-from app.enterprises.models.enterprises import EnterpriseType
-from app.enterprises.models.permissions import StaffRole, StaffPermission
+from app.gateway.enterprises.models.enterprises import EnterpriseType
+from app.gateway.enterprises.models.permissions import StaffRole, StaffPermission
 
 class ChangePasswordRequest(BaseModel):
     """Schema for change password request"""

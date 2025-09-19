@@ -14,7 +14,7 @@ from passlib.context import CryptContext
 from app.auth.database import get_db
 from app.auth.models.users import User, SubscriptionPlans
 from app.auth.schemas.user_schemas import UserCreate, UserResponse
-from app.enterprises.models.enterprises import Enterprise
+from app.gateway.enterprises.models.enterprises import Enterprise
 from app.gateway.users.admin.schemas.schema import UserCreateAdmin, UserUpdateAdmin, UserSubscriptionUpdate, UsersCreateBatch
 
 # Password context for hashing

@@ -1,7 +1,7 @@
 from typing import Optional, List
 from pydantic import BaseModel, Field
 from datetime import datetime
-from app.enterprises.models.enterprises import EnterpriseType
+from ..models.enterprises import EnterpriseType
 
 class EnterpriseBase(BaseModel):
     name: str

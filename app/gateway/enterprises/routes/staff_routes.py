@@ -4,11 +4,11 @@ from typing import List
 from app.auth.database import get_db
 from app.auth.models.users import User
 from app.auth.services.token_service import TokenService
-from app.enterprises.models.enterprises import Enterprise
-from app.enterprises.models.permissions import StaffPermission
-from app.enterprises.schemas.staff_schemas import StaffPermissionUpdate, StaffResponse
-from app.enterprises.services.enterprise_service import EnterpriseService
-from app.enterprises.services.permission_service import PermissionService
+from ..models.enterprises import Enterprise
+from ..models.permissions import StaffPermission
+from ..schemas.staff_schemas import StaffPermissionUpdate, StaffResponse
+from ..services.enterprise_service import EnterpriseService
+from ..services.permission_service import PermissionService
 
 
 staff_router = APIRouter(prefix="/enterprises", tags=["Enterprise Staffs"])

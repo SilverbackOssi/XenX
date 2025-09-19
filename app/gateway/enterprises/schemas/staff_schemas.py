@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List
-from app.enterprises.models.enterprises import StaffRole, StaffPermission
+from ..models.enterprises import StaffRole, StaffPermission
 
 # class StaffInvitationItem(BaseModel):
 #     email: EmailStr

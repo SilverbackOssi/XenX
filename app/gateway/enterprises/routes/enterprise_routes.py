@@ -4,13 +4,13 @@ from typing import List
 from app.auth.database import get_db
 from app.auth.services.token_service import TokenService
 from app.auth.models.users import User
-from app.enterprises.schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse
-from app.enterprises.services.enterprise_service import EnterpriseService
+from ..schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse
+from ..services.enterprise_service import EnterpriseService
 
-from app.enterprises.schemas.staff_schemas import StaffInvitation, MultipleStaffInvitations
+from ..schemas.staff_schemas import StaffInvitation, MultipleStaffInvitations
 from fastapi.responses import RedirectResponse
 from app.config import get_settings
-from app.enterprises.services.permission_service import PermissionService
+from ..services.permission_service import PermissionService
 
 settings = get_settings()
 

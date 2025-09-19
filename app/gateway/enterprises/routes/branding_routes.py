@@ -7,10 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.database import get_db
 from app.auth.models.users import User
 from app.auth.services.token_service import TokenService
-from app.enterprises.models.enterprises import Enterprise
-from app.enterprises.services.enterprise_service import EnterpriseService
-from app.enterprises.schemas.branding_schemas import BrandingUpdate, BrandingResponse
-from app.enterprises.services.permission_service import PermissionService
+from ..models.enterprises import Enterprise
+from ..services.enterprise_service import EnterpriseService
+from ..schemas.branding_schemas import BrandingUpdate, BrandingResponse
+from ..services.permission_service import PermissionService
 
 # Create uploads directory if it doesn't exist
 UPLOAD_DIR = Path("uploads/logos")

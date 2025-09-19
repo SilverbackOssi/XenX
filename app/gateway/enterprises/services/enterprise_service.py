@@ -6,9 +6,9 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from app.auth.services.email_service import EmailService
 from app.auth.services.auth_service import AuthService
-from app.enterprises.models.enterprises import Enterprise, Staff, StaffPermission, Client
-from app.enterprises.schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse
-from app.enterprises.schemas.staff_schemas import StaffInvitation
+from ..models.enterprises import Enterprise, Staff, StaffPermission, Client
+from ..schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse
+from ..schemas.staff_schemas import StaffInvitation
 from app.auth.models.users import User
 from app.config import get_settings
 

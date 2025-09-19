@@ -945,17 +945,169 @@ label input[type="checkbox"] {
     margin: 0;
 }
 
+/* Catalog Toggle Button */
+.catalog-toggle,
+.response-toggle {
+    margin-top: 15px;
+    margin-right: 10px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    background: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.catalog-toggle:hover,
+.response-toggle:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.catalog-toggle i,
+.response-toggle i {
+    font-size: 1.2rem;
+}
+
+@media (max-width: 1200px) {
+    .catalog-toggle {
+        display: inline-flex;
+    }
+}
+
+@media (max-width: 768px) {
+    .response-toggle {
+        display: inline-flex;
+    }
+    
+    .catalog-toggle,
+    .response-toggle {
+        margin: 10px 5px 0 5px;
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
+}
+
 .api-explorer-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
+    grid-template-columns: 1fr 1fr 350px;
+    gap: 20px;
     min-height: 600px;
+    position: relative;
+}
+
+@media (max-width: 1600px) {
+    .api-explorer-layout {
+        grid-template-columns: 1fr 1fr 320px;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 1400px) {
+    .api-explorer-layout {
+        grid-template-columns: 1fr 1fr 300px;
+        gap: 15px;
+    }
 }
 
 @media (max-width: 1200px) {
     .api-explorer-layout {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    
+    .api-catalog-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: 350px;
+        z-index: 1000;
+        background: white;
+        border-left: 2px solid var(--border-color);
+        box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .api-catalog-panel.open {
+        transform: translateX(0);
+    }
+    
+    .catalog-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .catalog-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+@media (max-width: 768px) {
+    .api-explorer-layout {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 15px;
+    }
+    
+    .api-response-panel {
+        order: 3;
+    }
+    
+    .api-catalog-panel {
+        width: 90%;
+        max-width: 350px;
+    }
+    
+    .api-explorer-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .api-explorer-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    /* Make buttons and form elements more touch-friendly */
+    .endpoint-item {
+        padding: 15px;
+        min-height: 50px;
+    }
+    
+    .example-btn {
+        padding: 10px 16px;
+        min-height: 40px;
+    }
+    
+    .form-control, .btn {
+        min-height: 44px;
+    }
+    
+    /* Improve scrolling on mobile */
+    .endpoint-catalog {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Better spacing for mobile */
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-actions {
+        margin-top: 20px;
     }
 }
 
@@ -1250,5 +1402,226 @@ label input[type="checkbox"] {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+/* Endpoint Catalog Styles */
+.api-catalog-panel {
+    max-height: calc(100vh - 200px);
+    overflow: hidden;
+}
+
+.api-catalog-panel .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.api-catalog-panel .card-body {
+    flex: 1;
+    padding: 0;
+    overflow: hidden;
+}
+
+@media (max-width: 1200px) {
+    .api-catalog-panel {
+        max-height: 100vh;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    
+    .api-catalog-panel .card-header {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+        border-bottom: 2px solid var(--border-color);
+    }
+}
+
+.endpoint-catalog {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.catalog-loading,
+.catalog-error,
+.catalog-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.catalog-loading i,
+.catalog-error i,
+.catalog-empty i {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    color: #ccc;
+    display: block;
+}
+
+.catalog-error {
+    color: #dc3545;
+}
+
+.catalog-error i {
+    color: #dc3545;
+}
+
+.catalog-error small {
+    display: block;
+    margin: 10px 0;
+    color: #666;
+}
+
+/* Endpoint Groups */
+.endpoint-group {
+    margin-bottom: 25px;
+}
+
+.endpoint-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+    color: #333;
+}
+
+.endpoint-group-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.endpoint-count {
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.endpoint-list {
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+}
+
+/* Endpoint Items */
+.endpoint-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.endpoint-item:hover {
+    background: #f8f9fa;
+    border-left: 4px solid var(--primary-color);
+    padding-left: 11px;
+}
+
+.endpoint-item.selected {
+    background: #e3f2fd;
+    border-left: 4px solid var(--primary-color);
+    padding-left: 11px;
+}
+
+.endpoint-item:last-child {
+    border-bottom: none;
+}
+
+.endpoint-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.endpoint-method {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    min-width: 55px;
+    text-align: center;
+}
+
+/* HTTP Method Colors */
+.endpoint-method.get {
+    background: #61affe;
+    color: white;
+}
+
+.endpoint-method.post {
+    background: #49cc90;
+    color: white;
+}
+
+.endpoint-method.put {
+    background: #fca130;
+    color: white;
+}
+
+.endpoint-method.patch {
+    background: #50e3c2;
+    color: white;
+}
+
+.endpoint-method.delete {
+    background: #f93e3e;
+    color: white;
+}
+
+.endpoint-path {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #333;
+    word-break: break-all;
+    flex: 1;
+}
+
+.endpoint-summary {
+    font-size: 0.8rem;
+    color: #666;
+    line-height: 1.3;
+    margin-left: 67px;
+    font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+    .endpoint-method {
+        min-width: 45px;
+        font-size: 0.65rem;
+    }
+    
+    .endpoint-path {
+        font-size: 0.8rem;
+    }
+    
+    .endpoint-summary {
+        margin-left: 57px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 1000px) {
+    .api-catalog-panel {
+        margin-top: 20px;
+        max-height: 400px;
+    }
 }
 

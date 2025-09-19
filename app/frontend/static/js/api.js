@@ -142,6 +142,20 @@ const api = {
 
     async getSystemStats() {
         return await this.request('/admin/stats');
+    },
+
+    // OpenAPI/Swagger endpoints
+    async getOpenApiSpec() {
+        try {
+            const response = await fetch('/api/v1/openapi.json');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return { success: true, data: await response.json() };
+        } catch (error) {
+            console.error('Failed to fetch OpenAPI spec:', error);
+            return { success: false, error: { detail: error.message } };
+        }
     }
 };
 

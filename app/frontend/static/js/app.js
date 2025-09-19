@@ -536,6 +536,7 @@ const app = {
     showApiExplorerPage() {
         ui.render(components.createApiExplorer());
         this.attachApiExplorerEventListeners();
+        this.loadEndpointCatalog();
     },
 
     attachApiExplorerEventListeners() {
@@ -587,9 +588,136 @@ const app = {
             this.clearApiHistory();
         });
 
+        // Refresh endpoints button
+        document.getElementById('refresh-endpoints').addEventListener('click', () => {
+            this.loadEndpointCatalog();
+        });
+
+        // Toggle catalog button (for mobile)
+        const toggleBtn = document.getElementById('toggle-catalog');
+        const catalogPanel = document.querySelector('.api-catalog-panel');
+        const catalogOverlay = document.getElementById('catalog-overlay');
+        
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                this.toggleEndpointCatalog();
+            });
+        }
+
+        // Toggle response button (for mobile)
+        const toggleResponseBtn = document.getElementById('toggle-response');
+        if (toggleResponseBtn) {
+            toggleResponseBtn.addEventListener('click', () => {
+                this.toggleResponsePanel();
+            });
+        }
+
+        if (catalogOverlay) {
+            catalogOverlay.addEventListener('click', () => {
+                this.hideEndpointCatalog();
+            });
+        }
+
+        // Close catalog on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && catalogPanel && catalogPanel.classList.contains('open')) {
+                this.hideEndpointCatalog();
+            }
+        });
+
+        // Update toggle button visibility based on screen size
+        this.updateToggleButtonsVisibility();
+        window.addEventListener('resize', () => {
+            this.updateToggleButtonsVisibility();
+        });
+
         // Initialize UI state
         document.getElementById('http-method').dispatchEvent(new Event('change'));
         document.getElementById('use-auth').dispatchEvent(new Event('change'));
+    },
+
+    updateToggleButtonsVisibility() {
+        const toggleBtn = document.getElementById('toggle-catalog');
+        const toggleResponseBtn = document.getElementById('toggle-response');
+        
+        if (toggleBtn) {
+            if (window.innerWidth <= 1200) {
+                toggleBtn.style.display = 'inline-flex';
+            } else {
+                toggleBtn.style.display = 'none';
+                this.hideEndpointCatalog(); // Close catalog if screen gets larger
+            }
+        }
+
+        if (toggleResponseBtn) {
+            if (window.innerWidth <= 768) {
+                toggleResponseBtn.style.display = 'inline-flex';
+            } else {
+                toggleResponseBtn.style.display = 'none';
+            }
+        }
+    },
+
+    toggleResponsePanel() {
+        const responsePanel = document.querySelector('.api-response-panel');
+        if (responsePanel) {
+            const isHidden = responsePanel.style.display === 'none';
+            
+            if (isHidden) {
+                responsePanel.style.display = 'block';
+                responsePanel.scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('toggle-response').innerHTML = '<i class="material-icons">visibility_off</i> Hide Response';
+            } else {
+                responsePanel.style.display = 'none';
+                document.getElementById('toggle-response').innerHTML = '<i class="material-icons">receipt_long</i> Show Response';
+            }
+        }
+    },
+
+    toggleEndpointCatalog() {
+        const catalogPanel = document.querySelector('.api-catalog-panel');
+        const catalogOverlay = document.getElementById('catalog-overlay');
+        const toggleBtn = document.getElementById('toggle-catalog');
+        
+        if (catalogPanel && catalogOverlay && toggleBtn) {
+            const isOpen = catalogPanel.classList.contains('open');
+            
+            if (isOpen) {
+                this.hideEndpointCatalog();
+            } else {
+                this.showEndpointCatalog();
+            }
+        }
+    },
+
+    showEndpointCatalog() {
+        const catalogPanel = document.querySelector('.api-catalog-panel');
+        const catalogOverlay = document.getElementById('catalog-overlay');
+        const toggleBtn = document.getElementById('toggle-catalog');
+        
+        if (catalogPanel && catalogOverlay && toggleBtn) {
+            catalogPanel.classList.add('open');
+            catalogOverlay.classList.add('active');
+            toggleBtn.innerHTML = '<i class="material-icons">close</i> Hide Endpoints';
+            
+            // Prevent body scroll when catalog is open on mobile
+            document.body.style.overflow = 'hidden';
+        }
+    },
+
+    hideEndpointCatalog() {
+        const catalogPanel = document.querySelector('.api-catalog-panel');
+        const catalogOverlay = document.getElementById('catalog-overlay');
+        const toggleBtn = document.getElementById('toggle-catalog');
+        
+        if (catalogPanel && catalogOverlay && toggleBtn) {
+            catalogPanel.classList.remove('open');
+            catalogOverlay.classList.remove('active');
+            toggleBtn.innerHTML = '<i class="material-icons">menu_open</i> Show Endpoints';
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
     },
 
     loadApiExample(example) {
@@ -955,6 +1083,258 @@ const app = {
             this.renderApiHistory();
             ui.showNotification('Request history cleared', 'info');
         }
+    },
+
+    async loadEndpointCatalog() {
+        const catalogElement = document.getElementById('endpoint-catalog');
+        const refreshBtn = document.getElementById('refresh-endpoints');
+        
+        // Show loading state
+        catalogElement.innerHTML = `
+            <div class="catalog-loading">
+                <i class="material-icons">hourglass_empty</i>
+                <p>Loading endpoints...</p>
+            </div>
+        `;
+        
+        if (refreshBtn) {
+            refreshBtn.disabled = true;
+            const originalText = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<i class="material-icons">hourglass_empty</i> Loading...';
+        }
+
+        try {
+            const response = await api.getOpenApiSpec();
+            
+            if (response.success) {
+                this.renderEndpointCatalog(response.data);
+                ui.showNotification('Endpoint catalog refreshed', 'success');
+            } else {
+                catalogElement.innerHTML = `
+                    <div class="catalog-error">
+                        <i class="material-icons">error</i>
+                        <p>Failed to load endpoints</p>
+                        <small>${response.error?.detail || 'Unknown error'}</small>
+                        <button class="btn btn-sm btn-primary" onclick="app.loadEndpointCatalog()">
+                            <i class="material-icons">refresh</i> Retry
+                        </button>
+                    </div>
+                `;
+                ui.showNotification('Failed to load endpoint catalog', 'error');
+            }
+        } catch (error) {
+            console.error('Error loading endpoint catalog:', error);
+            catalogElement.innerHTML = `
+                <div class="catalog-error">
+                    <i class="material-icons">error</i>
+                    <p>Network error</p>
+                    <small>${error.message}</small>
+                    <button class="btn btn-sm btn-primary" onclick="app.loadEndpointCatalog()">
+                        <i class="material-icons">refresh</i> Retry
+                    </button>
+                </div>
+            `;
+        } finally {
+            if (refreshBtn) {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<i class="material-icons">refresh</i> Refresh';
+            }
+        }
+    },
+
+    renderEndpointCatalog(openApiSpec) {
+        const catalogElement = document.getElementById('endpoint-catalog');
+        
+        // Group endpoints by tags
+        const endpointsByTag = {};
+        const paths = openApiSpec.paths || {};
+        
+        Object.keys(paths).forEach(path => {
+            const pathObject = paths[path];
+            Object.keys(pathObject).forEach(method => {
+                if (['get', 'post', 'put', 'patch', 'delete'].includes(method.toLowerCase())) {
+                    const operation = pathObject[method];
+                    const tags = operation.tags || ['Other'];
+                    const tag = tags[0]; // Use first tag
+                    
+                    if (!endpointsByTag[tag]) {
+                        endpointsByTag[tag] = [];
+                    }
+                    
+                    endpointsByTag[tag].push({
+                        method: method.toUpperCase(),
+                        path: path,
+                        summary: operation.summary || '',
+                        description: operation.description || '',
+                        operationId: operation.operationId || '',
+                        parameters: operation.parameters || [],
+                        requestBody: operation.requestBody || null,
+                        responses: operation.responses || {}
+                    });
+                }
+            });
+        });
+
+        // Sort tags alphabetically, but put common ones first
+        const tagOrder = ['Auth', 'Users', 'Enterprises', 'Admin', 'Health'];
+        const sortedTags = Object.keys(endpointsByTag).sort((a, b) => {
+            const aIndex = tagOrder.indexOf(a);
+            const bIndex = tagOrder.indexOf(b);
+            
+            if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+            if (aIndex !== -1) return -1;
+            if (bIndex !== -1) return 1;
+            return a.localeCompare(b);
+        });
+
+        // Create HTML for endpoint catalog
+        let catalogHtml = '';
+        
+        if (sortedTags.length === 0) {
+            catalogHtml = `
+                <div class="catalog-empty">
+                    <i class="material-icons">api_off</i>
+                    <p>No endpoints found</p>
+                </div>
+            `;
+        } else {
+            catalogHtml = sortedTags.map(tag => {
+                const endpoints = endpointsByTag[tag];
+                const endpointItems = endpoints.map(endpoint => {
+                    const methodClass = endpoint.method.toLowerCase();
+                    return `
+                        <div class="endpoint-item" 
+                             data-method="${endpoint.method}" 
+                             data-path="${endpoint.path}"
+                             data-summary="${endpoint.summary}"
+                             data-description="${endpoint.description}"
+                             data-request-body='${JSON.stringify(endpoint.requestBody).replace(/'/g, "&apos;")}'>
+                            <div class="endpoint-header">
+                                <span class="endpoint-method ${methodClass}">${endpoint.method}</span>
+                                <span class="endpoint-path">${endpoint.path}</span>
+                            </div>
+                            <div class="endpoint-summary">${endpoint.summary || 'No description'}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="endpoint-group">
+                        <div class="endpoint-group-header">
+                            <h4><i class="material-icons">folder</i> ${tag}</h4>
+                            <span class="endpoint-count">${endpoints.length}</span>
+                        </div>
+                        <div class="endpoint-list">
+                            ${endpointItems}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        catalogElement.innerHTML = catalogHtml;
+
+        // Add click listeners to endpoint items
+        document.querySelectorAll('.endpoint-item').forEach(item => {
+            item.addEventListener('click', () => {
+                this.selectEndpointFromCatalog(item);
+            });
+        });
+    },
+
+    selectEndpointFromCatalog(endpointElement) {
+        const method = endpointElement.dataset.method;
+        const path = endpointElement.dataset.path;
+        const summary = endpointElement.dataset.summary;
+        const requestBodyData = endpointElement.dataset.requestBody;
+
+        // Set form values
+        document.getElementById('http-method').value = method;
+        document.getElementById('endpoint-path').value = path;
+        
+        // Clear other fields
+        document.getElementById('request-headers').value = '';
+        document.getElementById('query-params').value = '';
+        document.getElementById('request-body').value = '';
+
+        // Try to populate sample request body if available
+        if (requestBodyData && requestBodyData !== 'null') {
+            try {
+                const requestBody = JSON.parse(requestBodyData.replace(/&apos;/g, "'"));
+                if (requestBody && requestBody.content && requestBody.content['application/json']) {
+                    const schema = requestBody.content['application/json'].schema;
+                    if (schema && schema.example) {
+                        document.getElementById('request-body').value = JSON.stringify(schema.example, null, 2);
+                    } else if (schema && schema.properties) {
+                        // Generate sample body from schema properties
+                        const sampleBody = this.generateSampleFromSchema(schema);
+                        if (sampleBody) {
+                            document.getElementById('request-body').value = JSON.stringify(sampleBody, null, 2);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error parsing request body schema:', error);
+            }
+        }
+
+        // Trigger method change to show/hide body field
+        document.getElementById('http-method').dispatchEvent(new Event('change'));
+
+        // Highlight selected endpoint
+        document.querySelectorAll('.endpoint-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        endpointElement.classList.add('selected');
+
+        // Show notification
+        ui.showNotification(`Selected ${method} ${path}`, 'info');
+
+        // Close catalog on mobile after selection
+        if (window.innerWidth <= 1200) {
+            setTimeout(() => {
+                this.hideEndpointCatalog();
+            }, 500); // Small delay to show the selection feedback
+        }
+    },
+
+    generateSampleFromSchema(schema) {
+        if (!schema || !schema.properties) return null;
+
+        const sample = {};
+        Object.keys(schema.properties).forEach(key => {
+            const property = schema.properties[key];
+            switch (property.type) {
+                case 'string':
+                    if (property.format === 'email') {
+                        sample[key] = 'user@example.com';
+                    } else if (property.format === 'password') {
+                        sample[key] = 'Password@123';
+                    } else {
+                        sample[key] = property.example || `example_${key}`;
+                    }
+                    break;
+                case 'integer':
+                    sample[key] = property.example || 1;
+                    break;
+                case 'number':
+                    sample[key] = property.example || 1.0;
+                    break;
+                case 'boolean':
+                    sample[key] = property.example !== undefined ? property.example : true;
+                    break;
+                case 'array':
+                    sample[key] = property.example || [];
+                    break;
+                case 'object':
+                    sample[key] = property.example || {};
+                    break;
+                default:
+                    sample[key] = property.example || null;
+            }
+        });
+        
+        return Object.keys(sample).length > 0 ? sample : null;
     },
 
     async logout() {

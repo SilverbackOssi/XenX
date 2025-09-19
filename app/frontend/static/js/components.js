@@ -486,7 +486,16 @@ const components = {
                 <div class="api-explorer-header">
                     <h1><i class="material-icons">api</i> API Explorer</h1>
                     <p>Test and explore all backend endpoints interactively</p>
+                    <button id="toggle-catalog" class="btn btn-outline catalog-toggle">
+                        <i class="material-icons">menu_open</i> Show Endpoints
+                    </button>
+                    <button id="toggle-response" class="btn btn-outline response-toggle">
+                        <i class="material-icons">receipt_long</i> Show Response
+                    </button>
                 </div>
+
+                <!-- Catalog Overlay (for mobile) -->
+                <div id="catalog-overlay" class="catalog-overlay"></div>
 
                 <div class="api-explorer-layout">
                     <!-- Left Panel: Request Builder -->
@@ -581,7 +590,7 @@ const components = {
                         </div>
                     </div>
 
-                    <!-- Right Panel: Response Display -->
+                    <!-- Middle Panel: Response Display -->
                     <div class="api-response-panel">
                         <div class="card">
                             <div class="card-header">
@@ -612,6 +621,26 @@ const components = {
                                 <div id="request-history" class="request-history">
                                     <div class="history-placeholder">
                                         <p>Request history will appear here</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Endpoint Catalog -->
+                    <div class="api-catalog-panel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="material-icons">api</i> Available Endpoints</h3>
+                                <button id="refresh-endpoints" class="btn btn-sm btn-outline">
+                                    <i class="material-icons">refresh</i> Refresh
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="endpoint-catalog" class="endpoint-catalog">
+                                    <div class="catalog-loading">
+                                        <i class="material-icons">hourglass_empty</i>
+                                        <p>Loading endpoints...</p>
                                     </div>
                                 </div>
                             </div>

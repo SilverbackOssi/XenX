@@ -28,7 +28,7 @@ def hash_password(password: str) -> str:
 admin_router = APIRouter(prefix="/admin", tags=["Admin"])
 
 @admin_router.get(
-    "/users/all", 
+    "/users", 
     response_model=List[UserResponse],
     summary="Get all users",
     description="Retrieves all users in the database. For development and testing only."

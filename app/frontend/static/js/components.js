@@ -478,6 +478,148 @@ const components = {
                 </form>
             </div>
         `;
+    },
+
+    createApiExplorer() {
+        return `
+            <div class="api-explorer">
+                <div class="api-explorer-header">
+                    <h1><i class="material-icons">api</i> API Explorer</h1>
+                    <p>Test and explore all backend endpoints interactively</p>
+                </div>
+
+                <div class="api-explorer-layout">
+                    <!-- Left Panel: Request Builder -->
+                    <div class="api-request-panel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="material-icons">send</i> Request Builder</h3>
+                            </div>
+                            <div class="card-body">
+                                <!-- Quick Examples -->
+                                <div class="quick-examples">
+                                    <h4>Quick Examples</h4>
+                                    <div class="example-buttons">
+                                        <button class="btn btn-sm btn-outline example-btn" data-example="health">Health Check</button>
+                                        <button class="btn btn-sm btn-outline example-btn" data-example="login">Login</button>
+                                        <button class="btn btn-sm btn-outline example-btn" data-example="register">Register</button>
+                                        <button class="btn btn-sm btn-outline example-btn" data-example="enterprises">Get Enterprises</button>
+                                        <button class="btn btn-sm btn-outline example-btn" data-example="users">Get Users</button>
+                                    </div>
+                                </div>
+
+                                <!-- Request Configuration -->
+                                <div class="request-config">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="http-method">HTTP Method</label>
+                                            <select id="http-method" class="form-control">
+                                                <option value="GET">GET</option>
+                                                <option value="POST">POST</option>
+                                                <option value="PUT">PUT</option>
+                                                <option value="PATCH">PATCH</option>
+                                                <option value="DELETE">DELETE</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group endpoint-group">
+                                            <label for="endpoint-path">Endpoint</label>
+                                            <div class="endpoint-input">
+                                                <span class="base-url">/api/v1</span>
+                                                <input type="text" id="endpoint-path" class="form-control" placeholder="/health" value="/health">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Authentication -->
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="use-auth" checked> 
+                                            Use Authentication Token
+                                        </label>
+                                        <div id="auth-token-group" class="auth-token-group">
+                                            <input type="text" id="auth-token" class="form-control" 
+                                                   placeholder="JWT token (leave empty to use current session)">
+                                            <small class="form-hint">Leave empty to use current session token automatically</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Headers -->
+                                    <div class="form-group">
+                                        <label for="request-headers">Headers</label>
+                                        <textarea id="request-headers" class="form-control code-editor" rows="4" 
+                                                  placeholder='{"Content-Type": "application/json"}'></textarea>
+                                        <small class="form-hint">JSON format. Content-Type and Authorization headers are added automatically.</small>
+                                    </div>
+
+                                    <!-- Query Parameters -->
+                                    <div class="form-group">
+                                        <label for="query-params">Query Parameters</label>
+                                        <textarea id="query-params" class="form-control code-editor" rows="3" 
+                                                  placeholder='{"limit": 10, "offset": 0}'></textarea>
+                                        <small class="form-hint">JSON format. Will be converted to URL query string.</small>
+                                    </div>
+
+                                    <!-- Request Body -->
+                                    <div class="form-group" id="request-body-group">
+                                        <label for="request-body">Request Body</label>
+                                        <textarea id="request-body" class="form-control code-editor" rows="8" 
+                                                  placeholder='{\n  "email": "user@example.com",\n  "password": "password123"\n}'></textarea>
+                                        <small class="form-hint">JSON format. Only for POST, PUT, PATCH requests.</small>
+                                    </div>
+
+                                    <!-- Send Button -->
+                                    <div class="form-actions">
+                                        <button id="send-request" class="btn btn-primary">
+                                            <i class="material-icons">send</i> Send Request
+                                        </button>
+                                        <button id="clear-request" class="btn btn-secondary">
+                                            <i class="material-icons">clear</i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Response Display -->
+                    <div class="api-response-panel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="material-icons">receipt_long</i> Response</h3>
+                                <div class="response-status" id="response-status">
+                                    Ready to send request
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="response-content" class="response-content">
+                                    <div class="response-placeholder">
+                                        <i class="material-icons">http</i>
+                                        <p>Send a request to see the response here</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Request History -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="material-icons">history</i> Request History</h3>
+                                <button id="clear-history" class="btn btn-sm btn-secondary">
+                                    <i class="material-icons">delete_sweep</i> Clear History
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="request-history" class="request-history">
+                                    <div class="history-placeholder">
+                                        <p>Request history will appear here</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
     // Add more components like tables, modals, etc. later
 };

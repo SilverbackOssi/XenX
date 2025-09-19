@@ -38,6 +38,7 @@ const app = {
         router.add('/admin', () => this.showAdminPage());
         router.add('/auth', () => this.showAuthPage());
         router.add('/profile', () => this.showProfilePage());
+        router.add('/api-explorer', () => this.showApiExplorerPage());
         router.add('/google-callback', () => this.handleGoogleCallback());
         router.add('/404', () => ui.render('<h2>404 Not Found</h2>'));
     },
@@ -530,6 +531,430 @@ const app = {
                 ui.showNotification(errorMessage, 'error');
             }
         });
+    },
+
+    showApiExplorerPage() {
+        ui.render(components.createApiExplorer());
+        this.attachApiExplorerEventListeners();
+    },
+
+    attachApiExplorerEventListeners() {
+        // Initialize API Explorer state
+        this.apiExplorer = {
+            history: JSON.parse(localStorage.getItem('apiExplorerHistory') || '[]')
+        };
+
+        // Load request history
+        this.renderApiHistory();
+
+        // Example buttons
+        document.querySelectorAll('.example-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const example = e.target.dataset.example;
+                this.loadApiExample(example);
+            });
+        });
+
+        // HTTP method change - show/hide body field
+        document.getElementById('http-method').addEventListener('change', (e) => {
+            const method = e.target.value;
+            const bodyGroup = document.getElementById('request-body-group');
+            if (['GET', 'DELETE'].includes(method)) {
+                bodyGroup.style.display = 'none';
+            } else {
+                bodyGroup.style.display = 'block';
+            }
+        });
+
+        // Auth checkbox
+        document.getElementById('use-auth').addEventListener('change', (e) => {
+            const tokenGroup = document.getElementById('auth-token-group');
+            tokenGroup.style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        // Send request button
+        document.getElementById('send-request').addEventListener('click', () => {
+            this.sendApiRequest();
+        });
+
+        // Clear request button
+        document.getElementById('clear-request').addEventListener('click', () => {
+            this.clearApiRequest();
+        });
+
+        // Clear history button
+        document.getElementById('clear-history').addEventListener('click', () => {
+            this.clearApiHistory();
+        });
+
+        // Initialize UI state
+        document.getElementById('http-method').dispatchEvent(new Event('change'));
+        document.getElementById('use-auth').dispatchEvent(new Event('change'));
+    },
+
+    loadApiExample(example) {
+        const examples = {
+            health: {
+                method: 'GET',
+                path: '/health',
+                headers: {},
+                params: {},
+                body: null
+            },
+            login: {
+                method: 'POST',
+                path: '/auth/login',
+                headers: {},
+                params: {},
+                body: {
+                    "email": "user@example.com",
+                    "password": "Password@123"
+                }
+            },
+            register: {
+                method: 'POST',
+                path: '/auth/register',
+                headers: {},
+                params: {},
+                body: {
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "username": "johndoe",
+                    "email": "john.doe@example.com",
+                    "password": "Password@123"
+                }
+            },
+            enterprises: {
+                method: 'GET',
+                path: '/enterprises/',
+                headers: {},
+                params: {},
+                body: null
+            },
+            users: {
+                method: 'GET',
+                path: '/admin/users/all',
+                headers: {},
+                params: {},
+                body: null
+            }
+        };
+
+        const config = examples[example];
+        if (!config) return;
+
+        // Set form values
+        document.getElementById('http-method').value = config.method;
+        document.getElementById('endpoint-path').value = config.path;
+        document.getElementById('request-headers').value = JSON.stringify(config.headers, null, 2);
+        document.getElementById('query-params').value = JSON.stringify(config.params, null, 2);
+        
+        if (config.body) {
+            document.getElementById('request-body').value = JSON.stringify(config.body, null, 2);
+        } else {
+            document.getElementById('request-body').value = '';
+        }
+
+        // Trigger method change to show/hide body
+        document.getElementById('http-method').dispatchEvent(new Event('change'));
+
+        // Show notification
+        ui.showNotification(`Loaded ${example} example`, 'info');
+    },
+
+    async sendApiRequest() {
+        const sendBtn = document.getElementById('send-request');
+        const originalText = sendBtn.innerHTML;
+        
+        try {
+            // Show loading state
+            sendBtn.innerHTML = '<i class="material-icons">hourglass_empty</i> Sending...';
+            sendBtn.disabled = true;
+
+            // Get form values
+            const method = document.getElementById('http-method').value;
+            const path = document.getElementById('endpoint-path').value;
+            const useAuth = document.getElementById('use-auth').checked;
+            const customToken = document.getElementById('auth-token').value.trim();
+
+            // Parse JSON fields
+            let headers = {};
+            let queryParams = {};
+            let body = null;
+
+            try {
+                const headersText = document.getElementById('request-headers').value.trim();
+                if (headersText) {
+                    headers = JSON.parse(headersText);
+                }
+            } catch (error) {
+                throw new Error('Invalid JSON in headers');
+            }
+
+            try {
+                const paramsText = document.getElementById('query-params').value.trim();
+                if (paramsText) {
+                    queryParams = JSON.parse(paramsText);
+                }
+            } catch (error) {
+                throw new Error('Invalid JSON in query parameters');
+            }
+
+            if (!['GET', 'DELETE'].includes(method)) {
+                const bodyText = document.getElementById('request-body').value.trim();
+                if (bodyText) {
+                    try {
+                        body = JSON.parse(bodyText);
+                    } catch (error) {
+                        throw new Error('Invalid JSON in request body');
+                    }
+                }
+            }
+
+            // Build URL with query parameters
+            let fullPath = path;
+            if (Object.keys(queryParams).length > 0) {
+                const queryString = new URLSearchParams(queryParams).toString();
+                fullPath += (path.includes('?') ? '&' : '?') + queryString;
+            }
+
+            // Prepare request
+            const requestConfig = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...headers
+                }
+            };
+
+            if (body) {
+                requestConfig.body = JSON.stringify(body);
+            }
+
+            // Handle authentication
+            if (useAuth) {
+                const token = customToken || api.token;
+                if (token) {
+                    requestConfig.headers['Authorization'] = `Bearer ${token}`;
+                }
+            }
+
+            // Record request start time
+            const startTime = Date.now();
+
+            // Make request
+            const response = await fetch(`/api/v1${fullPath}`, requestConfig);
+            
+            // Record response time
+            const responseTime = Date.now() - startTime;
+
+            // Parse response
+            let responseData;
+            const responseText = await response.text();
+            try {
+                responseData = responseText ? JSON.parse(responseText) : {};
+            } catch (error) {
+                responseData = { _rawResponse: responseText };
+            }
+
+            // Create response object
+            const apiResponse = {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok,
+                headers: Object.fromEntries(response.headers.entries()),
+                data: responseData,
+                responseTime
+            };
+
+            // Display response
+            this.displayApiResponse(apiResponse);
+
+            // Add to history
+            this.addToApiHistory({
+                timestamp: new Date().toISOString(),
+                method,
+                path: fullPath,
+                request: {
+                    headers: requestConfig.headers,
+                    body: body
+                },
+                response: apiResponse
+            });
+
+        } catch (error) {
+            console.error('API request error:', error);
+            this.displayApiResponse({
+                status: 0,
+                statusText: 'Request Failed',
+                ok: false,
+                headers: {},
+                data: { error: error.message },
+                responseTime: 0
+            });
+            
+            ui.showNotification(`Request failed: ${error.message}`, 'error');
+        } finally {
+            // Reset button state
+            sendBtn.innerHTML = originalText;
+            sendBtn.disabled = false;
+        }
+    },
+
+    clearApiRequest() {
+        document.getElementById('http-method').value = 'GET';
+        document.getElementById('endpoint-path').value = '/health';
+        document.getElementById('request-headers').value = '';
+        document.getElementById('query-params').value = '';
+        document.getElementById('request-body').value = '';
+        document.getElementById('use-auth').checked = true;
+        document.getElementById('auth-token').value = '';
+        
+        // Clear response
+        document.getElementById('response-content').innerHTML = `
+            <div class="response-placeholder">
+                <i class="material-icons">http</i>
+                <p>Send a request to see the response here</p>
+            </div>
+        `;
+        document.getElementById('response-status').textContent = 'Ready to send request';
+        document.getElementById('response-status').className = 'response-status';
+        
+        // Trigger change events
+        document.getElementById('http-method').dispatchEvent(new Event('change'));
+        document.getElementById('use-auth').dispatchEvent(new Event('change'));
+    },
+
+    displayApiResponse(response) {
+        const statusElement = document.getElementById('response-status');
+        const contentElement = document.getElementById('response-content');
+
+        // Update status
+        const statusClass = response.ok ? 'success' : 'error';
+        statusElement.textContent = `${response.status} ${response.statusText} (${response.responseTime}ms)`;
+        statusElement.className = `response-status ${statusClass}`;
+
+        // Format response content
+        const responseHtml = `
+            <div class="response-details">
+                <div class="response-section">
+                    <h4><i class="material-icons">info</i> Status</h4>
+                    <div class="status-badge ${statusClass}">
+                        ${response.status} ${response.statusText}
+                    </div>
+                    <div class="response-time">Response time: ${response.responseTime}ms</div>
+                </div>
+
+                <div class="response-section">
+                    <h4><i class="material-icons">http</i> Headers</h4>
+                    <pre class="code-block">${JSON.stringify(response.headers, null, 2)}</pre>
+                </div>
+
+                <div class="response-section">
+                    <h4><i class="material-icons">data_object</i> Body</h4>
+                    <pre class="code-block">${JSON.stringify(response.data, null, 2)}</pre>
+                </div>
+            </div>
+        `;
+
+        contentElement.innerHTML = responseHtml;
+    },
+
+    addToApiHistory(entry) {
+        this.apiExplorer.history.unshift(entry);
+        
+        // Keep only last 50 entries
+        if (this.apiExplorer.history.length > 50) {
+            this.apiExplorer.history = this.apiExplorer.history.slice(0, 50);
+        }
+
+        // Save to localStorage
+        localStorage.setItem('apiExplorerHistory', JSON.stringify(this.apiExplorer.history));
+        
+        // Re-render history
+        this.renderApiHistory();
+    },
+
+    renderApiHistory() {
+        const historyElement = document.getElementById('request-history');
+        
+        if (!this.apiExplorer.history.length) {
+            historyElement.innerHTML = `
+                <div class="history-placeholder">
+                    <p>Request history will appear here</p>
+                </div>
+            `;
+            return;
+        }
+
+        const historyHtml = this.apiExplorer.history.map(entry => {
+            const statusClass = entry.response.ok ? 'success' : 'error';
+            const timestamp = new Date(entry.timestamp).toLocaleString();
+            
+            return `
+                <div class="history-entry" data-entry='${JSON.stringify(entry).replace(/'/g, "&apos;")}'>
+                    <div class="history-header">
+                        <div class="history-method">${entry.method}</div>
+                        <div class="history-path">${entry.path}</div>
+                        <div class="history-status ${statusClass}">${entry.response.status}</div>
+                    </div>
+                    <div class="history-time">${timestamp}</div>
+                    <button class="btn btn-sm btn-outline replay-btn" onclick="app.replayApiRequest(this)">
+                        <i class="material-icons">replay</i> Replay
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        historyElement.innerHTML = historyHtml;
+    },
+
+    replayApiRequest(button) {
+        const entryData = button.closest('.history-entry').dataset.entry;
+        const entry = JSON.parse(entryData.replace(/&apos;/g, "'"));
+        
+        // Extract path and query parameters
+        const [basePath, queryString] = entry.path.split('?');
+        const queryParams = {};
+        
+        if (queryString) {
+            const params = new URLSearchParams(queryString);
+            for (const [key, value] of params.entries()) {
+                queryParams[key] = value;
+            }
+        }
+
+        // Set form values
+        document.getElementById('http-method').value = entry.method;
+        document.getElementById('endpoint-path').value = basePath;
+        
+        // Set headers (excluding auto-added ones)
+        const customHeaders = { ...entry.request.headers };
+        delete customHeaders['Content-Type'];
+        delete customHeaders['Authorization'];
+        document.getElementById('request-headers').value = JSON.stringify(customHeaders, null, 2);
+        
+        document.getElementById('query-params').value = JSON.stringify(queryParams, null, 2);
+        
+        if (entry.request.body) {
+            document.getElementById('request-body').value = JSON.stringify(entry.request.body, null, 2);
+        } else {
+            document.getElementById('request-body').value = '';
+        }
+
+        // Trigger change events
+        document.getElementById('http-method').dispatchEvent(new Event('change'));
+        
+        ui.showNotification('Request replayed from history', 'info');
+    },
+
+    clearApiHistory() {
+        if (confirm('Are you sure you want to clear the request history?')) {
+            this.apiExplorer.history = [];
+            localStorage.removeItem('apiExplorerHistory');
+            this.renderApiHistory();
+            ui.showNotification('Request history cleared', 'info');
+        }
     },
 
     async logout() {

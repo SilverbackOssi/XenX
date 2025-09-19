@@ -15,11 +15,13 @@ const ui = {
                 <a href="/profile"><i class="material-icons">person</i><span>Profile</span></a>
                 <a href="/enterprises"><i class="material-icons">business</i><span>Enterprises</span></a>
                 <a href="/tax-planner"><i class="material-icons">calculate</i><span>Tax Planner</span></a>
+                <a href="/api-explorer"><i class="material-icons">api</i><span>API Explorer</span></a>
                 <a href="/admin"><i class="material-icons">admin_panel_settings</i><span>Admin</span></a>
                 <button id="logout-btn"><i class="material-icons">logout</i><span>Logout</span></button>
             `
             : `
                 <a href="/auth"><i class="material-icons">login</i><span>Login / Register</span></a>
+                <a href="/api-explorer"><i class="material-icons">api</i><span>API Explorer</span></a>
             `;
 
         // Get user switcher content if logged in

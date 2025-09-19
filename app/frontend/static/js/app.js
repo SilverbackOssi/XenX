@@ -1,12 +1,33 @@
 // Main application logic
 const app = {
     user: null,
+    adminState: {
+        currentTab: 'users',
+        auditLog: [],
+        rawJsonVisible: {
+            users: false,
+            enterprises: false
+        }
+    },
+    currentUsers: null,
+    currentEnterprises: null,
 
     async init() {
         // Load stored token first
         const storedToken = localStorage.getItem('authToken');
         if (storedToken) {
             api.setToken(storedToken);
+        }
+        
+        // Load stored audit log
+        const storedAuditLog = localStorage.getItem('adminAuditLog');
+        if (storedAuditLog) {
+            try {
+                this.adminState.auditLog = JSON.parse(storedAuditLog);
+            } catch (e) {
+                console.error('Error parsing stored audit log:', e);
+                this.adminState.auditLog = [];
+            }
         }
         
         // Check for authenticated session
@@ -458,53 +479,232 @@ const app = {
     },
 
     async showAdminPage() {
-        const [usersResponse, statsResponse] = await Promise.all([
-            api.getAllUsers(),
-            api.getSystemStats()
-        ]);
-
-        if (usersResponse.success) {
-            const stats = statsResponse.success ? statsResponse.data : {};
-            ui.render(components.createAdminDashboard(usersResponse.data, stats));
+        ui.showLoading('Loading admin dashboard...');
+        
+        try {
+            // Check user permissions first
+            const currentUserResponse = await api.getCurrentUser();
+            
+            if (!currentUserResponse.success) {
+                ui.render('<div class="error-message"><h2>Access Denied</h2><p>Please log in to access the admin page.</p></div>');
+                return;
+            }
+            
+            const currentUser = currentUserResponse.data;
+            if (!currentUser.is_superuser) {
+                ui.render('<div class="error-message"><h2>Access Denied</h2><p>You do not have admin permissions to view this page.</p></div>');
+                return;
+            }
+            
+            // Initialize with empty data first, then load asynchronously
+            const stats = { total_users: 0, total_enterprises: 0, total_projects: 0 };
+            const users = [];
+            const enterprises = [];
+            
+            // Initialize empty audit log
+            this.adminState.auditLog = JSON.parse(localStorage.getItem('adminAuditLog') || '[]');
+            
+            ui.render(components.createAdminDashboard(users, stats, currentUser));
             this.attachAdminEventListeners();
-        } else {
-            ui.render('<h2>Could not load admin data. You may not have admin permissions.</h2>');
+            
+            // Now load data asynchronously
+            this.loadAdminData();
+            
+        } catch (error) {
+            console.error('Error loading admin page:', error);
+            ui.render('<div class="error-message"><h2>Error Loading Admin Page</h2><p>Please try again or check your connection.</p><pre>' + error.message + '</pre></div>');
+        }
+    },
+
+    async loadAdminData() {
+        try {
+            // Load users data
+            this.loadUsers();
+            
+            // Load enterprises data
+            this.loadEnterprises();
+            
+            // Load auth info
+            this.refreshAuthInfo();
+            
+            // Render audit log
+            this.renderAuditLog();
+            
+        } catch (error) {
+            console.error('Error loading admin data:', error);
+            ui.showNotification('Failed to load some admin data', 'warning');
         }
     },
 
     attachAdminEventListeners() {
-        document.getElementById('add-user-btn').addEventListener('click', () => {
+        // Initialize admin state
+        this.adminState = {
+            currentTab: 'users',
+            auditLog: JSON.parse(localStorage.getItem('adminAuditLog') || '[]')
+        };
+
+        // Tab navigation
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tabName = e.target.dataset.tab;
+                this.switchAdminTab(tabName);
+            });
+        });
+
+        // Auth debugging panel
+        document.getElementById('refresh-token-btn')?.addEventListener('click', () => {
+            this.refreshAuthInfo();
+        });
+
+        document.getElementById('update-token-btn')?.addEventListener('click', () => {
+            const newToken = document.getElementById('manual-token').value.trim();
+            if (newToken) {
+                api.setToken(newToken);
+                this.refreshAuthInfo();
+                ui.showNotification('Token updated', 'success');
+            }
+        });
+
+        // User management events
+        this.attachUserManagementEvents();
+        
+        // Enterprise management events
+        this.attachEnterpriseManagementEvents();
+        
+        // Audit log events
+        this.attachAuditLogEvents();
+
+        // Developer utilities
+        this.attachDeveloperUtilities();
+
+        // Load initial data for current tab
+        this.loadAdminTabData(this.adminState.currentTab);
+    },
+
+    switchAdminTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+        // Update tab content
+        document.querySelectorAll('.tab-panel').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+
+        this.adminState.currentTab = tabName;
+        this.loadAdminTabData(tabName);
+    },
+
+    async loadAdminTabData(tabName) {
+        switch (tabName) {
+            case 'users':
+                await this.loadUsers();
+                break;
+            case 'enterprises':
+                await this.loadEnterprises();
+                break;
+            case 'auth':
+                await this.refreshAuthInfo();
+                break;
+            case 'audit':
+                this.renderAuditLog();
+                break;
+        }
+    },
+
+    attachUserManagementEvents() {
+        // Add user button
+        document.getElementById('add-user-btn')?.addEventListener('click', () => {
             ui.showModal(components.createUserForm(), 'Add User');
             this.handleUserFormSubmit();
         });
 
-        document.querySelectorAll('.edit-user-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const id = e.target.dataset.id;
-                const users = await api.getAllUsers();
-                if (users.success) {
-                    const user = users.data.find(u => u.id == id);
-                    if (user) {
-                        ui.showModal(components.createUserForm(user), 'Edit User');
-                        this.handleUserFormSubmit(id);
-                    }
-                }
-            });
+        // Search users
+        document.getElementById('user-search')?.addEventListener('input', (e) => {
+            this.searchUsers(e.target.value);
         });
 
-        document.querySelectorAll('.delete-user-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
+        // Filter users by role
+        document.getElementById('user-role-filter')?.addEventListener('change', (e) => {
+            this.filterUsers('role', e.target.value);
+        });
+
+        // Filter users by status
+        document.getElementById('user-status-filter')?.addEventListener('change', (e) => {
+            this.filterUsers('status', e.target.value);
+        });
+
+        // Refresh users
+        document.getElementById('refresh-users-btn')?.addEventListener('click', () => {
+            this.loadUsers();
+        });
+
+        // Show raw JSON toggle
+        document.getElementById('show-users-json')?.addEventListener('change', (e) => {
+            this.toggleRawJSON('users', e.target.checked);
+        });
+    },
+
+    attachEnterpriseManagementEvents() {
+        // Add enterprise button
+        document.getElementById('add-enterprise-btn')?.addEventListener('click', () => {
+            ui.showModal(components.createEnterpriseForm(), 'Add Enterprise');
+            this.handleEnterpriseFormSubmit();
+        });
+
+        // Search enterprises
+        document.getElementById('enterprise-search')?.addEventListener('input', (e) => {
+            this.searchEnterprises(e.target.value);
+        });
+
+        // Refresh enterprises
+        document.getElementById('refresh-enterprises-btn')?.addEventListener('click', () => {
+            this.loadEnterprises();
+        });
+
+        // Show raw JSON toggle
+        document.getElementById('show-enterprises-json')?.addEventListener('change', (e) => {
+            this.toggleRawJSON('enterprises', e.target.checked);
+        });
+    },
+
+    attachAuditLogEvents() {
+        // Clear audit log
+        document.getElementById('clear-audit-log')?.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear the audit log?')) {
+                this.clearAuditLog();
+            }
+        });
+
+        // Show audit details
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('audit-detail-btn')) {
+                const logIndex = e.target.dataset.index;
+                this.showAuditDetails(logIndex);
+            }
+        });
+    },
+
+    attachDeveloperUtilities() {
+        // Copy buttons for IDs
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('copy-id-btn')) {
                 const id = e.target.dataset.id;
-                if (confirm('Are you sure you want to delete this user?')) {
-                    const response = await api.deleteUser(id);
-                    if (response.success) {
-                        this.showAdminPage();
-                        ui.showNotification('User deleted successfully!', 'success');
-                    } else {
-                        ui.showNotification('Error deleting user.', 'error');
-                    }
-                }
-            });
+                navigator.clipboard.writeText(id).then(() => {
+                    ui.showNotification('ID copied to clipboard', 'success');
+                });
+            }
+        });
+
+        // Quick links
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('view-user-enterprises')) {
+                const userId = e.target.dataset.userId;
+                this.viewUserEnterprises(userId);
+            }
         });
     },
 
@@ -526,6 +726,452 @@ const app = {
                 ui.closeModal();
                 this.showAdminPage();
                 ui.showNotification(`User ${id ? 'updated' : 'created'} successfully!`, 'success');
+            } else {
+                const errorMessage = response.error?.detail || 'An error occurred.';
+                ui.showNotification(errorMessage, 'error');
+            }
+        });
+    },
+
+    // Load and manage users
+    async loadUsers() {
+        const container = document.getElementById('users-table-container');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading">Loading users...</div>';
+
+        try {
+            const response = await this.logAdminAction('GET', '/admin/users', null);
+            
+            if (response.success) {
+                const users = response.data;
+                this.currentUsers = users;
+                this.renderUsersTable(users);
+            } else {
+                container.innerHTML = '<div class="error">Failed to load users</div>';
+                ui.showNotification('Failed to load users', 'error');
+            }
+        } catch (error) {
+            container.innerHTML = '<div class="error">Network error loading users</div>';
+            ui.showNotification('Network error loading users', 'error');
+        }
+    },
+
+    renderUsersTable(users) {
+        const container = document.getElementById('users-table-container');
+        if (!users || users.length === 0) {
+            container.innerHTML = '<div class="empty-state">No users found</div>';
+            return;
+        }
+
+        const tableHtml = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${users.map(user => `
+                        <tr>
+                            <td>
+                                ${user.id}
+                                <button class="copy-id-btn" data-id="${user.id}" title="Copy ID">
+                                    <i class="material-icons">content_copy</i>
+                                </button>
+                            </td>
+                            <td>${user.email}</td>
+                            <td>${user.username}</td>
+                            <td>
+                                <span class="role-badge ${user.is_superuser ? 'admin' : 'user'}">
+                                    ${user.is_superuser ? 'Admin' : 'User'}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge ${user.is_active ? 'active' : 'inactive'}">
+                                    ${user.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td>${new Date(user.created_at || Date.now()).toLocaleDateString()}</td>
+                            <td class="actions">
+                                <button class="btn btn-sm view-user-btn" data-id="${user.id}">View</button>
+                                <button class="btn btn-sm edit-user-btn" data-id="${user.id}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-user-btn" data-id="${user.id}">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        container.innerHTML = tableHtml;
+        this.attachUserTableEvents();
+    },
+
+    attachUserTableEvents() {
+        // Edit user buttons
+        document.querySelectorAll('.edit-user-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                const user = this.currentUsers.find(u => u.id == id);
+                if (user) {
+                    ui.showModal(components.createUserForm(user), 'Edit User');
+                    this.handleUserFormSubmit(id);
+                }
+            });
+        });
+
+        // View user buttons
+        document.querySelectorAll('.view-user-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                const user = this.currentUsers.find(u => u.id == id);
+                if (user) {
+                    ui.showModal(components.createUserDetailView(user), 'User Details');
+                }
+            });
+        });
+
+        // Delete user buttons
+        document.querySelectorAll('.delete-user-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                const user = this.currentUsers.find(u => u.id == id);
+                if (user && confirm(`Are you sure you want to delete ${user.email}?`)) {
+                    const response = await this.logAdminAction('DELETE', `/admin/users/${id}`, null);
+                    if (response.success) {
+                        this.loadUsers();
+                        ui.showNotification('User deleted successfully!', 'success');
+                    } else {
+                        ui.showNotification('Error deleting user.', 'error');
+                    }
+                }
+            });
+        });
+    },
+
+    searchUsers(query) {
+        if (!this.currentUsers) return;
+        
+        const filtered = this.currentUsers.filter(user => 
+            user.email.toLowerCase().includes(query.toLowerCase()) ||
+            user.username.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        this.renderUsersTable(filtered);
+    },
+
+    filterUsers(type, value) {
+        if (!this.currentUsers) return;
+        
+        let filtered = this.currentUsers;
+        
+        if (value !== 'all') {
+            if (type === 'role') {
+                filtered = filtered.filter(user => 
+                    value === 'admin' ? user.is_superuser : !user.is_superuser
+                );
+            } else if (type === 'status') {
+                filtered = filtered.filter(user => 
+                    value === 'active' ? user.is_active : !user.is_active
+                );
+            }
+        }
+        
+        this.renderUsersTable(filtered);
+    },
+
+    // Load and manage enterprises
+    async loadEnterprises() {
+        const container = document.getElementById('enterprises-table-container');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading">Loading enterprises...</div>';
+
+        try {
+            const response = await this.logAdminAction('GET', '/enterprises/', null);
+            
+            if (response.success) {
+                const enterprises = response.data;
+                this.currentEnterprises = enterprises;
+                this.renderEnterprisesTable(enterprises);
+            } else {
+                container.innerHTML = '<div class="error">Failed to load enterprises</div>';
+                ui.showNotification('Failed to load enterprises', 'error');
+            }
+        } catch (error) {
+            container.innerHTML = '<div class="error">Network error loading enterprises</div>';
+            ui.showNotification('Network error loading enterprises', 'error');
+        }
+    },
+
+    renderEnterprisesTable(enterprises) {
+        const container = document.getElementById('enterprises-table-container');
+        if (!enterprises || enterprises.length === 0) {
+            container.innerHTML = '<div class="empty-state">No enterprises found</div>';
+            return;
+        }
+
+        const tableHtml = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Owner</th>
+                        <th>Status</th>
+                        <th>Members</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${enterprises.map(enterprise => `
+                        <tr>
+                            <td>
+                                ${enterprise.id}
+                                <button class="copy-id-btn" data-id="${enterprise.id}" title="Copy ID">
+                                    <i class="material-icons">content_copy</i>
+                                </button>
+                            </td>
+                            <td>${enterprise.name}</td>
+                            <td>${enterprise.type?.replace(/_/g, ' ') || 'N/A'}</td>
+                            <td>${enterprise.owner_id || 'N/A'}</td>
+                            <td>
+                                <span class="status-badge ${enterprise.is_active ? 'active' : 'inactive'}">
+                                    ${enterprise.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td>${enterprise.staff_ids?.length || 0} + ${enterprise.client_ids?.length || 0}</td>
+                            <td>${new Date(enterprise.created_at || Date.now()).toLocaleDateString()}</td>
+                            <td class="actions">
+                                <button class="btn btn-sm view-enterprise-btn" data-id="${enterprise.id}">View</button>
+                                <button class="btn btn-sm edit-enterprise-btn" data-id="${enterprise.id}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-enterprise-btn" data-id="${enterprise.id}">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        container.innerHTML = tableHtml;
+        this.attachEnterpriseTableEvents();
+    },
+
+    attachEnterpriseTableEvents() {
+        // View enterprise buttons
+        document.querySelectorAll('.view-enterprise-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                const enterprise = this.currentEnterprises.find(e => e.id == id);
+                if (enterprise) {
+                    ui.showModal(components.createEnterpriseDetailView(enterprise), 'Enterprise Details');
+                }
+            });
+        });
+
+        // Edit enterprise buttons  
+        document.querySelectorAll('.edit-enterprise-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                const enterprise = this.currentEnterprises.find(e => e.id == id);
+                if (enterprise) {
+                    ui.showModal(components.createEnterpriseForm(enterprise), 'Edit Enterprise');
+                    this.handleEnterpriseFormSubmit(id);
+                }
+            });
+        });
+
+        // Delete enterprise buttons
+        document.querySelectorAll('.delete-enterprise-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                const enterprise = this.currentEnterprises.find(e => e.id == id);
+                if (enterprise && confirm(`Are you sure you want to delete ${enterprise.name}?`)) {
+                    const response = await this.logAdminAction('DELETE', `/enterprises/${id}`, null);
+                    if (response.success) {
+                        this.loadEnterprises();
+                        ui.showNotification('Enterprise deleted successfully!', 'success');
+                    } else {
+                        ui.showNotification('Error deleting enterprise.', 'error');
+                    }
+                }
+            });
+        });
+    },
+
+    searchEnterprises(query) {
+        if (!this.currentEnterprises) return;
+        
+        const filtered = this.currentEnterprises.filter(enterprise => 
+            enterprise.name.toLowerCase().includes(query.toLowerCase()) ||
+            (enterprise.type && enterprise.type.toLowerCase().includes(query.toLowerCase()))
+        );
+        
+        this.renderEnterprisesTable(filtered);
+    },
+
+    // Auth debugging
+    async refreshAuthInfo() {
+        const container = document.getElementById('auth-debug-container');
+        if (!container) return;
+
+        try {
+            const response = await api.getCurrentUser();
+            const authInfo = {
+                token: api.token ? `${api.token.substring(0, 20)}...` : 'No token',
+                tokenLength: api.token ? api.token.length : 0,
+                user: response.success ? response.data : null,
+                error: response.success ? null : response.error
+            };
+
+            container.innerHTML = components.createAuthDebugPanel(authInfo);
+        } catch (error) {
+            container.innerHTML = '<div class="error">Failed to load auth info</div>';
+        }
+    },
+
+    // Audit logging
+    async logAdminAction(method, path, data) {
+        const startTime = Date.now();
+        
+        try {
+            const response = await api.request(path, method, data);
+            const endTime = Date.now();
+            
+            const logEntry = {
+                timestamp: new Date().toISOString(),
+                method,
+                path: `/api/v1${path}`,
+                data,
+                response,
+                duration: endTime - startTime,
+                status: response.success ? 200 : 400
+            };
+            
+            this.adminState.auditLog.unshift(logEntry);
+            
+            // Keep only last 100 entries
+            if (this.adminState.auditLog.length > 100) {
+                this.adminState.auditLog = this.adminState.auditLog.slice(0, 100);
+            }
+            
+            localStorage.setItem('adminAuditLog', JSON.stringify(this.adminState.auditLog));
+            
+            // Update audit tab if it's active
+            if (this.adminState.currentTab === 'audit') {
+                this.renderAuditLog();
+            }
+            
+            return response;
+        } catch (error) {
+            const endTime = Date.now();
+            
+            const logEntry = {
+                timestamp: new Date().toISOString(),
+                method,
+                path: `/api/v1${path}`,
+                data,
+                response: { success: false, error: { detail: error.message } },
+                duration: endTime - startTime,
+                status: 0
+            };
+            
+            this.adminState.auditLog.unshift(logEntry);
+            localStorage.setItem('adminAuditLog', JSON.stringify(this.adminState.auditLog));
+            
+            throw error;
+        }
+    },
+
+    renderAuditLog() {
+        const container = document.getElementById('audit-log-container');
+        if (!container) return;
+
+        if (this.adminState.auditLog.length === 0) {
+            container.innerHTML = '<div class="empty-state">No audit log entries</div>';
+            return;
+        }
+
+        const logHtml = this.adminState.auditLog.map((entry, index) => `
+            <div class="audit-entry">
+                <div class="audit-header">
+                    <span class="audit-method ${entry.method.toLowerCase()}">${entry.method}</span>
+                    <span class="audit-path">${entry.path}</span>
+                    <span class="audit-status status-${entry.status >= 200 && entry.status < 300 ? 'success' : 'error'}">
+                        ${entry.status || 'ERR'}
+                    </span>
+                    <span class="audit-duration">${entry.duration}ms</span>
+                    <span class="audit-time">${new Date(entry.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <button class="btn btn-sm audit-detail-btn" data-index="${index}">
+                    View Details
+                </button>
+            </div>
+        `).join('');
+
+        container.innerHTML = logHtml;
+    },
+
+    showAuditDetails(logIndex) {
+        const entry = this.adminState.auditLog[logIndex];
+        if (entry) {
+            ui.showModal(components.createAuditDetailView(entry), 'Audit Entry Details');
+        }
+    },
+
+    clearAuditLog() {
+        this.adminState.auditLog = [];
+        localStorage.removeItem('adminAuditLog');
+        this.renderAuditLog();
+        ui.showNotification('Audit log cleared', 'success');
+    },
+
+    // Developer utilities
+    toggleRawJSON(type, show) {
+        const container = document.getElementById(`${type}-json-container`);
+        if (!container) return;
+
+        if (show) {
+            const data = type === 'users' ? this.currentUsers : this.currentEnterprises;
+            container.innerHTML = `<pre class="json-viewer">${JSON.stringify(data, null, 2)}</pre>`;
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+    },
+
+    viewUserEnterprises(userId) {
+        // This would need backend support - adding to missing features list
+        ui.showNotification('Feature requires backend support', 'warning');
+    },
+
+    handleEnterpriseFormSubmit(id = null) {
+        const form = document.getElementById('enterprise-form');
+        if (!form) return;
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            const endpoint = id ? `/enterprises/${id}` : '/enterprises/create';
+            const method = id ? 'PUT' : 'POST';
+            
+            const response = await this.logAdminAction(method, endpoint, data);
+
+            if (response.success) {
+                ui.closeModal();
+                this.loadEnterprises();
+                ui.showNotification(`Enterprise ${id ? 'updated' : 'created'} successfully!`, 'success');
             } else {
                 const errorMessage = response.error?.detail || 'An error occurred.';
                 ui.showNotification(errorMessage, 'error');
@@ -761,7 +1407,7 @@ const app = {
             },
             users: {
                 method: 'GET',
-                path: '/admin/users/all',
+                path: '/admin/users',
                 headers: {},
                 params: {},
                 body: null

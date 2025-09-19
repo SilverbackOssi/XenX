@@ -73,7 +73,7 @@ const api = {
     
     // Development endpoints
     async getAllUsersForTesting() {
-        return await this.request('/admin/users/all');
+        return await this.request('/admin/users');
     },
     
     // Health check

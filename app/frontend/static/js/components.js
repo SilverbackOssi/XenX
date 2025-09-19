@@ -234,55 +234,217 @@ const components = {
         `;
     },
 
-    createAdminDashboard(users, stats) {
-        const statsCards = `
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>${stats.total_users || users.length}</h3>
-                    <p>Total Users</p>
+    createAdminDashboard(users, stats, currentUser = null) {
+        return `
+            <div class="admin-dashboard">
+                <div class="admin-header">
+                    <h1><i class="material-icons">admin_panel_settings</i> Admin Dashboard</h1>
+                    <p class="admin-subtitle">Developer testing interface for administrative endpoints</p>
                 </div>
-                <div class="stat-card">
-                    <h3>${stats.total_enterprises || 0}</h3>
-                    <p>Total Enterprises</p>
+
+                <!-- Auth Debugging Panel -->
+                <div class="admin-section">
+                    <div class="card">
+                        <div class="card-header collapsible" data-target="auth-debug">
+                            <h3><i class="material-icons">verified_user</i> Authentication Debug</h3>
+                            <i class="material-icons toggle-icon">expand_more</i>
+                        </div>
+                        <div class="card-body" id="auth-debug">
+                            <div class="auth-debug-panel">
+                                <div class="debug-section">
+                                    <h4>Current Session</h4>
+                                    <div class="debug-info">
+                                        <div class="debug-item">
+                                            <label>User ID:</label>
+                                            <span class="copyable" data-copy="${currentUser?.id || 'Not authenticated'}">${currentUser?.id || 'Not authenticated'}</span>
+                                        </div>
+                                        <div class="debug-item">
+                                            <label>Email:</label>
+                                            <span>${currentUser?.email || 'N/A'}</span>
+                                        </div>
+                                        <div class="debug-item">
+                                            <label>Role:</label>
+                                            <span class="role-badge ${currentUser?.is_superuser ? 'superuser' : 'user'}">${currentUser?.is_superuser ? 'SUPERUSER' : 'USER'}</span>
+                                        </div>
+                                        <div class="debug-item">
+                                            <label>Active:</label>
+                                            <span class="status-badge ${currentUser?.is_active ? 'active' : 'inactive'}">${currentUser?.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="debug-section">
+                                    <h4>JWT Token Management</h4>
+                                    <div class="token-controls">
+                                        <button class="btn btn-sm btn-outline" id="show-token-btn">
+                                            <i class="material-icons">visibility</i> Show Token
+                                        </button>
+                                        <button class="btn btn-sm btn-outline" id="refresh-token-btn">
+                                            <i class="material-icons">refresh</i> Refresh Session
+                                        </button>
+                                        <button class="btn btn-sm btn-outline" id="manual-token-btn">
+                                            <i class="material-icons">edit</i> Manual Token
+                                        </button>
+                                    </div>
+                                    <div class="token-display" id="token-display" style="display: none;">
+                                        <textarea class="token-textarea" id="current-token" readonly></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <h3>${stats.total_projects || 0}</h3>
-                    <p>Tax Projects</p>
+
+                <!-- System Stats -->
+                <div class="admin-section">
+                    <h2>System Overview</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="material-icons">people</i></div>
+                            <div class="stat-content">
+                                <h3>${stats.total_users || users.length}</h3>
+                                <p>Total Users</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="material-icons">business</i></div>
+                            <div class="stat-content">
+                                <h3>${stats.total_enterprises || 0}</h3>
+                                <p>Enterprises</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="material-icons">calculate</i></div>
+                            <div class="stat-content">
+                                <h3>${stats.total_projects || 0}</h3>
+                                <p>Tax Projects</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="material-icons">api</i></div>
+                            <div class="stat-content">
+                                <h3 id="api-calls-count">0</h3>
+                                <p>API Calls (Session)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Navigation Tabs -->
+                <div class="admin-tabs">
+                    <button class="tab-btn active" data-tab="users">
+                        <i class="material-icons">people</i> Users
+                    </button>
+                    <button class="tab-btn" data-tab="enterprises">
+                        <i class="material-icons">business</i> Enterprises
+                    </button>
+                    <button class="tab-btn" data-tab="audit">
+                        <i class="material-icons">history</i> Audit Log
+                    </button>
+                </div>
+
+                <!-- Tab Content Areas -->
+                <div class="tab-content">
+                    <!-- Users Tab -->
+                    <div class="tab-panel active" id="users-tab">
+                        ${this.createUserManagementPanel(users)}
+                    </div>
+
+                    <!-- Enterprises Tab -->
+                    <div class="tab-panel" id="enterprises-tab">
+                        ${this.createEnterpriseManagementPanel([])}
+                    </div>
+
+                    <!-- Audit Log Tab -->
+                    <div class="tab-panel" id="audit-tab">
+                        ${this.createAuditLogPanel([])}
+                    </div>
                 </div>
             </div>
         `;
+    },
 
-        const userTableRows = users.map(user => `
-            <tr>
-                <td>${user.id}</td>
-                <td>${user.full_name}</td>
-                <td>${user.email}</td>
-                <td>${user.is_active ? 'Active' : 'Inactive'}</td>
-                <td>${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</td>
-                <td class="actions">
-                    <a data-id="${user.id}" class="edit-user-btn">Edit</a>
-                    <a data-id="${user.id}" class="delete-user-btn">Delete</a>
-                </td>
-            </tr>
-        `).join('');
+    createUserManagementPanel(users) {
+        const userTableRows = users.map(user => {
+            const createdDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A';
+            const roleBadge = user.is_superuser ? '<span class="role-badge superuser">SUPER</span>' : '<span class="role-badge user">USER</span>';
+            const statusBadge = user.is_active ? '<span class="status-badge active">ACTIVE</span>' : '<span class="status-badge inactive">INACTIVE</span>';
+            
+            return `
+                <tr class="user-row" data-user-id="${user.id}">
+                    <td>
+                        <span class="copyable" data-copy="${user.id}">${user.id}</span>
+                    </td>
+                    <td>${user.username || user.full_name || 'N/A'}</td>
+                    <td>
+                        <span class="copyable" data-copy="${user.email}">${user.email}</span>
+                    </td>
+                    <td>${roleBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td class="copyable" data-copy="${createdDate}">${createdDate}</td>
+                    <td class="actions">
+                        <button class="btn btn-sm btn-outline view-user-btn" data-id="${user.id}">
+                            <i class="material-icons">visibility</i>
+                        </button>
+                        <button class="btn btn-sm btn-primary edit-user-btn" data-id="${user.id}">
+                            <i class="material-icons">edit</i>
+                        </button>
+                        <button class="btn btn-sm btn-warning reset-password-btn" data-id="${user.id}">
+                            <i class="material-icons">key</i>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-user-btn" data-id="${user.id}">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
 
         return `
-            <div class="admin-dashboard">
-                <h2>Admin Dashboard</h2>
-                ${statsCards}
-                
-                <div class="card">
-                    <div class="card-header">
-                        <h3>User Management</h3>
-                        <button class="btn" id="add-user-btn">Add User</button>
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="material-icons">people</i> User Management</h3>
+                    <div class="header-actions">
+                        <div class="search-box">
+                            <input type="text" id="user-search" placeholder="Search users..." class="form-control">
+                            <i class="material-icons">search</i>
+                        </div>
+                        <select id="user-role-filter" class="form-control">
+                            <option value="">All Roles</option>
+                            <option value="superuser">Superusers</option>
+                            <option value="user">Regular Users</option>
+                        </select>
+                        <select id="user-status-filter" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        <button class="btn btn-primary" id="add-user-btn">
+                            <i class="material-icons">add</i> Add User
+                        </button>
+                        <button class="btn btn-outline" id="refresh-users-btn">
+                            <i class="material-icons">refresh</i>
+                        </button>
                     </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-controls">
+                        <label class="debug-toggle">
+                            <input type="checkbox" id="show-user-json"> Show Raw JSON
+                        </label>
+                        <div class="pagination-info">
+                            Showing ${users.length} users
+                        </div>
+                    </div>
+                    
                     <div class="table-container">
-                        <table>
+                        <table class="admin-table" id="users-table">
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Name</th>
+                                    <th>Username</th>
                                     <th>Email</th>
+                                    <th>Role</th>
                                     <th>Status</th>
                                     <th>Created</th>
                                     <th>Actions</th>
@@ -292,6 +454,179 @@ const components = {
                                 ${userTableRows}
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <div class="raw-json" id="users-json" style="display: none;">
+                        <h4>Raw JSON Response</h4>
+                        <pre class="json-viewer">${JSON.stringify(users, null, 2)}</pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    createEnterpriseManagementPanel(enterprises) {
+        const enterpriseRows = enterprises.length ? enterprises.map(enterprise => `
+            <tr class="enterprise-row" data-enterprise-id="${enterprise.id}">
+                <td><span class="copyable" data-copy="${enterprise.id}">${enterprise.id}</span></td>
+                <td>${enterprise.name}</td>
+                <td><span class="copyable" data-copy="${enterprise.slug || enterprise.id}">${enterprise.slug || 'N/A'}</span></td>
+                <td>${enterprise.owner_email || enterprise.owner || 'N/A'}</td>
+                <td><span class="status-badge ${enterprise.is_active ? 'active' : 'inactive'}">${enterprise.is_active ? 'ACTIVE' : 'INACTIVE'}</span></td>
+                <td>${enterprise.created_at ? new Date(enterprise.created_at).toLocaleDateString() : 'N/A'}</td>
+                <td class="actions">
+                    <button class="btn btn-sm btn-outline view-enterprise-btn" data-id="${enterprise.id}">
+                        <i class="material-icons">visibility</i>
+                    </button>
+                    <button class="btn btn-sm btn-primary edit-enterprise-btn" data-id="${enterprise.id}">
+                        <i class="material-icons">edit</i>
+                    </button>
+                    <button class="btn btn-sm btn-warning manage-members-btn" data-id="${enterprise.id}">
+                        <i class="material-icons">group</i>
+                    </button>
+                    <button class="btn btn-sm btn-danger delete-enterprise-btn" data-id="${enterprise.id}">
+                        <i class="material-icons">delete</i>
+                    </button>
+                </td>
+            </tr>
+        `).join('') : '<tr><td colspan="7" class="empty-state">No enterprises found. Click "Add Enterprise" to create one.</td></tr>';
+
+        return `
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="material-icons">business</i> Enterprise Management</h3>
+                    <div class="header-actions">
+                        <div class="search-box">
+                            <input type="text" id="enterprise-search" placeholder="Search enterprises..." class="form-control">
+                            <i class="material-icons">search</i>
+                        </div>
+                        <button class="btn btn-primary" id="add-enterprise-btn">
+                            <i class="material-icons">add</i> Add Enterprise
+                        </button>
+                        <button class="btn btn-outline" id="refresh-enterprises-btn">
+                            <i class="material-icons">refresh</i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-controls">
+                        <label class="debug-toggle">
+                            <input type="checkbox" id="show-enterprise-json"> Show Raw JSON
+                        </label>
+                        <div class="pagination-info">
+                            Showing ${enterprises.length} enterprises
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="admin-table" id="enterprises-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Slug</th>
+                                    <th>Owner</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${enterpriseRows}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="raw-json" id="enterprises-json" style="display: none;">
+                        <h4>Raw JSON Response</h4>
+                        <pre class="json-viewer">${JSON.stringify(enterprises, null, 2)}</pre>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    createAuditLogPanel(auditLogs) {
+        const logRows = auditLogs.length ? auditLogs.map((log, index) => {
+            const statusClass = log.status >= 200 && log.status < 300 ? 'success' : log.status >= 400 ? 'error' : 'warning';
+            const timestamp = new Date(log.timestamp).toLocaleString();
+            
+            return `
+                <tr class="audit-row" data-log-index="${index}">
+                    <td class="timestamp">${timestamp}</td>
+                    <td><span class="method-badge ${log.method.toLowerCase()}">${log.method}</span></td>
+                    <td class="path"><code>${log.path}</code></td>
+                    <td><span class="status-badge ${statusClass}">${log.status}</span></td>
+                    <td class="duration">${log.duration}ms</td>
+                    <td class="actions">
+                        <button class="btn btn-sm btn-outline view-request-btn" data-index="${index}">
+                            <i class="material-icons">code</i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('') : '<tr><td colspan="6" class="empty-state">No API calls recorded in this session.</td></tr>';
+
+        return `
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="material-icons">history</i> Admin API Audit Log</h3>
+                    <div class="header-actions">
+                        <button class="btn btn-outline" id="clear-audit-log-btn">
+                            <i class="material-icons">clear_all</i> Clear Log
+                        </button>
+                        <button class="btn btn-outline" id="export-audit-log-btn">
+                            <i class="material-icons">download</i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="audit-stats">
+                        <div class="audit-stat">
+                            <span class="stat-label">Total Calls:</span>
+                            <span class="stat-value">${auditLogs.length}</span>
+                        </div>
+                        <div class="audit-stat">
+                            <span class="stat-label">Success Rate:</span>
+                            <span class="stat-value">${auditLogs.length ? Math.round((auditLogs.filter(log => log.status < 400).length / auditLogs.length) * 100) : 0}%</span>
+                        </div>
+                        <div class="audit-stat">
+                            <span class="stat-label">Avg Response Time:</span>
+                            <span class="stat-value">${auditLogs.length ? Math.round(auditLogs.reduce((sum, log) => sum + log.duration, 0) / auditLogs.length) : 0}ms</span>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="admin-table audit-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Method</th>
+                                    <th>Path</th>
+                                    <th>Status</th>
+                                    <th>Duration</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${logRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Request/Response Detail Panel -->
+            <div class="card" id="request-detail-panel" style="display: none;">
+                <div class="card-header">
+                    <h3><i class="material-icons">code</i> Request/Response Details</h3>
+                    <button class="btn btn-sm btn-outline" id="close-detail-panel">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="detail-content" id="request-detail-content">
+                        <!-- Will be populated when viewing request details -->
                     </div>
                 </div>
             </div>
@@ -645,6 +980,260 @@ const components = {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    createUserDetailView(user) {
+        return `
+            <div class="user-detail-view">
+                <div class="detail-section">
+                    <h3>User Information</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>User ID:</label>
+                            <span>${user.id}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Email:</label>
+                            <span>${user.email}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Username:</label>
+                            <span>${user.username || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Role:</label>
+                            <span class="role-badge ${user.is_superuser ? 'admin' : 'user'}">
+                                ${user.is_superuser ? 'Admin' : 'User'}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Status:</label>
+                            <span class="status-badge ${user.is_active ? 'active' : 'inactive'}">
+                                ${user.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Created:</label>
+                            <span>${new Date(user.created_at || Date.now()).toLocaleString()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Last Login:</label>
+                            <span>${user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Profile Complete:</label>
+                            <span>${user.profile_completed ? 'Yes' : 'No'}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Authentication</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Google OAuth:</label>
+                            <span>${user.google_id ? 'Linked' : 'Not linked'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Password Set:</label>
+                            <span>${user.password_hash ? 'Yes' : 'No'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Email Verified:</label>
+                            <span>${user.email_verified ? 'Yes' : 'No'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-actions">
+                    <button class="btn btn-primary" onclick="app.loadUsers()">Back to Users</button>
+                </div>
+            </div>
+        `;
+    },
+
+    createEnterpriseDetailView(enterprise) {
+        return `
+            <div class="enterprise-detail-view">
+                <div class="detail-section">
+                    <h3>Enterprise Information</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Enterprise ID:</label>
+                            <span>${enterprise.id}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Name:</label>
+                            <span>${enterprise.name}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Email:</label>
+                            <span>${enterprise.email || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Type:</label>
+                            <span>${enterprise.type?.replace(/_/g, ' ') || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Tax Year:</label>
+                            <span>${enterprise.tax_year || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Status:</label>
+                            <span class="status-badge ${enterprise.is_active ? 'active' : 'inactive'}">
+                                ${enterprise.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Created:</label>
+                            <span>${new Date(enterprise.created_at || Date.now()).toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Ownership & Access</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Owner ID:</label>
+                            <span>${enterprise.owner_id || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Staff Members:</label>
+                            <span>${enterprise.staff_ids?.length || 0}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Clients:</label>
+                            <span>${enterprise.client_ids?.length || 0}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Total Users:</label>
+                            <span>${(enterprise.staff_ids?.length || 0) + (enterprise.client_ids?.length || 0)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-actions">
+                    <button class="btn btn-primary" onclick="app.loadEnterprises()">Back to Enterprises</button>
+                </div>
+            </div>
+        `;
+    },
+
+    createAuthDebugPanel(authInfo) {
+        return `
+            <div class="auth-debug-panel">
+                <div class="debug-section">
+                    <h3>Token Information</h3>
+                    <div class="debug-grid">
+                        <div class="debug-item">
+                            <label>Token Present:</label>
+                            <span class="status-badge ${authInfo.token !== 'No token' ? 'active' : 'inactive'}">
+                                ${authInfo.token !== 'No token' ? 'Yes' : 'No'}
+                            </span>
+                        </div>
+                        <div class="debug-item">
+                            <label>Token Preview:</label>
+                            <span class="token-preview">${authInfo.token}</span>
+                        </div>
+                        <div class="debug-item">
+                            <label>Token Length:</label>
+                            <span>${authInfo.tokenLength} characters</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="debug-section">
+                    <h3>User Session</h3>
+                    <div class="debug-grid">
+                        <div class="debug-item">
+                            <label>Authentication Status:</label>
+                            <span class="status-badge ${authInfo.user ? 'active' : 'inactive'}">
+                                ${authInfo.user ? 'Authenticated' : 'Not authenticated'}
+                            </span>
+                        </div>
+                        ${authInfo.user ? `
+                            <div class="debug-item">
+                                <label>User ID:</label>
+                                <span>${authInfo.user.id}</span>
+                            </div>
+                            <div class="debug-item">
+                                <label>Email:</label>
+                                <span>${authInfo.user.email}</span>
+                            </div>
+                            <div class="debug-item">
+                                <label>Role:</label>
+                                <span>${authInfo.user.is_superuser ? 'Admin' : 'User'}</span>
+                            </div>
+                        ` : ''}
+                        ${authInfo.error ? `
+                            <div class="debug-item error">
+                                <label>Error:</label>
+                                <span>${authInfo.error.detail || 'Unknown error'}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <div class="debug-actions">
+                    <button class="btn btn-sm btn-outline" onclick="app.refreshAuthInfo()">
+                        <i class="material-icons">refresh</i> Refresh
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="api.clearToken(); app.refreshAuthInfo();">
+                        <i class="material-icons">logout</i> Clear Token
+                    </button>
+                </div>
+            </div>
+        `;
+    },
+
+    createAuditDetailView(entry) {
+        return `
+            <div class="audit-detail-view">
+                <div class="audit-detail-header">
+                    <h3>Request Details</h3>
+                    <div class="audit-meta">
+                        <span class="audit-method ${entry.method.toLowerCase()}">${entry.method}</span>
+                        <span class="audit-status status-${entry.status >= 200 && entry.status < 300 ? 'success' : 'error'}">
+                            ${entry.status || 'ERR'}
+                        </span>
+                        <span class="audit-duration">${entry.duration}ms</span>
+                    </div>
+                </div>
+                
+                <div class="audit-detail-section">
+                    <h4>Request</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Timestamp:</label>
+                            <span>${new Date(entry.timestamp).toLocaleString()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Method:</label>
+                            <span>${entry.method}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Path:</label>
+                            <span>${entry.path}</span>
+                        </div>
+                    </div>
+                    ${entry.data ? `
+                        <div class="json-section">
+                            <label>Request Data:</label>
+                            <pre class="json-viewer">${JSON.stringify(entry.data, null, 2)}</pre>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <div class="audit-detail-section">
+                    <h4>Response</h4>
+                    <div class="json-section">
+                        <label>Response:</label>
+                        <pre class="json-viewer">${JSON.stringify(entry.response, null, 2)}</pre>
                     </div>
                 </div>
             </div>

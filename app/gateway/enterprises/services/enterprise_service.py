@@ -4,7 +4,7 @@ from typing import Dict, Any, Tuple, Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from app.gateway.auth.services.email_service import EmailService
+from app.gateway.utils.email_service import EmailService
 from app.gateway.auth.services.auth_service import AuthService
 from ..models.enterprises import Enterprise, Staff, StaffPermission, Client
 from ..schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse

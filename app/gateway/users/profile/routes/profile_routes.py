@@ -6,7 +6,7 @@ from app.gateway.auth.database import get_db
 from app.gateway.users.user.schemas.user_schemas import UserResponse
 from ..schemas.profile_schemas import ChangePasswordRequest, UserProfileResponse, UserUpdate
 from app.gateway.users.user.models.users import User
-from ....auth.services.profile_service import ProfileService
+from ..services.profile_service import ProfileService
 from ....auth.services.token_service import TokenService
 
 

@@ -4,7 +4,7 @@ from app.gateway.auth.database import get_db
 from app.gateway.users.user.schemas.user_schemas import UserCreate, UserResponse, UserRegisterResponse
 from ..schemas.auth_schemas import LoginRequest, TokenResponse, RefreshRequest, LoginResponse
 from ..services.auth_service import AuthService
-from ..services.email_service import EmailService
+from app.gateway.utils.email_service import EmailService
 from typing import Dict, Any
 from app.config import get_settings
 

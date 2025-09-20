@@ -12,7 +12,7 @@ from ..schemas.auth_schemas import (
     AccountRecoveryRequest
 )
 from ..services.auth_service import AuthService
-from ..services.email_service import EmailService
+from app.gateway.utils.email_service import EmailService
 
 
 email_service = EmailService()

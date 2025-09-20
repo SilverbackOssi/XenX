@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 from app.gateway.users.user.models.users import User
 from app.gateway.users.profile.schemas.profile_schemas import UserUpdate, UserProfileResponse, SimpleEnterpriseResponse, SimpleStaffEnterpriseResponse
-from ..services.auth_service import AuthService, PasswordPolicy
+from app.gateway.auth.services.auth_service import AuthService, PasswordPolicy
 from app.gateway.enterprises.models.enterprises import Enterprise, Staff, Client
 from fastapi import HTTPException, status
 from typing import Optional

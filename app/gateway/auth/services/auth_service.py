@@ -10,7 +10,7 @@ from fastapi import HTTPException, status
 import re
 import secrets
 import string
-from ..services.email_service import EmailService
+from app.gateway.utils.email_service import EmailService
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

@@ -12,7 +12,7 @@ from sqlalchemy import update, delete
 from passlib.context import CryptContext
 
 from app.gateway.auth.database import get_db
-from app.gateway.auth.models.users import User, SubscriptionPlans
+from app.gateway.users.user.models.users import User, SubscriptionPlans
 from app.gateway.auth.schemas.user_schemas import UserCreate, UserResponse
 from app.gateway.enterprises.models.enterprises import Enterprise
 from app.gateway.users.admin.schemas.schema import UserCreateAdmin, UserUpdateAdmin, UserSubscriptionUpdate, UsersCreateBatch

@@ -10,7 +10,7 @@ from ..models.enterprises import Enterprise, Staff, StaffPermission, Client
 from ..schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse
 from ..schemas.staff_schemas import StaffInvitation
 from ..schemas.staff_schemas import StaffResponse
-from app.gateway.auth.models.users import User
+from app.gateway.users.user.models.users import User
 from app.config import get_settings
 
 class EnterpriseService:

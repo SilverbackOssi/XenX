@@ -3,7 +3,7 @@
 from typing import Optional, Tuple   
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select    
-from app.gateway.auth.models.users import User
+from app.gateway.users.user.models.users import User
 from ..models.enterprises import Enterprise, Staff, StaffPermission
 
 class PermissionService:

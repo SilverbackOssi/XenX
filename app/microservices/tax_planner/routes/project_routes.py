@@ -9,7 +9,7 @@ from app.microservices.tax_planner.schemas.project_schemas import (
 )
 from app.microservices.tax_planner.services.project_service import ProjectService
 from app.gateway.auth.services.token_service import TokenService
-from app.gateway.auth.models.users import User
+from app.gateway.users.user.models.users import User
 
 project_router = APIRouter(prefix="/enterprises", tags=["Enterprise Projects"])
 

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr
 from app.gateway.auth.schemas.user_schemas import UserCreate
-from app.gateway.auth.models.users import SubscriptionPlans
+from app.gateway.users.user.models.users import SubscriptionPlans
 
 
 # Define admin-specific schemas

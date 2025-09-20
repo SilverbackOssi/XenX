@@ -3,11 +3,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.gateway.auth.database import get_db
-from ..schemas.user_schemas import UserResponse
-from ..schemas.profile_schemas import ChangePasswordRequest, UserProfileResponse, UserUpdate
-from ..models.users import User
-from ..services.profile_service import ProfileService
-from ..services.token_service import TokenService
+from ....auth.schemas.user_schemas import UserResponse
+from ....auth.schemas.profile_schemas import ChangePasswordRequest, UserProfileResponse, UserUpdate
+from app.gateway.users.user.models.users import User
+from ....auth.services.profile_service import ProfileService
+from ....auth.services.token_service import TokenService
 
 
 profile_router = APIRouter(prefix="/users", tags=["Users"])

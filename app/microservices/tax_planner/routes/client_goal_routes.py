@@ -9,7 +9,7 @@ from app.microservices.tax_planner.schemas.strategy_schemas import (
 )
 from app.microservices.tax_planner.services.strategy_service import StrategyService
 from app.gateway.auth.services.token_service import TokenService
-from app.gateway.auth.models.users import User
+from app.gateway.users.user.models.users import User
 
 client_goal_router = APIRouter(prefix="/enterprises", tags=["Client Goals"])
 

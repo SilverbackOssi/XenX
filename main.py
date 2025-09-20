@@ -47,7 +47,7 @@ api_app.add_middleware(
 # Auth routes
 api_app.include_router(google_oauth_router)
 api_app.include_router(auth_routes.auth_router)
-api_app.include_router(password_reset_routes.recovery_router)
+api_app.include_router(recovery.recovery_router)
 api_app.include_router(profile_routes.profile_router)
 
 # Enterprise/Organization routes

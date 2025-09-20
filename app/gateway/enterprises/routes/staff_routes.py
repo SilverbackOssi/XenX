@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.gateway.auth.database import get_db
-from app.gateway.auth.models.users import User
+from app.gateway.users.user.models.users import User
 from app.gateway.auth.services.token_service import TokenService
 from ..models.enterprises import Enterprise
 from ..models.permissions import StaffPermission

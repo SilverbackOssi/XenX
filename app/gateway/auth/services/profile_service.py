@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func
-from ..models.users import User
+from app.gateway.users.user.models.users import User
 from ..schemas.profile_schemas import UserUpdate, UserProfileResponse, SimpleEnterpriseResponse, SimpleStaffEnterpriseResponse
 from ..services.auth_service import AuthService, PasswordPolicy
 from app.gateway.enterprises.models.enterprises import Enterprise, Staff, Client

@@ -1,6 +1,6 @@
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr
-from app.gateway.auth.schemas.user_schemas import UserCreate
+from app.gateway.users.user.schemas.user_schemas import UserCreate
 from app.gateway.users.user.models.users import SubscriptionPlans
 
 

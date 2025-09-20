@@ -3,9 +3,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from app.gateway.routes.routes import *
-from app.gateway.auth.database import engine, Base
+from app.gateway.database import engine, Base
 from app.frontend import create_frontend_app
-from app.gateway.auth.seeder import seed_database
+from app.gateway.seeder import seed_database
 from app.config import get_settings
 
 import logging

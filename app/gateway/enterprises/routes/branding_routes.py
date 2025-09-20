@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.gateway.auth.database import get_db
+from app.gateway.database import get_db
 from app.gateway.users.user.models.users import User
 from app.gateway.auth.services.token_service import TokenService
 from ..models.enterprises import Enterprise

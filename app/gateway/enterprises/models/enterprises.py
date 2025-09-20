@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLAEnum, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, Session
-from app.gateway.auth.database import Base
+from app.gateway.database import Base
 from .permissions import StaffPermission, StaffRole
 import enum
 

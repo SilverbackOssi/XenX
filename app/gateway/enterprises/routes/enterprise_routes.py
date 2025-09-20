@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from app.gateway.auth.database import get_db
+from app.gateway.database import get_db
 from app.gateway.auth.services.token_service import TokenService
 from app.gateway.users.user.models.users import User
 from ..schemas.enterprise_schemas import EnterpriseCreate, EnterpriseResponse

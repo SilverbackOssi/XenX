@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.gateway.auth.database import get_db
+from app.gateway.database import get_db
 from app.gateway.users.user.schemas.user_schemas import UserResponse
 from ..schemas.profile_schemas import ChangePasswordRequest, UserProfileResponse, UserUpdate
 from app.gateway.users.user.models.users import User

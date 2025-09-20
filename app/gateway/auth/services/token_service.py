@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import jwt
 from fastapi import Depends, HTTPException, status
 from app.gateway.users.user.models.users import User
-from app.gateway.auth.database import get_db
+from app.gateway.database import get_db
 from app.config import get_settings
 
 settings = get_settings()

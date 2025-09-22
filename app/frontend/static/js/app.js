@@ -121,7 +121,7 @@ const app = {
             submitBtn.textContent = 'Logging in...';
         }
 
-        const response = await api.login(email, password);
+        const response = await api.login(email, password, false); // Not a user switch
         console.log('Login response:', response);
         
         // Restore button
@@ -2064,5 +2064,113 @@ const app = {
         router.navigate('/auth');
     }
 };
+
+// Developer console utilities for user switching
+window.dev = {
+    // Show user switch audit log
+    showSwitchLog() {
+        const log = api.getSwitchAuditLog();
+        console.table(log);
+        console.log(`📊 User Switch Audit: ${log.length} attempts total`);
+        return log;
+    },
+    
+    // Clear switch audit log
+    clearSwitchLog() {
+        api.clearSwitchAuditLog();
+        console.log('🗑️ Switch audit log cleared');
+    },
+    
+    // Show current session info
+    showSessionInfo() {
+        const info = {
+            currentUser: app.user?.email || 'Not logged in',
+            currentUserId: app.user?.id || null,
+            isAdmin: app.user?.is_superuser || false,
+            hasToken: !!api.token,
+            tokenLength: api.token ? api.token.length : 0,
+            tokenPreview: api.token ? api.token.substring(0, 20) + '...' : 'No token'
+        };
+        
+        console.table([info]);
+        console.log('🎯 Current Session Info:', info);
+        return info;
+    },
+    
+    // Quick switch to admin user
+    async switchToAdmin() {
+        console.log('🔄 Quick switch to admin user');
+        const userSelect = document.getElementById('user-select');
+        if (userSelect) {
+            // Find admin option
+            const adminOption = Array.from(userSelect.options).find(option => 
+                option.dataset.isAdmin === 'true'
+            );
+            
+            if (adminOption) {
+                userSelect.value = adminOption.value;
+                userSelect.dispatchEvent(new Event('change'));
+            } else {
+                console.error('❌ No admin user found in user switcher');
+            }
+        } else {
+            console.error('❌ User switcher not available (not logged in?)');
+        }
+    },
+    
+    // Get list of available test users
+    getTestUsers() {
+        const userSelect = document.getElementById('user-select');
+        if (userSelect) {
+            const users = Array.from(userSelect.options)
+                .filter(option => option.value)
+                .map(option => ({
+                    id: option.value,
+                    email: option.dataset.email,
+                    username: option.dataset.username,
+                    role: option.dataset.role,
+                    isAdmin: option.dataset.isAdmin === 'true'
+                }));
+            
+            console.table(users);
+            console.log(`👥 Available Test Users: ${users.length} accounts`);
+            return users;
+        } else {
+            console.error('❌ User switcher not available');
+            return [];
+        }
+    },
+    
+    // Show development warnings
+    showDevWarnings() {
+        console.group('⚠️ DEVELOPMENT FEATURES WARNING');
+        console.warn('The user switching feature is for DEVELOPMENT/TESTING only');
+        console.warn('Features included:');
+        console.warn('- Session invalidation and token clearing');
+        console.warn('- Automatic login with default test passwords');
+        console.warn('- Role-based UI updates');
+        console.warn('- Audit logging for debugging');
+        console.warn('');
+        console.warn('DO NOT USE IN PRODUCTION:');
+        console.warn('- Exposes test account credentials');
+        console.warn('- Allows bypassing normal authentication flow');
+        console.warn('- Can leak user session data if misused');
+        console.groupEnd();
+        
+        // Show warning in UI as well
+        ui.showSwitchUserStatus('warning', 'Development Feature', 'User switching is for testing only - not for production use', false);
+    }
+};
+
+// Log development utilities availability
+console.group('🛠️ XenToba Development Utilities');
+console.log('User switching debugging tools available via window.dev:');
+console.log('- dev.showSwitchLog() - View user switch attempts');
+console.log('- dev.clearSwitchLog() - Clear switch audit log');
+console.log('- dev.showSessionInfo() - Display current session info');
+console.log('- dev.switchToAdmin() - Quick switch to admin user');
+console.log('- dev.getTestUsers() - List available test accounts');
+console.log('- dev.showDevWarnings() - Display development warnings');
+console.groupEnd();
 
 document.addEventListener('DOMContentLoaded', () => app.init());

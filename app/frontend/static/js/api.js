@@ -2,6 +2,9 @@
 const api = {
     baseUrl: '/api/v1',
     token: null,
+    
+    // User switching audit log
+    switchLog: [],
 
     async request(endpoint, method = 'GET', body = null) {
         const headers = { 'Content-Type': 'application/json' };
@@ -15,8 +18,21 @@ const api = {
             body: body ? JSON.stringify(body) : null
         };
 
+        console.log(`🌐 API Request: ${method} ${endpoint}`, {
+            hasToken: !!this.token,
+            tokenPreview: this.token ? this.token.substring(0, 20) + '...' : 'none',
+            bodySize: body ? JSON.stringify(body).length : 0
+        });
+
         try {
             const response = await fetch(this.baseUrl + endpoint, config);
+            
+            console.log(`📡 API Response: ${method} ${endpoint}`, {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok
+            });
+            
             if (!response.ok) {
                 // Handle non-2xx responses
                 let errorData;
@@ -25,29 +41,99 @@ const api = {
                 } catch {
                     errorData = { detail: `HTTP ${response.status}: ${response.statusText}` };
                 }
-                console.error('API Error:', errorData);
+                console.error('❌ API Error Response:', errorData);
                 return { success: false, error: errorData };
             }
-            return { success: true, data: await response.json() };
+            const responseData = await response.json();
+            console.log(`✅ API Success: ${method} ${endpoint}`, responseData);
+            return { success: true, data: responseData };
         } catch (error) {
-            console.error('Fetch Error:', error);
+            console.error('❌ Fetch Error:', error);
             return { success: false, error: { detail: 'Network error - please check your connection' } };
         }
     },
 
     setToken(token) {
+        const previousToken = this.token;
         this.token = token;
         localStorage.setItem('authToken', token);
+        
+        // Log token changes for debugging
+        console.log('🔑 Token Updated:', {
+            hasToken: !!token,
+            tokenLength: token ? token.length : 0,
+            previousTokenPresent: !!previousToken,
+            timestamp: new Date().toISOString()
+        });
     },
 
     clearToken() {
+        const hadToken = !!this.token;
         this.token = null;
         localStorage.removeItem('authToken');
+        
+        console.log('🗑️ Token Cleared:', {
+            hadPreviousToken: hadToken,
+            timestamp: new Date().toISOString()
+        });
     },
-
-    // Auth endpoints
-    async login(email, password) {
-        return await this.request('/auth/login', 'POST', { email, password });
+    
+    // Enhanced login method with user switching support
+    async login(email, password, isUserSwitch = false) {
+        const loginAttempt = {
+            email,
+            timestamp: new Date().toISOString(),
+            isUserSwitch,
+            success: false
+        };
+        
+        try {
+            const response = await this.request('/auth/login', 'POST', { email, password });
+            
+            loginAttempt.success = response.success;
+            loginAttempt.error = response.error;
+            
+            if (isUserSwitch) {
+                this.switchLog.push(loginAttempt);
+                this.logSwitchAttempt(loginAttempt);
+            }
+            
+            return response;
+        } catch (error) {
+            loginAttempt.error = error;
+            if (isUserSwitch) {
+                this.switchLog.push(loginAttempt);
+                this.logSwitchAttempt(loginAttempt);
+            }
+            throw error;
+        }
+    },
+    
+    logSwitchAttempt(attempt) {
+        const logStyle = attempt.success 
+            ? 'color: #2ecc71; font-weight: bold;' 
+            : 'color: #e74c3c; font-weight: bold;';
+            
+        console.log(
+            `%c🔄 USER SWITCH ${attempt.success ? 'SUCCESS' : 'FAILED'}`,
+            logStyle,
+            {
+                email: attempt.email,
+                timestamp: attempt.timestamp,
+                error: attempt.error?.detail || null,
+                totalSwitchAttempts: this.switchLog.length
+            }
+        );
+    },
+    
+    getSwitchAuditLog() {
+        return [...this.switchLog];
+    },
+    
+    clearSwitchAuditLog() {
+        const previousCount = this.switchLog.length;
+        this.switchLog = [];
+        console.log(`🗑️ Cleared ${previousCount} switch audit log entries`);
     },
 
     async register(userData) {

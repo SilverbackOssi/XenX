@@ -769,26 +769,79 @@ const components = {
     },
 
     createUserSwitcher(users, currentUserId) {
-        const userOptions = users.map(user => {
-            const displayName = `${user.first_name} ${user.last_name}`.trim() || user.username;
-            const isCurrentUser = user.id === currentUserId;
+        // Find current user details
+        const currentUser = users.find(user => user.id === currentUserId);
+        const currentUserDisplay = currentUser ? 
+            `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() || currentUser.username :
+            'Unknown User';
+        
+        // Determine current user role
+        const currentUserRole = currentUser?.is_superuser ? 'ADMIN' : 'USER';
+        
+        // Group users by role and sort
+        const adminUsers = users.filter(user => user.is_superuser).sort((a, b) => a.email.localeCompare(b.email));
+        const regularUsers = users.filter(user => !user.is_superuser).sort((a, b) => a.email.localeCompare(b.email));
+        
+        // Create option groups
+        const createUserOption = (user, isCurrent = false) => {
+            const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username;
+            const role = user.is_superuser ? 'ADMIN' : 'USER';
+            const roleIcon = user.is_superuser ? '👑' : '👤';
+            const currentLabel = isCurrent ? ' ✓ CURRENT' : '';
+            const email = user.email || 'No email';
+            
             return `
-                <option value="${user.id}" data-email="${user.email}" data-username="${user.username}" 
-                        ${isCurrentUser ? 'selected' : ''}>
-                    ${displayName} (${user.email})${isCurrentUser ? ' - Current' : ''}
+                <option value="${user.id}" 
+                        data-email="${email}" 
+                        data-username="${user.username}" 
+                        data-role="${role.toLowerCase()}"
+                        data-is-admin="${user.is_superuser}"
+                        ${isCurrent ? 'selected' : ''}>
+                    ${roleIcon} ${displayName} (${email}) - ${role}${currentLabel}
                 </option>
             `;
-        }).join('');
+        };
+
+        const adminOptions = adminUsers.map(user => createUserOption(user, user.id === currentUserId)).join('');
+        const regularOptions = regularUsers.map(user => createUserOption(user, user.id === currentUserId)).join('');
 
         return `
             <div class="user-switcher">
-                <label for="user-select">
-                    <i class="fas fa-user-friends"></i> Switch User (Testing)
-                </label>
-                <select id="user-select" class="user-select">
-                    <option value="">Select a user...</option>
-                    ${userOptions}
-                </select>
+                <!-- Current User Display -->
+                <div class="current-user-display">
+                    <div class="current-user-info">
+                        <div class="current-user-avatar">
+                            <i class="material-icons">${currentUser?.is_superuser ? 'admin_panel_settings' : 'person'}</i>
+                        </div>
+                        <div class="current-user-details">
+                            <div class="current-user-name">${currentUserDisplay}</div>
+                            <div class="current-user-meta">
+                                <span class="current-user-role ${currentUserRole.toLowerCase()}">${currentUserRole}</span>
+                                <span class="current-user-id">ID: ${currentUserId}</span>
+                            </div>
+                            <div class="current-user-email">${currentUser?.email || 'No email'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Switch User Control -->
+                <div class="user-switch-control">
+                    <label for="user-select">
+                        <i class="material-icons">swap_horiz</i> 
+                        <span>Switch User</span>
+                        <span class="dev-only-badge">DEV ONLY</span>
+                    </label>
+                    <select id="user-select" class="user-select">
+                        <option value="">Choose user to switch to...</option>
+                        ${adminOptions ? `<optgroup label="👑 ADMIN USERS (Full Access)">${adminOptions}</optgroup>` : ''}
+                        ${regularOptions ? `<optgroup label="👤 REGULAR USERS (Limited Access)">${regularOptions}</optgroup>` : ''}
+                    </select>
+                    
+                    <div class="switch-user-hint">
+                        <i class="material-icons">info</i>
+                        <span>Test accounts use default passwords</span>
+                    </div>
+                </div>
             </div>
         `;
     },
@@ -796,19 +849,21 @@ const components = {
     createPasswordPromptModal(userEmail) {
         return `
             <div class="password-prompt-modal">
-                <h3><i class="fas fa-key"></i> Password Required</h3>
+                <h3><i class="material-icons">key</i> Password Required</h3>
                 <p>Please enter the password for <strong>${userEmail}</strong>:</p>
                 <form id="password-prompt-form">
                     <div class="form-group">
                         <input type="password" id="switch-password" name="password" 
-                               placeholder="Enter password" required>
+                               placeholder="Enter password" required autocomplete="new-password">
                         <small class="form-hint">
-                            Try: <code>Password@123</code> for regular users or <code>Admin@123</code> for admin
+                            Try: <code>Password@123</code> for regular users or <code>Admin@123</code> for admin accounts
                         </small>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="ui.closeModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Switch User</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="material-icons">login</i> Switch User
+                        </button>
                     </div>
                 </form>
             </div>

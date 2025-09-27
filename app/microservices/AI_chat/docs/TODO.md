@@ -61,12 +61,12 @@ ai_chat/
 ```
 Effort: M
 
-☐ 1.2 Add environment config entries (ENV parsing in `config.py`). Effort: S
-☐ 1.3 Wire router into FastAPI application root (non-invasive import & include). Effort: S
-☐ 1.4 Add feature flag (ENABLE_AI_CHAT) to allow safe deployment toggle. Effort: S
+☑ 1.2 Add environment config entries (ENV parsing in `config.py`). Effort: S
+☑ 1.3 Wire router into FastAPI application root (non-invasive import & include). Effort: S
+☑ 1.4 Add feature flag (ENABLE_AI_CHAT) to allow safe deployment toggle. Effort: S
 
 ## 2. Database Layer (Schema + Migration)
-☐ 2.1 Define SQLAlchemy models: Conversation, Message, Summary, Audit, RateLimitCounter. Effort: M
+☑ 2.1 Define SQLAlchemy models: Conversation, Message, Summary, Audit, RateLimitCounter. Effort: M
 ☐ 2.2 Write lightweight migration script (manual) or integrate Alembic (decision). Effort: M
 ☐ 2.3 Add repository functions (create_conversation, append_message, list_recent_messages, store_summary, write_audit). Effort: M
 ☐ 2.4 Add idempotency helper store (in-memory + optional table/TTL). Effort: S
@@ -177,6 +177,4 @@ Effort: M
 
 ---
 ## Immediate Next Candidate Task
-Implement Section 1.1 scaffolding so subsequent tasks have concrete locations.
-
-Let me know to proceed with 1.1 now or adjust the structure first.
+Move to Section 2: start with 2.1 (SQLAlchemy models for conversations/messages/summaries/audits/rate limits).

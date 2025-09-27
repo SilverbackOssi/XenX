@@ -1,1 +1,0 @@
-"""AI Chat module package initialization."""

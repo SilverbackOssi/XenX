@@ -1,5 +1,5 @@
 """Chat router entrypoint (placeholder)."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/chat", tags=["ai-chat"])
 

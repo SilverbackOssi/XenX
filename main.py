@@ -7,6 +7,12 @@ from app.gateway.database import engine, Base
 from app.frontend import create_frontend_app
 from app.gateway.seeder import seed_database
 from app.config import get_settings
+from app.microservices.AI_chat.ai_chat.config import CONFIG as AI_CHAT_CONFIG
+
+try:
+    from app.microservices.AI_chat.ai_chat.router import router as ai_chat_router
+except Exception as _e:
+    ai_chat_router = None
 
 import logging
 settings = get_settings()
@@ -62,6 +68,13 @@ api_app.include_router(tax_plan_router)
 
 # Admin/Demo routes
 api_app.include_router(admin_router)
+
+# Conditionally include AI Chat router (feature flagged)
+if AI_CHAT_CONFIG.enable_ai_chat and ai_chat_router is not None:
+    api_app.include_router(ai_chat_router)
+    logger.info("AI Chat router enabled.")
+else:
+    logger.info("AI Chat router disabled (ENABLE_AI_CHAT=false or import failed).")
 
 @api_app.get("/")
 def api_index():

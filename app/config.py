@@ -85,6 +85,23 @@ class Settings(BaseSettings):
     # Security Settings
     CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "*").split(",")
     SSL_ENABLED: bool = os.getenv("SSL_ENABLED", "False").lower() == "true"
+
+    # -----------------------------
+    # AI Chat Feature Configuration
+    # -----------------------------
+    ENABLE_AI_CHAT: bool = os.getenv("ENABLE_AI_CHAT", "False").lower() == "true"
+    SIMULATION_MODE: bool = os.getenv("SIMULATION_MODE", "True").lower() == "true"
+    MODEL_PROVIDER: str = os.getenv("MODEL_PROVIDER", "gemini")
+    MODEL_NAME: str = os.getenv("MODEL_NAME", "gemini-free")
+    MAX_TOKENS_MODEL: int = int(os.getenv("MAX_TOKENS_MODEL", 2048))
+    RATE_LIMIT_REQUESTS_PER_WINDOW: int = int(os.getenv("RATE_LIMIT_REQUESTS_PER_WINDOW", 60))
+    RATE_LIMIT_WINDOW_SECONDS: int = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", 300))
+    RATE_LIMIT_ACTIONS_PER_HOUR: int = int(os.getenv("RATE_LIMIT_ACTIONS_PER_HOUR", 10))
+    ACTION_PROPOSALS_PER_HOUR: int = int(os.getenv("ACTION_PROPOSALS_PER_HOUR", 20))
+    SUMMARY_TRIGGER_TURNS: int = int(os.getenv("SUMMARY_TRIGGER_TURNS", 15))
+    SUMMARY_KEEP_RECENT_TURNS: int = int(os.getenv("SUMMARY_KEEP_RECENT_TURNS", 12))
+    INVITE_REINVITE_INTERVAL_SECONDS: int = int(os.getenv("INVITE_REINVITE_INTERVAL_SECONDS", 3600))
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "info")
     
     @field_validator("CORS_ORIGINS", mode="before")
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:

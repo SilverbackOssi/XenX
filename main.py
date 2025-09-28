@@ -8,6 +8,7 @@ from app.frontend import create_frontend_app
 from app.gateway.seeder import seed_database
 from app.config import get_settings
 from app.microservices.AI_chat.ai_chat.config import CONFIG as AI_CHAT_CONFIG
+from app.microservices.AI_chat.ai_chat.persistence.migrate import ensure_ai_chat_tables
 
 try:
     from app.microservices.AI_chat.ai_chat.router import router as ai_chat_router
@@ -99,6 +100,17 @@ app.mount("/", frontend_app)
 @app.get("/api/v1/openapi.json", include_in_schema=False)
 async def get_open_api_endpoint():
     return api_app.openapi()
+
+# AI Chat startup hook (separate from commented legacy startup)
+@app.on_event("startup")
+async def ai_chat_startup_event():  # pragma: no cover - trivial environment hook
+    if AI_CHAT_CONFIG.enable_ai_chat:
+        try:
+            await ensure_ai_chat_tables()
+            logger.info("[AI_CHAT] Tables ensured (migration).")
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"[AI_CHAT] Failed to ensure tables: {e}")
+
 
 # @app.on_event("startup")
 # async def startup_event():

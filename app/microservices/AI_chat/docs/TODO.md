@@ -3,14 +3,18 @@
 This checklist operationalizes the implementation plan. Tackle in order unless a dependency notes otherwise. Update state (☐ ➜ ☑) as we proceed.
 
 ## Legend
+
 - P#: Phase alignment (from implementation plan)
 - Effort: S (≤2h), M (≤1d), L (>1d)
 - Dep: Key prerequisite(s)
 
 ---
+
 ## 1. Scaffolding & Structure
+
 ☑ 1.1 Create package layout:
-```
+
+```filetree
 ai_chat/
   __init__.py
   router.py
@@ -67,15 +71,15 @@ Effort: M
 
 ## 2. Database Layer (Schema + Migration)
 ☑ 2.1 Define SQLAlchemy models: Conversation, Message, Summary, Audit, RateLimitCounter. Effort: M
-☐ 2.2 Write lightweight migration script (manual) or integrate Alembic (decision). Effort: M
-☐ 2.3 Add repository functions (create_conversation, append_message, list_recent_messages, store_summary, write_audit). Effort: M
-☐ 2.4 Add idempotency helper store (in-memory + optional table/TTL). Effort: S
+☑ 2.2 Write lightweight migration script (manual) or integrate Alembic (decision). Effort: M
+☑ 2.3 Add repository functions (create_conversation, append_message, list_recent_messages, store_summary, write_audit). Effort: M
+☑ 2.4 Add idempotency helper store (in-memory + optional table/TTL). Effort: S
 
 ## 3. Model & Orchestration Abstraction
-☐ 3.1 Create model provider interface (generate(messages, mode, json_schema?)). Effort: S
-☐ 3.2 Implement Gemini free-tier adapter (stub). Effort: S
-☐ 3.3 Place adapter behind factory (env-driven). Effort: S
-☐ 3.4 Add tracing IDs to each call. Effort: S
+☑ 3.1 Create model provider interface (generate(messages, mode, json_schema?)). Effort: S
+☑ 3.2 Implement Gemini free-tier adapter (stub). Effort: S
+☑ 3.3 Place adapter behind factory (env-driven). Effort: S
+☑ 3.4 Add tracing IDs to each call. Effort: S
 
 ## 4. Graph State & Nodes
 ☐ 4.1 Define `ChatState` dataclass / Pydantic model. Effort: S
@@ -177,4 +181,4 @@ Effort: M
 
 ---
 ## Immediate Next Candidate Task
-Move to Section 2: start with 2.1 (SQLAlchemy models for conversations/messages/summaries/audits/rate limits).
+Proceed directly to Section 4 - start with Ingest → Intent → ResponseComposer (stub)

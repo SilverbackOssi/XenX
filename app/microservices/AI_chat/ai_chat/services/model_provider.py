@@ -41,7 +41,7 @@ Future Enhancements (not implemented here):
 """
 from __future__ import annotations
 
-from typing import Protocol, List, Optional, Dict, Any, Union
+from typing import Protocol, List, Optional, Dict, Any, TypedDict, Union
 from enum import Enum
 from dataclasses import dataclass
 import uuid
@@ -84,6 +84,22 @@ class ModelMessage:
     def __post_init__(self):
         self.role = MessageRole.coerce(self.role)
 
+class RawGenerationMeta(TypedDict, total=False):
+    """Provider-specific diagnostic / introspection payload.
+
+    Standard optional keys (conventions, not guarantees):
+        echoed: Last user message echoed (stub only)
+        mode: Semantic generation mode label
+        schema: Whether json_schema hint was supplied
+        count: Number of messages considered (fallback provider)
+        provider: Provider name (redundant convenience)
+    """
+
+    echoed: str
+    mode: str
+    schema: bool
+    count: int
+    provider: str
 
 @dataclass
 class GenerationResult:
@@ -95,18 +111,19 @@ class GenerationResult:
         model_name: Name / label of the underlying provider implementation.
         latency_ms: Milliseconds elapsed for the *provider* call (excludes
             orchestration overhead outside this module).
-        raw: Provider-specific diagnostic payload (debug / introspection use only).
+        raw: Lightly structured provider-specific diagnostic metadata (debug / introspection use only).
+        chunks: Optional list of incremental pieces (future streaming support); ``text`` should equal ``\"\".join(chunks)`` when populated.
     """
 
     trace_id: str
     model_name: str
     latency_ms: int
     text: str
-    raw: Dict[str, Any]
+    raw: RawGenerationMeta
     chunks: Optional[List[str]] = None  # For future streaming support, only populated in streaming mode
 
 
-class ModelProvider(Protocol):  # Section 3.1
+class ModelProvider(Protocol):
     """Protocol describing required provider behavior.
 
     Implementations MUST:
@@ -134,9 +151,12 @@ class ModelProvider(Protocol):  # Section 3.1
     ) -> GenerationResult:  # pragma: no cover - interface specification
         ...
 
+def compute_latency_ms(start: float) -> int:
+    """Return elapsed milliseconds given a start time."""
+    return int((time.time() - start) * 1000)
 
 class GeminiFreeStub:
-    """Stub adapter simulating a Gemini provider (Section 3.2).
+    """Stub adapter simulating a Gemini provider.
 
     Behavior:
         * Echoes the last user message with a stub prefix and optional schema key list.
@@ -148,6 +168,10 @@ class GeminiFreeStub:
     """
 
     name = "gemini_stub"
+    capabilities: Dict[str, Any] = {
+        "streaming": False,
+        "structured_json": "best_effort",
+    }
 
     async def generate(
         self,
@@ -171,14 +195,14 @@ class GeminiFreeStub:
         base_output = f"Stub({mode}) response to: {last_user[:200]}"
         if json_schema:
             base_output += " | schema_stub: {keys}".format(keys=list(json_schema.get("properties", {}).keys()))
-        trace_id = str(uuid.uuid4())  # Section 3.4
-        latency_ms = int((time.time() - start) * 1000)
+        trace_id = str(uuid.uuid4())
+        latency_ms = compute_latency_ms(start)
         return GenerationResult(
             text=base_output,
             trace_id=trace_id,
             model_name=self.name,
             latency_ms=latency_ms,
-            raw={"echoed": last_user, "mode": mode, "schema": bool(json_schema)},
+            raw={"echoed": last_user, "mode": mode, "schema": bool(json_schema), "provider": self.name},
         )
 
 
@@ -189,6 +213,10 @@ class FallbackEchoProvider:
     """
 
     name = "echo_fallback"
+    capabilities: Dict[str, Any] = {
+        "streaming": False,
+        "structured_json": "unsupported",
+    }
 
     async def generate(
         self,
@@ -203,38 +231,50 @@ class FallbackEchoProvider:
         start = time.time()
         combined = " | ".join(f"{m.role}: {m.content[:80]}" for m in messages[-4:])
         trace_id = str(uuid.uuid4())
-        latency_ms = int((time.time() - start) * 1000)
+        latency_ms = compute_latency_ms(start)
         return GenerationResult(
             text=f"Fallback({mode}) => {combined}",
             trace_id=trace_id,
             model_name=self.name,
             latency_ms=latency_ms,
-            raw={"count": len(messages)},
+            raw={"count": len(messages), "mode": mode, "schema": False, "provider": self.name},
         )
 
+_CACHED_PROVIDER: Optional[ModelProvider] = None
+_CACHED_PROVIDER_KEY: Optional[str] = None
 
-def get_model_provider() -> ModelProvider:  # Section 3.3
-    """Return a concrete provider instance based on configuration.
+def get_model_provider() -> ModelProvider:
+    """Return a (memoized) provider instance based on configuration.
 
-    Resolution Logic:
-        * If ``CONFIG.model_provider`` starts with ``"gemini"`` → :class:`GeminiFreeStub`.
-        * Otherwise → :class:`FallbackEchoProvider`.
-
-    Returns:
-        ModelProvider: Instantiated provider (stateless objects – lightweight to create).
+    Re-instantiates only if the configured provider string changes.
     """
-    provider = CONFIG.model_provider.lower()
-    if provider.startswith("gemini"):
-        return GeminiFreeStub()
-    return FallbackEchoProvider()
+    global _CACHED_PROVIDER, _CACHED_PROVIDER_KEY
+    key = CONFIG.model_provider.lower()
+    if _CACHED_PROVIDER and _CACHED_PROVIDER_KEY == key:
+        return _CACHED_PROVIDER
+    if key.startswith("gemini"):
+        _CACHED_PROVIDER = GeminiFreeStub()
+    else:
+        _CACHED_PROVIDER = FallbackEchoProvider()
+    _CACHED_PROVIDER_KEY = key
+    return _CACHED_PROVIDER
+
+def provider_capabilities(provider: Optional[ModelProvider] = None) -> Dict[str, Any]:
+    """Return capability flags for a provider (streaming, structured JSON, etc.)."""
+    if provider is None:
+        provider = get_model_provider()
+    return getattr(provider, "capabilities", {"streaming": False})
 
 
 __all__ = [
     "MessageRole",
     "ModelMessage",
+    "RawGenerationMeta",
     "GenerationResult",
     "ModelProvider",
     "GeminiFreeStub",
     "FallbackEchoProvider",
     "get_model_provider",
+    "provider_capabilities",
+    "compute_latency_ms",
 ]

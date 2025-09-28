@@ -1,8 +1,15 @@
-"""Chat state placeholder model."""
+"""Unified ChatState model (consolidated).
+
+This replaces earlier duplicate definitions (dataclass + Pydantic). For the
+basic chat flow we only leverage a subset of fields; the remaining attributes
+anticipate later graph orchestration work (intent classification, parameter
+collection, tool execution, etc.).
+"""
 from typing import Any, Dict, Optional
 from pydantic import BaseModel, Field
 
-class ChatState(BaseModel):
+
+class ChatState(BaseModel):  # Future: may become a typed state machine model
     user_id: Optional[int] = None
     enterprise_id: Optional[int] = None
     user_message: Optional[str] = None
@@ -14,3 +21,5 @@ class ChatState(BaseModel):
     tool_result: Optional[Dict[str, Any]] = None
     response_draft: Optional[str] = None
     final_response: Optional[str] = None
+
+__all__ = ["ChatState"]

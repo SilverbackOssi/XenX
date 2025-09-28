@@ -142,6 +142,7 @@ class ModelProvider(Protocol):
     """
 
     name: str
+    capabilities: Dict[str, Any]
 
     async def generate(
         self,

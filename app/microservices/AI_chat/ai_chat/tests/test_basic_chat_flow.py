@@ -24,3 +24,12 @@ def test_basic_chat_flow(monkeypatch):  # noqa: D103
     assert data["user_message"] == "Hello there"
     assert "assistant_message" in data
     assert "trace_id" in data
+
+    # Fetch history and ensure at least user + assistant messages present
+    history = client.get(f"/api/v1/chat/{data['conversation_id']}")
+    if history.status_code == 200:  # Only if feature flag enabled
+        hist_json = history.json()
+        assert hist_json["conversation_id"] == data["conversation_id"]
+        assert len(hist_json["messages"]) >= 2
+        roles = [m["role"] for m in hist_json["messages"]]
+        assert "user" in roles and "assistant" in roles

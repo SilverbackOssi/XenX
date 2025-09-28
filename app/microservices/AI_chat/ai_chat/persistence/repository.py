@@ -60,6 +60,22 @@ async def list_recent_messages(db: AsyncSession, conversation_id: int, limit: in
     return list(reversed(rows))
 
 
+async def get_conversation(db: AsyncSession, conversation_id: int) -> Optional[AIChatConversation]:
+    q = select(AIChatConversation).where(AIChatConversation.id == conversation_id)
+    res = await db.execute(q)
+    return res.scalar_one_or_none()
+
+
+async def list_conversation_messages(db: AsyncSession, conversation_id: int) -> List[AIChatMessage]:
+    q = (
+        select(AIChatMessage)
+        .where(AIChatMessage.conversation_id == conversation_id)
+        .order_by(AIChatMessage.turn_index.asc())
+    )
+    res = await db.execute(q)
+    return res.scalars().all()
+
+
 async def store_summary(
     db: AsyncSession,
     conversation_id: int,
@@ -110,6 +126,8 @@ __all__ = [
     "create_conversation",
     "append_message",
     "list_recent_messages",
+    "get_conversation",
+    "list_conversation_messages",
     "store_summary",
     "write_audit",
 ]

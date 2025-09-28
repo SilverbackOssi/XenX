@@ -8,7 +8,6 @@ from ..services.model_provider import MessageRole
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 
-from app.microservices.AI_chat.ai_chat.services.model_provider import ModelMessage
 
 
 class ChatMessageIn(BaseModel):

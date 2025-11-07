@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.auth.database import Base, engine, AsyncSessionLocal
 from app.auth.services.auth_service import AuthService
-from app.auth.models.users import User, UserRole
+from app.gateway.users.user.models.users import User
 import asyncio
 
 # Test data

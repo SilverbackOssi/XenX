@@ -1,1 +1,1 @@
-from app.microservices.tax_planner.tp_routes import project_router, strategy_router
+from app.microservices.tax_planner.tp_routes import project_router, strategy_router, client_goal_router

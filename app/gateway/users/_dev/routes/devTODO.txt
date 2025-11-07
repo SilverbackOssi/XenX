@@ -1,0 +1,7 @@
+
+Necessary dev routes
+
+- user registration/creation vs quick-create
+- user login, but not saved on browser
+- use token returned for subsequent requests
+

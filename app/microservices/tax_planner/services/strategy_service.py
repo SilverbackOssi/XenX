@@ -1,17 +1,20 @@
 from typing import Tuple, Optional, List, Dict, Any, Union
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, or_, and_
 from sqlalchemy.orm import joinedload
 from uuid import UUID
 import json
 
 from app.microservices.tax_planner.models.tax_strategies import (
-    TaxStrategy, CustomStrategy, ImplementationTask, TaxStrategyType
+    TaxStrategy, CustomStrategy, ImplementationTask, TaxStrategyType, StrategyGoal
 )
-from app.microservices.tax_planner.models.client_goals import ClientGoal, ClientGoalOptions
-from app.microservices.tax_planner.models.projects import Project
+from app.microservices.tax_planner.models.client_goals import (
+    ClientGoal, CustomGoal
+)
+from app.microservices.tax_planner.models.projects import Project, ProjectGoal
 from app.microservices.tax_planner.schemas.strategy_schemas import (
-    ClientGoalsUpdate, ClientGoalsResponse, ClientGoalResponse,
+    ProjectGoalsUpdate, ProjectGoalsResponse, ProjectGoalResponse,
+    ClientGoalResponse, CustomGoalResponse, CustomGoalCreate,
     StrategyCreate, StrategyUpdate, StrategyResponse,
     RecommendedStrategiesResponse, ImplementationTaskCreate
 )
@@ -21,11 +24,11 @@ class StrategyService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    # --- Client Goals Methods ---
-    async def update_client_goals(
-        self, enterprise_id: int, project_id: int, goals_data: ClientGoalsUpdate
-    ) -> Tuple[Optional[ClientGoalsResponse], Optional[str]]:
-        """Update client goals for a project"""
+    # --- Project Goals Methods ---
+    async def update_project_goals(
+        self, enterprise_id: int, project_id: int, goals_data: ProjectGoalsUpdate
+    ) -> Tuple[Optional[ProjectGoalsResponse], Optional[str]]:
+        """Update goals for a project"""
         # Check if project exists and belongs to the enterprise
         query = select(Project).where(
             Project.id == project_id,
@@ -37,38 +40,39 @@ class StrategyService:
         if not project:
             return None, f"Project not found for enterprise {enterprise_id}"
 
-        # Delete existing goals for this project
-        delete_query = delete(ClientGoal).where(ClientGoal.project_id == project_id)
+        # Delete existing project goals
+        delete_query = delete(ProjectGoal).where(ProjectGoal.project_id == project_id)
         await self.db.execute(delete_query)
 
-        # Create new goals
-        goals_response = []
-        for goal_option in goals_data.goals:
-            # Create a new goal
-            new_goal = ClientGoal(
-                goal=goal_option,
-                project_id=project_id
+        # Create new project goals
+        project_goals = []
+        for goal_selection in goals_data.goals:
+            new_project_goal = ProjectGoal(
+                project_id=project_id,
+                goal_id=goal_selection.goal_id,
+                custom_goal_id=goal_selection.custom_goal_id
             )
-            self.db.add(new_goal)
-            await self.db.flush()  # To get the ID
-            
-            # Add to response list
-            goals_response.append(self._goal_to_response(new_goal))
+            self.db.add(new_project_goal)
+            await self.db.flush()
+            project_goals.append(new_project_goal)
 
         await self.db.commit()
 
-        # Create response
-        response = ClientGoalsResponse(
-            goals=goals_response,
-            message=f"Successfully updated {len(goals_response)} goals for project {project_id}"
+        # Get the goals with their details for response
+        response_goals = await self._get_project_goals_with_details(project_id)
+        
+        response = ProjectGoalsResponse(
+            project_id=project_id,
+            goals=response_goals,
+            message=f"Successfully updated {len(project_goals)} goals for project {project_id}"
         )
         
         return response, None
 
-    async def get_recommended_strategies(
+    async def get_project_goals(
         self, enterprise_id: int, project_id: int
-    ) -> Tuple[Optional[RecommendedStrategiesResponse], Optional[str]]:
-        """Get recommended strategies based on client goals"""
+    ) -> Tuple[Optional[List[ProjectGoalResponse]], Optional[str]]:
+        """Get all goals for a specific project"""
         # Check if project exists and belongs to the enterprise
         query = select(Project).where(
             Project.id == project_id,
@@ -80,36 +84,96 @@ class StrategyService:
         if not project:
             return None, f"Project not found for enterprise {enterprise_id}"
 
-        # Get client goals for this project
-        goals_query = select(ClientGoal).where(ClientGoal.project_id == project_id)
-        goals_result = await self.db.execute(goals_query)
-        goals = goals_result.scalars().all()
+        # Get project goals with details
+        response_goals = await self._get_project_goals_with_details(project_id)
+        return response_goals, None
 
-        if not goals:
-            return None, f"No goals found for project {project_id}. Please set client goals first."
+    async def get_system_client_goals(self) -> Tuple[Optional[List[ClientGoalResponse]], Optional[str]]:
+        """Get all system-defined client goals"""
+        query = select(ClientGoal)
+        result = await self.db.execute(query)
+        goals = result.scalars().all()
 
-        # Get goal types to search for strategies
-        goal_types = [goal.goal for goal in goals]
+        return [self._client_goal_to_response(goal) for goal in goals], None
 
-        # Find all system strategies that align with these goals
-        # In a real implementation, this would use a more sophisticated matching algorithm
-        # For now, we'll just get some system strategies as a demo
-        strategy_query = select(TaxStrategy).where(
-            TaxStrategy.type == TaxStrategyType.SYSTEM
-        ).limit(5)  # Just get a few for demo purposes
+    async def get_enterprise_custom_goals(
+        self, enterprise_id: int
+    ) -> Tuple[Optional[List[CustomGoalResponse]], Optional[str]]:
+        """Get all custom goals for an enterprise"""
+        query = select(CustomGoal).where(CustomGoal.enterprise_id == enterprise_id)
+        result = await self.db.execute(query)
+        goals = result.scalars().all()
+
+        return [self._custom_goal_to_response(goal) for goal in goals], None
+
+    async def create_custom_goal(
+        self, enterprise_id: int, goal_data: CustomGoalCreate
+    ) -> Tuple[Optional[CustomGoalResponse], Optional[str]]:
+        """Create a new custom goal for an enterprise"""
+        new_goal = CustomGoal(
+            enterprise_id=enterprise_id,
+            title=goal_data.title,
+            description=goal_data.description
+        )
+        
+        self.db.add(new_goal)
+        await self.db.commit()
+        await self.db.refresh(new_goal)
+        
+        return self._custom_goal_to_response(new_goal), None
+
+    async def get_recommended_strategies(
+        self, enterprise_id: int, project_id: int
+    ) -> Tuple[Optional[RecommendedStrategiesResponse], Optional[str]]:
+        """Get recommended strategies based on project goals"""
+        # Check if project exists and belongs to the enterprise
+        query = select(Project).where(
+            Project.id == project_id,
+            Project.enterprise_id == enterprise_id
+        )
+        result = await self.db.execute(query)
+        project = result.scalars().first()
+
+        if not project:
+            return None, f"Project not found for enterprise {enterprise_id}"
+
+        # Get project goals
+        project_goals = await self._get_project_goals_with_details(project_id)
+        if not project_goals:
+            return None, f"No goals found for project {project_id}. Please select project goals first."
+
+        # Get all goal IDs (both system and custom)
+        system_goal_ids = [pg.goal.id for pg in project_goals if pg.goal]
+        custom_goal_ids = [pg.custom_goal.id for pg in project_goals if pg.custom_goal]
+
+        # Find strategies that support ANY of these goals
+        strategy_conditions = []
+        if system_goal_ids:
+            strategy_conditions.append(StrategyGoal.goal_id.in_(system_goal_ids))
+        if custom_goal_ids:
+            strategy_conditions.append(StrategyGoal.custom_goal_id.in_(custom_goal_ids))
+        
+        if not strategy_conditions:
+            return None, "No valid goals found for recommendation"
+            
+        strategy_query = select(TaxStrategy).join(StrategyGoal).where(
+            or_(*strategy_conditions)
+        ).distinct().options(
+            joinedload(TaxStrategy.implementation_tasks)
+        )
         
         strategy_result = await self.db.execute(strategy_query)
         strategies = strategy_result.scalars().all()
 
         if not strategies:
-            return None, "No matching strategies found for the provided goals"
+            return None, "No matching strategies found for the selected goals"
 
         # Create response
         response = RecommendedStrategiesResponse(
             project_id=project_id,
             strategies=[self._strategy_to_response(strategy) for strategy in strategies],
-            goals=[self._goal_to_response(goal) for goal in goals],
-            message=f"Found {len(strategies)} recommended strategies based on {len(goals)} client goals"
+            selected_goals=project_goals,
+            message=f"Found {len(strategies)} recommended strategies based on {len(project_goals)} selected goals"
         )
         
         return response, None
@@ -335,15 +399,56 @@ class StrategyService:
         
         return StrategyResponse.model_validate(strategy_dict)
 
-    def _goal_to_response(self, goal: ClientGoal) -> ClientGoalResponse:
+    async def _get_project_goals_with_details(self, project_id: int) -> List[ProjectGoalResponse]:
+        """Helper method to get project goals with their details"""
+        # Get project goals
+        project_goals_query = select(ProjectGoal).where(ProjectGoal.project_id == project_id)
+        project_goals_result = await self.db.execute(project_goals_query)
+        project_goals = project_goals_result.scalars().all()
+
+        response_goals = []
+        for pg in project_goals:
+            goal_response = ProjectGoalResponse()
+            
+            if pg.goal_id is not None:
+                # Get system goal details
+                goal_query = select(ClientGoal).where(ClientGoal.id == pg.goal_id)
+                goal_result = await self.db.execute(goal_query)
+                goal = goal_result.scalars().first()
+                if goal:
+                    goal_response.goal = self._client_goal_to_response(goal)
+            
+            if pg.custom_goal_id is not None:
+                # Get custom goal details
+                custom_goal_query = select(CustomGoal).where(CustomGoal.id == pg.custom_goal_id)
+                custom_goal_result = await self.db.execute(custom_goal_query)
+                custom_goal = custom_goal_result.scalars().first()
+                if custom_goal:
+                    goal_response.custom_goal = self._custom_goal_to_response(custom_goal)
+            
+            response_goals.append(goal_response)
+        
+        return response_goals
+
+    def _client_goal_to_response(self, goal: ClientGoal) -> ClientGoalResponse:
         """Convert a client goal model to a response schema"""
-        # Create a dictionary with all the attributes and convert to response model
         goal_dict = {
             "id": goal.id,
-            "goal": goal.goal,
-            "project_id": goal.project_id,
-            "related_strategy_id": goal.related_strategy_id,
+            "title": goal.title,
+            "description": goal.description,
             "created_at": goal.created_at,
             "updated_at": goal.updated_at
         }
         return ClientGoalResponse.model_validate(goal_dict)
+
+    def _custom_goal_to_response(self, goal: CustomGoal) -> CustomGoalResponse:
+        """Convert a custom goal model to a response schema"""
+        goal_dict = {
+            "id": goal.id,
+            "enterprise_id": goal.enterprise_id,
+            "title": goal.title,
+            "description": goal.description,
+            "created_at": goal.created_at,
+            "updated_at": goal.updated_at
+        }
+        return CustomGoalResponse.model_validate(goal_dict)

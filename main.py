@@ -1,14 +1,19 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-from app.routes.routes import *
-from app.auth.database import engine, Base
-from app.frontend import init_frontend
-from app.auth.seeder import seed_database
+from app.gateway.routes.routes import *
+from app.gateway.database import engine, Base
+from app.frontend import create_frontend_app
+from app.gateway.seeder import seed_database
 from app.config import get_settings
+from app.microservices.AI_chat.ai_chat.config import CONFIG as AI_CHAT_CONFIG
+from app.microservices.AI_chat.ai_chat.persistence.migrate import ensure_ai_chat_tables
 
-# Include microservices routers
-from app.microservices.tax_planner import project_router, strategy_router
+try:
+    from app.microservices.AI_chat.ai_chat.router import router as ai_chat_router
+except Exception as _e:
+    ai_chat_router = None
 
 import logging
 settings = get_settings()
@@ -19,9 +24,12 @@ UPLOAD_DIR = Path("uploads").mkdir(parents=True, exist_ok=True)
 LOGOS_DIR = Path("uploads/logos").mkdir(parents=True, exist_ok=True)
 TAX_RETURNS_DIR = Path("uploads/tax_returns").mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="XenToba API Demo Frontend", 
-              version="0.1.0", 
-              description="Frontend routes for the XenToba API")
+# Main application
+app = FastAPI(
+    title="XenToba",
+    description="Main application hosting the API and Frontend.",
+    version="0.1.0"
+)
 
 # Create API app with versioned path
 api_app = FastAPI(
@@ -33,10 +41,20 @@ api_app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Include API routers
+# Add CORS middleware to API app
+api_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include Gateway API routers
+# Auth routes
 api_app.include_router(google_oauth_router)
 api_app.include_router(auth_routes.auth_router)
-api_app.include_router(password_reset_routes.recovery_router)
+api_app.include_router(recovery.recovery_router)
 api_app.include_router(profile_routes.profile_router)
 
 # Enterprise/Organization routes
@@ -46,49 +64,18 @@ api_app.include_router(staff_routes.staff_router)
 api_app.include_router(staff_routes.client_router)
 api_app.include_router(project_router)
 api_app.include_router(strategy_router)
+api_app.include_router(client_goal_router)
+api_app.include_router(tax_plan_router)
 
 # Admin/Demo routes
 api_app.include_router(admin_router)
 
-
-
-
-
-
-# Initialize frontend
-init_frontend(app)
-
-# sync tables
-# Mount the uploads directories to make files accessible
-app.mount("/logos", StaticFiles(directory="uploads/logos"), name="logos")
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
-@app.on_event("startup")
-async def startup_event():
-    # Create database tables for main app
-    async with engine.begin() as conn:
-        # Run database seeder to populate with test data
-        if settings.RUN_SEEDER_ON_STARTUP:
-            await conn.run_sync(Base.metadata.drop_all)
-            await conn.run_sync(Base.metadata.create_all)
-            try:
-                logger.info("🌱 Running database seeder...")
-                await seed_database()
-                logger.info("✅ Database seeded successfully!")
-            except Exception as e:
-                logger.error(f"❌ Error seeding database: {e}")
-            # Don't fail startup if seeding fails
-    
-    # Initialize Tax Planner microservice database
-    from app.microservices.tax_planner.tp_database import init_tp_db
-    try:
-        logger.info("🔄 Initializing Tax Planner database...")
-        await init_tp_db()
-        logger.info("✅ Tax Planner database initialized successfully!")
-    except Exception as e:
-        logger.error(f"❌ Error initializing Tax Planner database: {e}")
-    
-        
+# Conditionally include AI Chat router (feature flagged)
+if AI_CHAT_CONFIG.enable_ai_chat and ai_chat_router is not None:
+    api_app.include_router(ai_chat_router)
+    logger.info("AI Chat router enabled.")
+else:
+    logger.info("AI Chat router disabled (ENABLE_AI_CHAT=false or import failed).")
 
 @api_app.get("/")
 def api_index():
@@ -99,5 +86,66 @@ def api_index():
 async def health_check():
     return {"status": "healthy"}
 
-# Mount API app under /api/v1
+# Create Frontend app
+frontend_app = create_frontend_app()
+
+# Mount the uploads directories to make files accessible
+app.mount("/logos", StaticFiles(directory="uploads/logos"), name="logos")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# Mount API and Frontend apps
 app.mount("/api/v1", api_app)
+app.mount("/", frontend_app)
+
+@app.get("/api/v1/openapi.json", include_in_schema=False)
+async def get_open_api_endpoint():
+    return api_app.openapi()
+
+# AI Chat startup hook (separate from commented legacy startup)
+@app.on_event("startup")
+async def ai_chat_startup_event():  # pragma: no cover - trivial environment hook
+    if AI_CHAT_CONFIG.enable_ai_chat:
+        try:
+            await ensure_ai_chat_tables()
+            logger.info("[AI_CHAT] Tables ensured (migration).")
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"[AI_CHAT] Failed to ensure tables: {e}")
+
+
+# @app.on_event("startup")
+# async def startup_event():
+#     # Create database tables for main app
+#     async with engine.begin() as conn:
+#         # Run database seeder to populate with test data
+#         if settings.RUN_SEEDER_ON_STARTUP:
+#             try:
+#                 await conn.run_sync(Base.metadata.drop_all)
+#             except Exception as e:
+#                 # Ignore errors when dropping tables that don't exist
+#                 logger.warning(f"Warning dropping tables (this is normal on first run): {e}")
+            
+#             await conn.run_sync(Base.metadata.create_all)
+#             try:
+#                 logger.info("🌱 Running database seeder...")
+#                 await seed_database()
+#                 logger.info("✅ Database seeded successfully!")
+#             except Exception as e:
+#                 logger.error(f"❌ Error seeding database: {e}")
+#                 # Don't fail startup if seeding fails
+#         else:
+#             # Just create tables without seeding
+#             await conn.run_sync(Base.metadata.create_all)
+#             logger.info("✅ Database tables created!")
+    
+#     # Initialize Tax Planner microservice database
+#     from app.microservices.tax_planner.tp_database import init_tp_db
+#     try:
+#         logger.info("🔄 Initializing Tax Planner database...")
+#         await init_tp_db()
+#         logger.info("✅ Tax Planner database initialized successfully!")
+#     except Exception as e:
+#         logger.error(f"❌ Error initializing Tax Planner database: {e}")
+
+
+
+

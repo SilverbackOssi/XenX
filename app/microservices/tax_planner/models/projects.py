@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Enum, Integer, String, ForeignKey, DateTime, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.postgresql import UUID
 from app.microservices.tax_planner.tp_database import TPBase
 import enum
 
@@ -43,6 +44,7 @@ class TaxEntity(TPBase):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    # Relationships
     project = relationship("Project", back_populates="tax_entity", uselist=False)
 
 class Project(TPBase):
@@ -51,6 +53,7 @@ class Project(TPBase):
 
     id = Column(Integer, primary_key=True, index=True)
     enterprise_id = Column(Integer, nullable=False)  # No ForeignKey here, enterprises exist in a separate DB
+    
     tax_entity_id = Column(Integer, ForeignKey("tax_entities.id"), unique=True, nullable=False)
     project_name = Column(String, nullable=False)
     client_name = Column(String, nullable=True)
@@ -63,5 +66,24 @@ class Project(TPBase):
 
     # Relationships
     tax_entity = relationship("TaxEntity", back_populates="project", uselist=False)
-    goals = relationship("ClientGoal", back_populates="project", cascade="all, delete-orphan")
-    tax_plan = relationship("TaxPlan", back_populates="project", uselist=False, cascade="all, delete-orphan")
+    project_goals = relationship("ProjectGoal", cascade="all, delete-orphan")
+
+
+# Association table for project-goal relationships
+class ProjectGoal(TPBase):
+    """Association table linking projects to selected goals"""
+    __tablename__ = 'project_goals'
+
+    id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey('projects.id'), nullable=False)
+    goal_id = Column(UUID(as_uuid=True), ForeignKey('client_goals.id'), nullable=True)
+    custom_goal_id = Column(UUID(as_uuid=True), ForeignKey('custom_goals.id'), nullable=True)
+
+    # Ensure either goal_id or custom_goal_id is set, but not both
+    __table_args__ = (
+        UniqueConstraint('project_id', 'goal_id', name='uq_project_goal'),
+        UniqueConstraint('project_id', 'custom_goal_id', name='uq_project_custom_goal'),
+    )
+
+    def __repr__(self):
+        return f"<ProjectGoal(project_id={self.project_id}, goal_id={self.goal_id}, custom_goal_id={self.custom_goal_id})>"
